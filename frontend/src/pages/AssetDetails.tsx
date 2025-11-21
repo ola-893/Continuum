@@ -9,12 +9,15 @@ import { StreamVisualization } from '../components/ui/StreamVisualization';
 import { FlashAdvanceModal } from '../components/ui/FlashAdvanceModal';
 import { getAssetByAddress } from '../data/mockAssets';
 import { formatCurrency } from '../utils/formatting';
+import { useContinuum } from '../hooks/useContinuum';
 
 export const AssetDetails: React.FC = () => {
     const { tokenId } = useParams<{ tokenId: string }>();
     const navigate = useNavigate();
+    const { claimYield, flashAdvance, loading } = useContinuum();
     const [showFlashModal, setShowFlashModal] = useState(false);
     const [isRepaying, setIsRepaying] = useState(false);
+    const [txStatus, setTxStatus] = useState<string>('');
 
     const asset = tokenId ? getAssetByAddress(tokenId) : null;
 
@@ -34,6 +37,38 @@ export const AssetDetails: React.FC = () => {
     const currentStreamInfo = isRepaying
         ? { ...asset.streamInfo, isActive: false }
         : asset.streamInfo;
+
+    // Handle claim yield transaction
+    const handleClaimYield = async () => {
+        try {
+            setTxStatus('Claiming yield...');
+            await claimYield(asset.tokenAddress);
+            setTxStatus('✅ Yield claimed successfully!');
+            setTimeout(() => setTxStatus(''), 3000);
+        } catch (error) {
+            console.error('Claim failed:', error);
+            setTxStatus('❌ Claim failed. Check console for details.');
+            setTimeout(() => setTxStatus(''), 5000);
+        }
+    };
+
+    // Handle flash advance transaction
+    const handleFlashAdvance = async (amount: number) => {
+        try {
+            setTxStatus('Processing flash advance...');
+            // Convert from APT to octas
+            const amountInOctas = Math.floor(amount * 100_000_000);
+            await flashAdvance(asset.tokenAddress, amountInOctas);
+            setTxStatus('✅ Flash advance successful!');
+            setIsRepaying(true);
+            setShowFlashModal(false);
+            setTimeout(() => setTxStatus(''), 3000);
+        } catch (error) {
+            console.error('Flash advance failed:', error);
+            setTxStatus('❌ Flash advance failed. Check console for details.');
+            setTimeout(() => setTxStatus(''), 5000);
+        }
+    };
 
     return (
         <div className="container" style={{ paddingTop: 'var(--spacing-2xl)', paddingBottom: 'var(--spacing-2xl)' }}>
@@ -128,12 +163,28 @@ export const AssetDetails: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Transaction Status */}
+                        {txStatus && (
+                            <div
+                                className="card"
+                                style={{
+                                    marginBottom: 'var(--spacing-lg)',
+                                    background: txStatus.includes('✅') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                    border: txStatus.includes('✅') ? '1px solid var(--color-success)' : '1px solid var(--color-warning)',
+                                }}
+                            >
+                                <p>{txStatus}</p>
+                            </div>
+                        )}
+
                         {/* Action Buttons */}
                         <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
                             <Button
                                 variant="secondary"
                                 leftIcon={<DollarSign size={18} />}
-                                disabled={isRepaying}
+                                onClick={handleClaimYield}
+                                disabled={isRepaying || loading}
+                                isLoading={loading && txStatus.includes('Claiming')}
                                 style={{ flex: 1 }}
                             >
                                 Claim Yield
@@ -142,7 +193,7 @@ export const AssetDetails: React.FC = () => {
                                 variant="primary"
                                 leftIcon={<Zap size={18} />}
                                 onClick={() => setShowFlashModal(true)}
-                                disabled={isRepaying}
+                                disabled={isRepaying || loading}
                                 style={{ flex: 1 }}
                             >
                                 ⚡ Flash Advance
@@ -171,11 +222,7 @@ export const AssetDetails: React.FC = () => {
                 <FlashAdvanceModal
                     asset={asset}
                     onClose={() => setShowFlashModal(false)}
-                    onConfirm={(amount) => {
-                        console.log('Flash advance requested:', amount);
-                        setIsRepaying(true);
-                        setShowFlashModal(false);
-                    }}
+                    onConfirm={handleFlashAdvance}
                 />
             )}
         </div>

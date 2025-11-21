@@ -8,6 +8,7 @@ import { Navbar } from './components/ui/Navbar';
 import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
 import { AssetDetails } from './pages/AssetDetails';
+import { Admin } from './pages/Admin';
 import './index.css';
 
 const wallets = [new PetraWallet(), new MartianWallet(), new PontemWallet()];
@@ -40,6 +41,9 @@ const App: React.FC = () => {
                                 </>
                             }
                         />
+
+                        {/* Admin Route - No Navbar (has its own header) */}
+                        <Route path="/admin" element={<Admin />} />
 
                         {/* Redirect unknown routes to landing */}
                         <Route path="*" element={<Navigate to="/" replace />} />

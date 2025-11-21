@@ -5,9 +5,11 @@ import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
 import { Infinity } from 'lucide-react';
 import { Badge } from './Badge';
 import { truncateAddress } from '../../utils/formatting';
+import { useContinuum } from '../../hooks/useContinuum';
 
 export const Navbar: React.FC = () => {
     const { account, connected } = useWallet();
+    const { complianceStatus } = useContinuum();
 
     return (
         <nav className="glass" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
@@ -35,9 +37,15 @@ export const Navbar: React.FC = () => {
                                         <span className="text-sm font-medium">
                                             {truncateAddress(account.address)}
                                         </span>
-                                        <Badge variant="success" showIcon={true}>
-                                            KYC Verified
-                                        </Badge>
+                                        {complianceStatus.hasKYC ? (
+                                            <Badge variant="success" showIcon={true}>
+                                                KYC Verified
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="warning" showIcon={true}>
+                                                No KYC
+                                            </Badge>
+                                        )}
                                     </div>
                                 </div>
                             </>

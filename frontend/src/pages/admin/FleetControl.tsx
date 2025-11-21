@@ -1,0 +1,299 @@
+import React, { useState } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
+import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { mockAssets, type AssetLocation } from '../../data/mockAdminData';
+import { formatCurrency } from '../../utils/formatting';
+import { ContinuumService } from '../../services/continuumService';
+
+export const FleetControl: React.FC = () => {
+    const { signAndSubmitTransaction } = useWallet();
+    const [selectedAsset, setSelectedAsset] = useState<AssetLocation | null>(null);
+    const [showFreezeModal, setShowFreezeModal] = useState(false);
+
+    const getStatusBadgeVariant = (status: string) => {
+        switch (status) {
+            case 'active':
+                return 'success';
+            case 'frozen':
+                return 'error';
+            case 'idle':
+                return 'warning';
+            default:
+                return 'info';
+        }
+    };
+
+    const getAssetIcon = (type: string) => {
+        switch (type) {
+            case 'car':
+                return '🚗';
+            case 'real_estate':
+                return '🏢';
+            case 'machinery':
+                return '🚜';
+            default:
+                return '📍';
+        }
+    };
+
+    const handleFreeze = async () => {
+        if (!selectedAsset || !selectedAsset.streamId) {
+            alert('Cannot freeze: stream ID not found');
+            return;
+        }
+
+        try {
+            setShowFreezeModal(false);
+
+            // Call the real blockchain freeze function
+            const transaction = ContinuumService.freezeAsset(
+                selectedAsset.streamId,
+                'Frozen by admin via Command Center'
+            );
+
+            await signAndSubmitTransaction(transaction);
+            alert(`✅ Asset ${selectedAsset.name} has been frozen on-chain!`);
+            setSelectedAsset(null);
+
+            // In production, refresh asset list here
+        } catch (error) {
+            console.error('Freeze failed:', error);
+            alert('❌ Failed to freeze asset. Check console for details.');
+        }
+    };
+
+    return (
+        <div style={{ padding: 'var(--spacing-2xl)' }}>
+            <div style={{ marginBottom: 'var(--spacing-2xl)' }}>
+                <h1 style={{ marginBottom: 'var(--spacing-sm)' }}>Fleet Control</h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                    Monitor all assets and execute emergency actions
+                </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-lg">
+                {/* Asset List */}
+                <div className="col-span-2">
+                    <div className="card" style={{ padding: 'var(--spacing-lg)' }}>
+                        <h3 style={{ marginBottom: 'var(--spacing-md)' }}>All Assets</h3>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                            {mockAssets.map((asset) => (
+                                <div
+                                    key={asset.id}
+                                    className="card"
+                                    style={{
+                                        padding: 'var(--spacing-md)',
+                                        background: selectedAsset?.id === asset.id ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                                        border: selectedAsset?.id === asset.id ? '1px solid var(--color-primary)' : '1px solid rgba(255, 255, 255, 0.05)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onClick={() => setSelectedAsset(asset)}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                                            <span style={{ fontSize: '24px' }}>{getAssetIcon(asset.type)}</span>
+                                            <div>
+                                                <p style={{ fontWeight: 600, marginBottom: 'var(--spacing-xs)' }}>
+                                                    {asset.name}
+                                                </p>
+                                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                                                    {asset.location.city}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge variant={getStatusBadgeVariant(asset.status) as any}>
+                                            {asset.status.toUpperCase()}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Detail Panel */}
+                <div>
+                    {selectedAsset ? (
+                        <div className="card" style={{ padding: 'var(--spacing-lg)', position: 'sticky', top: 'var(--spacing-2xl)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 'var(--spacing-lg)' }}>
+                                <h3>{selectedAsset.name}</h3>
+                                <button
+                                    onClick={() => setSelectedAsset(null)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--color-text-secondary)',
+                                        cursor: 'pointer',
+                                        padding: 'var(--spacing-xs)',
+                                    }}
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xs)' }}>
+                                    Location
+                                </p>
+                                <p style={{ fontWeight: 600 }}>{selectedAsset.location.city}</p>
+                            </div>
+
+                            <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xs)' }}>
+                                    Asset Value
+                                </p>
+                                <p style={{ fontWeight: 600 }}>{formatCurrency(selectedAsset.currentValue, 0)}</p>
+                            </div>
+
+                            {selectedAsset.streamId && (
+                                <>
+                                    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xs)' }}>
+                                            Stream Status
+                                        </p>
+                                        <Badge variant={selectedAsset.status === 'active' ? 'success' : 'error'}>
+                                            {selectedAsset.status === 'active' ? 'Streaming' : 'Frozen'}
+                                        </Badge>
+                                    </div>
+
+                                    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xs)' }}>
+                                            Total Earned
+                                        </p>
+                                        <p style={{ fontWeight: 600, color: 'var(--color-success)' }}>
+                                            {formatCurrency(selectedAsset.totalEarned, 2)}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Emergency Zone */}
+                            {selectedAsset.status === 'active' && (
+                                <div
+                                    className="emergency-zone"
+                                    style={{
+                                        marginTop: 'var(--spacing-xl)',
+                                        padding: 'var(--spacing-md)',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '2px solid #ef4444',
+                                        borderRadius: 'var(--border-radius-md)',
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-sm)' }}>
+                                        <AlertTriangle size={18} style={{ color: '#ef4444' }} />
+                                        <strong style={{ color: '#ef4444' }}>Emergency Controls</strong>
+                                    </div>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
+                                        Stop the payment stream and disable this asset immediately
+                                    </p>
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => setShowFreezeModal(true)}
+                                        style={{
+                                            width: '100%',
+                                            background: 'rgba(239, 68, 68, 0.2)',
+                                            border: '1px solid #ef4444',
+                                            color: '#ef4444',
+                                        }}
+                                    >
+                                        FREEZE ASSET
+                                    </Button>
+                                </div>
+                            )}
+
+                            {selectedAsset.status === 'frozen' && (
+                                <div
+                                    className="card"
+                                    style={{
+                                        marginTop: 'var(--spacing-xl)',
+                                        padding: 'var(--spacing-md)',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid #ef4444',
+                                    }}
+                                >
+                                    <p style={{ color: '#ef4444', fontSize: 'var(--font-size-sm)' }}>
+                                        🔒 This asset is currently frozen
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                            <p>Select an asset to view details</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Freeze Confirmation Modal */}
+            {showFreezeModal && selectedAsset && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.8)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                    }}
+                    onClick={() => setShowFreezeModal(false)}
+                >
+                    <div
+                        className="card"
+                        style={{
+                            maxWidth: '500px',
+                            padding: 'var(--spacing-2xl)',
+                            border: '2px solid #ef4444',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+                            <AlertTriangle size={32} style={{ color: '#ef4444' }} />
+                            <h2 style={{ color: '#ef4444' }}>Emergency Freeze</h2>
+                        </div>
+
+                        <p style={{ marginBottom: 'var(--spacing-md)' }}>
+                            Are you sure you want to freeze <strong>{selectedAsset.name}</strong>?
+                        </p>
+
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)' }}>
+                            This will:
+                        </p>
+                        <ul style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)', paddingLeft: 'var(--spacing-lg)' }}>
+                            <li>Stop the payment stream immediately</li>
+                            <li>Disable the vehicle/asset</li>
+                            <li>Freeze all investor withdrawals</li>
+                        </ul>
+
+                        <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+                            <Button
+                                variant="ghost"
+                                onClick={() => setShowFreezeModal(false)}
+                                style={{ flex: 1 }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onClick={handleFreeze}
+                                style={{
+                                    flex: 1,
+                                    background: '#ef4444',
+                                    borderColor: '#ef4444',
+                                }}
+                            >
+                                Confirm Freeze
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
