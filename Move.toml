@@ -4,12 +4,17 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-
-[dev-addresses]
+aptos_rwa = "_"
+# Explicitly define the address for token objects to be safe (standard is 0x4)
+aptos_token_objects = "0x4"
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-framework.git"
 rev = "mainnet"
 subdir = "aptos-framework"
 
-[dev-dependencies]
+
+[dependencies.AptosTokenObjects]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "mainnet"
+subdir = "aptos-token-objects"
