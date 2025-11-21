@@ -2,10 +2,10 @@ import React from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
 import '@aptos-labs/wallet-adapter-ant-design/dist/index.css';
-import InitializeEcosystem from './InitializeEcosystem';
-import ComplianceSetup from './ComplianceSetup';
-import StreamManagement from './StreamManagement';
-import ViewFunctions from './ViewFunctions';
+import InitializeEcosystem from './components/InitializeEcosystem';
+import ComplianceSetup from './components/ComplianceSetup';
+import StreamManagement from './components/StreamManagement';
+import ViewFunctions from './components/ViewFunctions';
 
 const App: React.FC = () => {
     const { account, connected, disconnect } = useWallet();
