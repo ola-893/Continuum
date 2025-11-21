@@ -1,22 +1,15 @@
 [package]
-name = "YieldStream"
+name = "aptos_rwa"
 version = "1.0.0"
 authors = []
 
-[dependencies.AptosFramework]
-git = "https://github.com/aptos-labs/aptos-core.git"
-rev = "mainnet"
-subdir = "aptos-move/framework/aptos-framework"
-
-[dependencies.AptosToken]
-git = "https://github.com/aptos-labs/aptos-core.git"
-rev = "mainnet"
-subdir = "aptos-move/framework/aptos-token-objects"
-
-[dependencies.AptosStdlib]
-git = "https://github.com/aptos-labs/aptos-core.git"
-rev = "mainnet"
-subdir = "aptos-move/framework/aptos-stdlib"
+[addresses]
 
 [dev-addresses]
-aptos_rwa = "0xcafe"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "mainnet"
+subdir = "aptos-framework"
+
+[dev-dependencies]

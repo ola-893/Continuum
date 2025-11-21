@@ -11,6 +11,11 @@ module aptos_rwa::streaming_protocol {
     use aptos_framework::account;
     use aptos_std::table::{Self, Table};
 
+    // Make StreamRegistry and functions accessible to other modules
+    friend aptos_rwa::asset_yield_protocol;
+    friend aptos_rwa::compliance_guard;
+    friend aptos_rwa::rwa_hub;
+
     // Error codes
     const E_STREAM_NOT_FOUND: u64 = 1;
     const E_STREAM_NOT_ACTIVE: u64 = 2;
@@ -94,7 +99,7 @@ module aptos_rwa::streaming_protocol {
     }
 
     /// Create a stream and LOCK REAL FUNDS
-    public fun create_stream<CoinType>(
+    public(friend) fun create_stream<CoinType>(
         registry: &mut StreamRegistry<CoinType>,
         sender: &signer,
         recipient: address,
@@ -175,7 +180,7 @@ module aptos_rwa::streaming_protocol {
     }
 
     /// Withdraw from stream and TRANSFER REAL MONEY
-    public fun withdraw<CoinType>(
+    public(friend) fun withdraw<CoinType>(
         registry: &mut StreamRegistry<CoinType>,
         stream_id: u64,
         recipient: &signer,
@@ -210,10 +215,8 @@ module aptos_rwa::streaming_protocol {
         claimable
     }
 
-    /// 🚀 FLASH ADVANCE - The Innovation Winner
-    /// Allow the recipient to withdraw future funds immediately.
-    /// This creates a "time travel" effect where the stream self-repays the advance.
-    public fun flash_advance<CoinType>(
+    /// Flash advance - THE INNOVATION
+    public(friend) fun flash_advance<CoinType>(
         registry: &mut StreamRegistry<CoinType>,
         stream_id: u64,
         recipient: &signer,
@@ -291,7 +294,70 @@ module aptos_rwa::streaming_protocol {
         });
     }
 
-    /// Get stream info (view function)
+    /// Create a stream given an address (wrapper for cross-module access)
+    public(friend) fun create_stream_with_addr<CoinType>(
+        registry_addr: address,
+        sender: &signer,
+        recipient: address,
+        flow_rate: u64,
+        start_time: u64,
+        duration: u64,
+        total_amount: u64,
+    ): u64 acquires StreamRegistry {
+        let registry = borrow_global_mut<StreamRegistry<CoinType>>(registry_addr);
+        create_stream<CoinType>(registry, sender, recipient, flow_rate, start_time, duration, total_amount)
+    }
+
+    /// Claimable balance wrapper for cross-module access
+    public(friend) fun claimable_balance_with_addr<CoinType>(
+        registry_addr: address,
+        stream_id: u64,
+    ): u64 acquires StreamRegistry {
+        let registry = borrow_global<StreamRegistry<CoinType>>(registry_addr);
+        claimable_balance_of<CoinType>(registry, stream_id)
+    }
+
+    /// Withdraw wrapper for cross-module access
+    public(friend) fun withdraw_with_addr<CoinType>(
+        registry_addr: address,
+        stream_id: u64,
+        recipient: &signer,
+    ): u64 acquires StreamRegistry {
+        let registry = borrow_global_mut<StreamRegistry<CoinType>>(registry_addr);
+        withdraw<CoinType>(registry, stream_id, recipient)
+    }
+
+    /// Flash advance wrapper for cross-module access
+    public(friend) fun flash_advance_with_addr<CoinType>(
+        registry_addr: address,
+        stream_id: u64,
+        recipient: &signer,
+        amount_requested: u64,
+    ) acquires StreamRegistry {
+        let registry = borrow_global_mut<StreamRegistry<CoinType>>(registry_addr);
+        flash_advance<CoinType>(registry, stream_id, recipient, amount_requested)
+    }
+
+    /// Update recipient wrapper for cross-module access
+    public(friend) fun update_recipient_with_addr<CoinType>(
+        registry_addr: address,
+        stream_id: u64,
+        new_recipient: address,
+    ) acquires StreamRegistry {
+        let registry = borrow_global_mut<StreamRegistry<CoinType>>(registry_addr);
+        update_recipient<CoinType>(registry, stream_id, new_recipient)
+    }
+
+    /// Update status wrapper for cross-module access
+    public(friend) fun update_status_with_addr<CoinType>(
+        registry_addr: address,
+        stream_id: u64,
+        new_status: u8,
+    ) acquires StreamRegistry {
+        let registry = borrow_global_mut<StreamRegistry<CoinType>>(registry_addr);
+        update_status<CoinType>(registry, stream_id, new_status)
+    }
+
     #[view]
     public fun get_stream_info<CoinType>(
         registry_addr: address,
@@ -314,7 +380,7 @@ module aptos_rwa::streaming_protocol {
     }
 
     /// Update stream status
-    public fun update_status<CoinType>(
+    public(friend) fun update_status<CoinType>(
         registry: &mut StreamRegistry<CoinType>,
         stream_id: u64,
         new_status: u8,
@@ -325,7 +391,7 @@ module aptos_rwa::streaming_protocol {
     }
 
     /// Update stream recipient (for RWA ownership transfers)
-    public fun update_recipient<CoinType>(
+    public(friend) fun update_recipient<CoinType>(
         registry: &mut StreamRegistry<CoinType>,
         stream_id: u64,
         new_recipient: address,
@@ -335,7 +401,6 @@ module aptos_rwa::streaming_protocol {
         stream.recipient = new_recipient;
     }
 
-    /// Get remaining escrow balance
     #[view]
     public fun get_escrow_balance<CoinType>(
         registry_addr: address,
@@ -345,15 +410,5 @@ module aptos_rwa::streaming_protocol {
         assert!(table::contains(&registry.streams, stream_id), error::not_found(E_STREAM_NOT_FOUND));
         let stream = table::borrow(&registry.streams, stream_id);
         coin::value(&stream.escrow)
-    }
-
-    /// Public accessor for borrow_global_mut (for other modules)
-    public fun borrow_registry_mut<CoinType>(addr: address): &mut StreamRegistry<CoinType> acquires StreamRegistry {
-        borrow_global_mut<StreamRegistry<CoinType>>(addr)
-    }
-
-    /// Public accessor for borrow_global (for other modules)
-    public fun borrow_registry<CoinType>(addr: address): &StreamRegistry<CoinType> acquires StreamRegistry {
-        borrow_global<StreamRegistry<CoinType>>(addr)
     }
 }

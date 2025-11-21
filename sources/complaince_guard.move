@@ -171,8 +171,8 @@ module aptos_rwa::compliance_guard {
         });
     }
 
-    /// Check if user is authorized to receive RWA funds
     #[view]
+    /// Check if user is authorized to receive RWA funds
     public fun is_authorized_recipient(
         compliance_addr: address,
         user: address,
@@ -235,15 +235,13 @@ module aptos_rwa::compliance_guard {
             };
             table::add(&mut registry.frozen_streams, stream_id, freeze_info);
 
-            let stream_registry = streaming_protocol::borrow_registry_mut<CoinType>(stream_registry_addr);
-            streaming_protocol::update_status<CoinType>(stream_registry, stream_id, 1);
+            streaming_protocol::update_status_with_addr<CoinType>(stream_registry_addr, stream_id, 1);
         } else {
             if (table::contains(&registry.frozen_streams, stream_id)) {
                 table::remove(&mut registry.frozen_streams, stream_id);
             };
 
-            let stream_registry = streaming_protocol::borrow_registry_mut<CoinType>(stream_registry_addr);
-            streaming_protocol::update_status<CoinType>(stream_registry, stream_id, 0);
+            streaming_protocol::update_status_with_addr<CoinType>(stream_registry_addr, stream_id, 0);
         };
 
         event::emit_event(&mut registry.freeze_events, FreezeEvent {
@@ -254,8 +252,8 @@ module aptos_rwa::compliance_guard {
         });
     }
 
-    /// Check if stream is frozen
     #[view]
+    /// Check if stream is frozen
     public fun is_stream_frozen(
         compliance_addr: address,
         stream_id: u64,
@@ -264,8 +262,8 @@ module aptos_rwa::compliance_guard {
         table::contains(&registry.frozen_streams, stream_id)
     }
 
-    /// Get freeze info
     #[view]
+    /// Get freeze info
     public fun get_freeze_info(
         compliance_addr: address,
         stream_id: u64,
@@ -320,8 +318,8 @@ module aptos_rwa::compliance_guard {
         };
     }
 
-    /// Check if address is admin
     #[view]
+    /// Check if address is admin
     public fun is_admin(
         compliance_addr: address,
         user: address,
@@ -330,8 +328,8 @@ module aptos_rwa::compliance_guard {
         vector::contains(&registry.admins, &user)
     }
 
-    /// Get identity info
     #[view]
+    /// Get identity info
     public fun get_identity_info(
         compliance_addr: address,
         user: address,
@@ -352,8 +350,8 @@ module aptos_rwa::compliance_guard {
         )
     }
 
-    /// Check if user has valid KYC
     #[view]
+    /// Check if user has valid KYC
     public fun has_valid_kyc(
         compliance_addr: address,
         user: address,

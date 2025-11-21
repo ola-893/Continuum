@@ -231,8 +231,8 @@ module aptos_rwa::rwa_hub {
     // View Functions for Frontend Integration
     // ===================================================================
 
-    /// Check if user can participate in RWA ecosystem
     #[view]
+    /// Check if user can participate in RWA ecosystem
     public fun can_participate(
         compliance_addr: address,
         user: address,
@@ -245,15 +245,14 @@ module aptos_rwa::rwa_hub {
         )
     }
 
-    /// Get complete stream status
     #[view]
+    /// Get complete stream status
     public fun get_stream_status<CoinType>(
         stream_registry_addr: address,
         compliance_addr: address,
         stream_id: u64,
     ): (u64, u64, u64, bool) {
-        let registry = streaming_protocol::borrow_registry<CoinType>(stream_registry_addr);
-        let claimable = streaming_protocol::claimable_balance_of<CoinType>(registry, stream_id);
+        let claimable = streaming_protocol::claimable_balance_with_addr<CoinType>(stream_registry_addr, stream_id);
         let escrow_balance = streaming_protocol::get_escrow_balance<CoinType>(
             stream_registry_addr,
             stream_id,
@@ -268,8 +267,8 @@ module aptos_rwa::rwa_hub {
         (claimable, escrow_balance, total_amount - amount_withdrawn, is_frozen)
     }
 
-    /// Check user's complete compliance status
     #[view]
+    /// Check user's complete compliance status
     public fun get_user_compliance_status(
         compliance_addr: address,
         user: address,

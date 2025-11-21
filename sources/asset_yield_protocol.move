@@ -1,15 +1,13 @@
 // ===================================================================
 // sources/asset_yield_protocol.move
-// RWA Asset Yield Protocol with REAL OWNERSHIP VERIFICATION
+// RWA Asset Yield Protocol (Simplified for Hackathon)
 // ===================================================================
 module aptos_rwa::asset_yield_protocol {
     use std::signer;
     use std::error;
     use aptos_framework::event::{Self, EventHandle};
     use aptos_framework::account;
-    use aptos_framework::object::{Self, Object};
     use aptos_std::table::{Self, Table};
-    use aptos_token_objects::token::{Self, Token};
     use aptos_rwa::streaming_protocol;
 
     // Error codes
@@ -26,6 +24,8 @@ module aptos_rwa::asset_yield_protocol {
         yield_controllers: Table<u64, address>,
         // Maps StreamId -> Ownership checkpoint data
         ownership_checkpoints: Table<u64, OwnershipCheckpoint>,
+        // Maps StreamId -> Current owner (simplified ownership tracking)
+        stream_owners: Table<u64, address>,
         asset_stream_created_events: EventHandle<AssetStreamCreatedEvent>,
         yield_claimed_events: EventHandle<YieldClaimedEvent>,
         yield_rate_updated_events: EventHandle<YieldRateUpdatedEvent>,
@@ -68,6 +68,7 @@ module aptos_rwa::asset_yield_protocol {
                 asset_to_stream: table::new(),
                 yield_controllers: table::new(),
                 ownership_checkpoints: table::new(),
+                stream_owners: table::new(),
                 asset_stream_created_events: account::new_event_handle<AssetStreamCreatedEvent>(account),
                 yield_claimed_events: account::new_event_handle<YieldClaimedEvent>(account),
                 yield_rate_updated_events: account::new_event_handle<YieldRateUpdatedEvent>(account),
@@ -86,8 +87,6 @@ module aptos_rwa::asset_yield_protocol {
     ) acquires AssetYieldRegistry {
         let creator_addr = signer::address_of(creator);
         
-        // Get registries
-        let stream_registry = streaming_protocol::borrow_registry_mut<CoinType>(stream_registry_addr);
         let yield_registry = borrow_global_mut<AssetYieldRegistry<CoinType>>(yield_registry_addr);
         
         // Ensure asset not already registered
@@ -101,8 +100,8 @@ module aptos_rwa::asset_yield_protocol {
         let start_time = aptos_framework::timestamp::now_seconds();
 
         // Create the underlying stream with REAL MONEY
-        let stream_id = streaming_protocol::create_stream<CoinType>(
-            stream_registry,
+        let stream_id = streaming_protocol::create_stream_with_addr<CoinType>(
+            stream_registry_addr,
             creator,
             creator_addr, // Temporary recipient, will be updated during claim
             flow_rate,
@@ -116,6 +115,9 @@ module aptos_rwa::asset_yield_protocol {
         
         // Set yield controller (creator by default)
         table::add(&mut yield_registry.yield_controllers, stream_id, creator_addr);
+        
+        // Set initial owner
+        table::add(&mut yield_registry.stream_owners, stream_id, creator_addr);
 
         // Initialize ownership checkpoint
         table::add(&mut yield_registry.ownership_checkpoints, stream_id, OwnershipCheckpoint {
@@ -132,7 +134,8 @@ module aptos_rwa::asset_yield_protocol {
         });
     }
 
-    /// Claim yield for an asset with REAL OWNERSHIP VERIFICATION
+    /// Claim yield for an asset (Simplified - no NFT verification for hackathon)
+    /// In production, add NFT ownership verification
     public entry fun claim_yield_for_asset<CoinType>(
         claimer: &signer,
         stream_registry_addr: address,
@@ -141,15 +144,7 @@ module aptos_rwa::asset_yield_protocol {
     ) acquires AssetYieldRegistry {
         let claimer_addr = signer::address_of(claimer);
 
-        // 1. REAL INNOVATION: VERIFY OWNERSHIP
-        // Check if the claimer is the owner of the Token Object
-        assert!(
-            object::is_owner(object::address_to_object<Token>(token_obj_addr), claimer_addr),
-            error::permission_denied(E_NOT_ASSET_OWNER)
-        );
-
         let yield_registry = borrow_global_mut<AssetYieldRegistry<CoinType>>(yield_registry_addr);
-        let stream_registry = streaming_protocol::borrow_registry_mut<CoinType>(stream_registry_addr);
 
         // Get stream ID for this asset
         assert!(
@@ -158,14 +153,25 @@ module aptos_rwa::asset_yield_protocol {
         );
         let stream_id = *table::borrow(&yield_registry.asset_to_stream, token_obj_addr);
 
+        // Simplified ownership check - verify caller is registered owner
+        assert!(
+            table::contains(&yield_registry.stream_owners, stream_id),
+            error::not_found(E_ASSET_NOT_REGISTERED)
+        );
+        let current_owner = table::borrow(&yield_registry.stream_owners, stream_id);
+        assert!(
+            claimer_addr == *current_owner,
+            error::permission_denied(E_NOT_ASSET_OWNER)
+        );
+
         // Handle ownership checkpoint
         let checkpoint = table::borrow_mut(&mut yield_registry.ownership_checkpoints, stream_id);
         
         // Update stream recipient to current owner (for ownership transfers)
-        streaming_protocol::update_recipient<CoinType>(stream_registry, stream_id, claimer_addr);
+        streaming_protocol::update_recipient_with_addr<CoinType>(stream_registry_addr, stream_id, claimer_addr);
         
         // Calculate yield since last checkpoint
-        let claimable = streaming_protocol::claimable_balance_of<CoinType>(stream_registry, stream_id);
+        let claimable = streaming_protocol::claimable_balance_with_addr<CoinType>(stream_registry_addr, stream_id);
         
         if (claimable > 0) {
             // Update checkpoint
@@ -173,7 +179,7 @@ module aptos_rwa::asset_yield_protocol {
             checkpoint.last_claim_time = aptos_framework::timestamp::now_seconds();
             
             // Perform withdrawal - REAL MONEY TRANSFER
-            let amount = streaming_protocol::withdraw<CoinType>(stream_registry, stream_id, claimer);
+            let amount = streaming_protocol::withdraw_with_addr<CoinType>(stream_registry_addr, stream_id, claimer);
 
             event::emit_event(&mut yield_registry.yield_claimed_events, YieldClaimedEvent {
                 token_address: token_obj_addr,
@@ -184,7 +190,7 @@ module aptos_rwa::asset_yield_protocol {
         }
     }
 
-    /// 🚀 Flash advance yield for RWA owners
+    /// Flash advance yield for RWA owners
     public entry fun flash_advance_rwa_yield<CoinType>(
         owner: &signer,
         stream_registry_addr: address,
@@ -194,14 +200,7 @@ module aptos_rwa::asset_yield_protocol {
     ) acquires AssetYieldRegistry {
         let owner_addr = signer::address_of(owner);
 
-        // Verify ownership
-        assert!(
-            object::is_owner(object::address_to_object<Token>(token_obj_addr), owner_addr),
-            error::permission_denied(E_NOT_ASSET_OWNER)
-        );
-
         let yield_registry = borrow_global<AssetYieldRegistry<CoinType>>(yield_registry_addr);
-        let stream_registry = streaming_protocol::borrow_registry_mut<CoinType>(stream_registry_addr);
 
         assert!(
             table::contains(&yield_registry.asset_to_stream, token_obj_addr),
@@ -209,16 +208,54 @@ module aptos_rwa::asset_yield_protocol {
         );
         let stream_id = *table::borrow(&yield_registry.asset_to_stream, token_obj_addr);
 
+        // Verify ownership
+        assert!(
+            table::contains(&yield_registry.stream_owners, stream_id),
+            error::not_found(E_ASSET_NOT_REGISTERED)
+        );
+        let current_owner = table::borrow(&yield_registry.stream_owners, stream_id);
+        assert!(
+            owner_addr == *current_owner,
+            error::permission_denied(E_NOT_ASSET_OWNER)
+        );
+
         // Update recipient to ensure proper authorization
-        streaming_protocol::update_recipient<CoinType>(stream_registry, stream_id, owner_addr);
+        streaming_protocol::update_recipient_with_addr<CoinType>(stream_registry_addr, stream_id, owner_addr);
 
         // Execute flash advance - self-repaying loan
-        streaming_protocol::flash_advance<CoinType>(
-            stream_registry,
+        streaming_protocol::flash_advance_with_addr<CoinType>(
+            stream_registry_addr,
             stream_id,
             owner,
             amount_requested,
         );
+    }
+
+    /// Transfer ownership of yield stream (for NFT transfers)
+    public entry fun transfer_stream_ownership<CoinType>(
+        current_owner: &signer,
+        yield_registry_addr: address,
+        token_obj_addr: address,
+        new_owner: address,
+    ) acquires AssetYieldRegistry {
+        let current_owner_addr = signer::address_of(current_owner);
+        let yield_registry = borrow_global_mut<AssetYieldRegistry<CoinType>>(yield_registry_addr);
+
+        assert!(
+            table::contains(&yield_registry.asset_to_stream, token_obj_addr),
+            error::not_found(E_ASSET_NOT_REGISTERED)
+        );
+        let stream_id = *table::borrow(&yield_registry.asset_to_stream, token_obj_addr);
+
+        // Verify current ownership
+        let owner = table::borrow_mut(&mut yield_registry.stream_owners, stream_id);
+        assert!(
+            *owner == current_owner_addr,
+            error::permission_denied(E_NOT_ASSET_OWNER)
+        );
+
+        // Transfer ownership
+        *owner = new_owner;
     }
 
     /// Update yield rate (only yield controller can call)
@@ -242,19 +279,16 @@ module aptos_rwa::asset_yield_protocol {
             error::permission_denied(E_NOT_YIELD_CONTROLLER)
         );
 
-        // Note: In production, you'd need to handle the flow rate update carefully
-        // This is a simplified version
-        
         event::emit_event(&mut yield_registry.yield_rate_updated_events, YieldRateUpdatedEvent {
             stream_id,
-            old_flow_rate: 0, // Would need to fetch from stream
+            old_flow_rate: 0,
             new_flow_rate,
             updated_by: controller_addr,
         });
     }
 
-    /// Get stream ID for an asset
     #[view]
+    /// Get stream ID for an asset
     public fun get_asset_stream_id<CoinType>(
         yield_registry_addr: address,
         token_obj_addr: address,
@@ -269,8 +303,8 @@ module aptos_rwa::asset_yield_protocol {
         *table::borrow(&yield_registry.asset_to_stream, token_obj_addr)
     }
 
-    /// Check if asset has registered stream
     #[view]
+    /// Check if asset has registered stream
     public fun is_asset_registered<CoinType>(
         yield_registry_addr: address,
         token_obj_addr: address,
@@ -279,8 +313,8 @@ module aptos_rwa::asset_yield_protocol {
         table::contains(&yield_registry.asset_to_stream, token_obj_addr)
     }
 
-    /// Get ownership checkpoint info
     #[view]
+    /// Get ownership checkpoint info
     public fun get_ownership_checkpoint<CoinType>(
         yield_registry_addr: address,
         stream_id: u64,
@@ -294,5 +328,21 @@ module aptos_rwa::asset_yield_protocol {
         
         let checkpoint = table::borrow(&yield_registry.ownership_checkpoints, stream_id);
         (checkpoint.last_owner, checkpoint.last_claim_time, checkpoint.pending_yield)
+    }
+
+    #[view]
+    /// Get current owner of stream
+    public fun get_stream_owner<CoinType>(
+        yield_registry_addr: address,
+        stream_id: u64,
+    ): address acquires AssetYieldRegistry {
+        let yield_registry = borrow_global<AssetYieldRegistry<CoinType>>(yield_registry_addr);
+        
+        assert!(
+            table::contains(&yield_registry.stream_owners, stream_id),
+            error::not_found(E_ASSET_NOT_REGISTERED)
+        );
+        
+        *table::borrow(&yield_registry.stream_owners, stream_id)
     }
 }
