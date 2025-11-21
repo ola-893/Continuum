@@ -1,59 +1,52 @@
 import React from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
-import '@aptos-labs/wallet-adapter-ant-design/dist/index.css';
-import InitializeEcosystem from './components/InitializeEcosystem';
-import ComplianceSetup from './components/ComplianceSetup';
-import StreamManagement from './components/StreamManagement';
-import ViewFunctions from './components/ViewFunctions';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
+import { PetraWallet } from 'petra-plugin-wallet-adapter';
+import { MartianWallet } from '@martianwallet/aptos-wallet-adapter';
+import { PontemWallet } from '@pontem/wallet-adapter-plugin';
+import { Navbar } from './components/ui/Navbar';
+import { LandingPage } from './pages/LandingPage';
+import { Dashboard } from './pages/Dashboard';
+import { AssetDetails } from './pages/AssetDetails';
+import './index.css';
+
+const wallets = [new PetraWallet(), new MartianWallet(), new PontemWallet()];
 
 const App: React.FC = () => {
-    const { account, connected, disconnect } = useWallet();
-
     return (
-        <div className="container">
-            <h1>♾️ YieldStream - RWA Protocol</h1>
+        <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
+            <BrowserRouter>
+                <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    <Routes>
+                        {/* Landing Page - No Navbar */}
+                        <Route path="/" element={<LandingPage />} />
 
-            {/* Wallet Connection */}
-            <div className="wallet-info">
-                {connected && account ? (
-                    <>
-                        <div>
-                            <strong>Connected:</strong> {account.address}
-                        </div>
-                        <button onClick={disconnect}>Disconnect</button>
-                    </>
-                ) : (
-                    <div>
-                        <WalletSelector />
-                    </div>
-                )}
-            </div>
+                        {/* App Routes - With Navbar */}
+                        <Route
+                            path="/dashboard"
+                            element={
+                                <>
+                                    <Navbar />
+                                    <Dashboard />
+                                </>
+                            }
+                        />
+                        <Route
+                            path="/asset/:tokenId"
+                            element={
+                                <>
+                                    <Navbar />
+                                    <AssetDetails />
+                                </>
+                            }
+                        />
 
-            {!connected && (
-                <div className="info">
-                    Please connect your Aptos wallet to interact with the smart contracts.
+                        {/* Redirect unknown routes to landing */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
                 </div>
-            )}
-
-            {/* Main Content */}
-            <InitializeEcosystem />
-            <ComplianceSetup />
-            <StreamManagement />
-            <ViewFunctions />
-
-            {/* Info Footer */}
-            <div className="card" style={{ marginTop: '2rem', opacity: 0.7 }}>
-                <h3>💡 Usage Notes</h3>
-                <ul>
-                    <li>All registry addresses (Stream, Yield, Compliance) are typically your deployer address</li>
-                    <li>Initialize the ecosystem first before creating streams</li>
-                    <li>Register KYC and whitelist addresses before they can participate</li>
-                    <li>Amounts are in octas: 1 APT = 100,000,000 octas</li>
-                    <li>You need a real NFT/Token Object address to create streams</li>
-                </ul>
-            </div>
-        </div>
+            </BrowserRouter>
+        </AptosWalletAdapterProvider>
     );
 };
 
