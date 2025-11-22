@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Sparkles } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { useContinuum } from '../../hooks/useContinuum';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { NFTMintingService } from '../../services/nftMintingService';
-import { CONTRACT_CONFIG } from '../../config/contracts';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { aptosClient } from '../../services/aptosClient';
+import { useContinuum } from '../../hooks/useContinuum';
+import { CONTRACT_CONFIG } from '../../config/contracts';
 
 export const AssetFactory: React.FC = () => {
     const { createYieldStream, loading } = useContinuum();
@@ -218,19 +219,10 @@ export const AssetFactory: React.FC = () => {
                         <h3 style={{ marginBottom: 'var(--spacing-lg)' }}>NFT Details</h3>
 
                         {checkingCollection ? (
-                            <div
-                                className="card"
-                                style={{
-                                    marginBottom: 'var(--spacing-lg)',
-                                    padding: 'var(--spacing-md)',
-                                    background: 'rgba(100, 116, 139, 0.1)',
-                                    border: '1px solid var(--color-text-muted)',
-                                }}
-                            >
-                                <p style={{ color: 'var(--color-text-secondary)' }}>
-                                    Checking if collection exists...
-                                </p>
-                            </div>
+                            <LoadingScreen
+                                message="Checking collection status..."
+                                size="sm"
+                            />
                         ) : !collectionExists ? (
                             <div
                                 className="card"

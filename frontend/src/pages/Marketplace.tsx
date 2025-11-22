@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AssetCard } from '../components/ui/AssetCard';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { useAssetList } from '../hooks/useAssetList';
 import { ContinuumService } from '../services/continuumService';
 
@@ -34,13 +35,7 @@ export const Marketplace: React.FC = () => {
     return (
         <div style={{ padding: 'var(--spacing-2xl)' }}>
             {loadingRegistry ? (
-                <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>⏳</div>
-                    <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>Loading Marketplace...</h3>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>
-                        Fetching registered RWAs from blockchain
-                    </p>
-                </div>
+                <LoadingScreen message="Loading marketplace from blockchain..." />
             ) : publicTokenAddresses.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
                     <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>🏪</div>
