@@ -2,14 +2,14 @@
 // sources/compliance_guard.move
 // Compliance & Governance Module
 // ===================================================================
-module aptos_rwa::compliance_guard {
+module continuum::compliance_guard {
     use std::signer;
     use std::error;
     use std::vector;
     use aptos_std::table::{Self, Table};
     use aptos_framework::event::{Self, EventHandle};
     use aptos_framework::account;
-    use aptos_rwa::streaming_protocol;
+    use continuum::streaming_protocol;
 
     // Error codes
     const E_NOT_AUTHORIZED: u64 = 20;

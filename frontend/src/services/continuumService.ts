@@ -69,6 +69,119 @@ export class ContinuumService {
     }
 
     // ============================================
+    // 8. TOKEN REGISTRY FUNCTIONS
+    // ============================================
+
+    /**
+     * Get all registered tokens from the global registry
+     * Uses rwa_hub wrapper for better compatibility
+     */
+    static async getAllRegisteredTokens(): Promise<any[]> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_all_marketplace_tokens`,
+                    functionArguments: [],
+                },
+            });
+            return result[0] as any[] || [];
+        } catch (error) {
+            console.error("Error fetching all registered tokens:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get paginated tokens for marketplace
+     */
+    static async getTokensPaginated(offset: number, limit: number): Promise<any[]> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_marketplace_tokens_paginated`,
+                    functionArguments: [offset.toString(), limit.toString()],
+                },
+            });
+            return result[0] as any[] || [];
+        } catch (error) {
+            console.error("Error fetching paginated tokens:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get tokens by asset type
+     */
+    static async getTokensByType(assetType: number): Promise<any[]> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_tokens_by_asset_type`,
+                    functionArguments: [assetType],
+                },
+            });
+            return result[0] as any[] || [];
+        } catch (error) {
+            console.error("Error fetching tokens by type:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get count of all registered tokens
+     */
+    static async getTokenCount(): Promise<number> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_total_token_count`,
+                    functionArguments: [],
+                },
+            });
+            return Number(result[0]) || 0;
+        } catch (error) {
+            console.error("Error fetching token count:", error);
+            return 0;
+        }
+    }
+
+    /**
+     * Get token details by address
+     */
+    static async getTokenDetails(tokenAddress: string): Promise<any | null> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_token_details`,
+                    functionArguments: [tokenAddress],
+                },
+            });
+            return result[0] || null;
+        } catch (error) {
+            console.error("Error fetching token details:", error);
+            return null;
+        }
+    }
+
+    /**
+     * Get token by stream ID
+     */
+    static async getTokenByStreamId(streamId: number): Promise<any | null> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_token_by_stream`,
+                    functionArguments: [streamId.toString()],
+                },
+            });
+            return result[0] || null;
+        } catch (error) {
+            console.error("Error fetching token by stream ID:", error);
+            return null;
+        }
+    }
+
+    // ============================================
     // 2. ASSET STREAM MANAGEMENT
     // ============================================
 

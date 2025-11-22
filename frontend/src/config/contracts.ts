@@ -1,10 +1,10 @@
 /**
- * Contract Configuration for YieldStream on Aptos Testnet
+ * Contract Configuration for Continuum Protocol on Aptos Testnet
  */
 
 export const CONTRACT_CONFIG = {
-    // Your deployed contract address (from quick_setup_with_admin)
-    MODULE_ADDRESS: "0x7c68c08ed30efcb9159b90c398247bf6504ab11678b39e58db12cae2360c9dc3",
+    // Newly deployed Continuum contract address
+    MODULE_ADDRESS: "0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b",
 
     // Network
     NETWORK: "testnet" as const,
@@ -15,6 +15,7 @@ export const CONTRACT_CONFIG = {
         STREAMING_PROTOCOL: "streaming_protocol",
         ASSET_YIELD_PROTOCOL: "asset_yield_protocol",
         COMPLIANCE_GUARD: "compliance_guard",
+        TOKEN_REGISTRY: "token_registry",
     },
 
     // Coin type (AptosCoin for testnet)
@@ -22,11 +23,9 @@ export const CONTRACT_CONFIG = {
 
     // Asset types (from your Move contract)
     ASSET_TYPES: {
-        CAR: 0,
-        REAL_ESTATE: 1,
-        SECURITIES: 2,
-        COMMODITIES: 3,
-        ART: 4,
+        REAL_ESTATE: 0,  // Updated to match new registry
+        CAR: 1,
+        COMMODITIES: 2,
     },
 
     // Constants

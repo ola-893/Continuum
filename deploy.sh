@@ -1,34 +1,59 @@
 #!/bin/bash
 
-ACCOUNT="0x7c68c08ed30efcb9159b90c398247bf6504ab11678b39e58db12cae2360c9dc3"
-MODULE="$ACCOUNT::aptos_rwa"
+# Your Account
+ACCOUNT="0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b"
+PROFILE="continuum-admin"
+MAX_GAS="150000"
 
 echo "================================"
-echo "🚀 YieldStream Deployment"
+echo "🚀 Continuum Protocol Deployment"
 echo "================================"
+echo "Target Address: $ACCOUNT"
+echo "Using Profile:  $PROFILE"
 echo ""
 
-echo "📦 Publishing contract..."
+# Double check balance just to be safe (prints to console)
+aptos account list --profile $PROFILE
+
+echo ""
+echo "📦 Publishing contract (Max Gas $MAX_GAS)..."
+# FIX APPLIED: Ensure NO spaces are after the backslash (\) for line continuation
 aptos move publish \
-  --profile default \
-  --named-addresses aptos_rwa=$ACCOUNT
+  --profile $PROFILE \
+  --named-addresses continuum=$ACCOUNT \
+  --max-gas $MAX_GAS \
+  --assume-yes
 
 echo ""
-echo "⚙️  Initializing ecosystem..."
+echo "👤 Setting up admin (Step 1)..."
+# FIX APPLIED: Ensure NO spaces are after the backslash (\)
 aptos move run \
-  --profile default \
-  --function-id $MODULE::rwa_hub::initialize_rwa_ecosystem \
-  --type-args 0x1::aptos_coin::AptosCoin
-
-echo ""
-echo "👤 Setting up admin..."
-aptos move run \
-  --profile default \
-  --function-id $MODULE::rwa_hub::quick_setup_with_admin \
+  --profile $PROFILE \
+  --function-id $ACCOUNT::rwa_hub::quick_setup_with_admin \
   --type-args 0x1::aptos_coin::AptosCoin \
-  --args 'vector<u8>:"US"' 'u8:1' 'u64:9999999999'
+  --args string:US u8:1 u64:9999999999 \
+  --max-gas $MAX_GAS \
+  --assume-yes
+
+echo ""
+echo "⚙️  Initializing ecosystem (Step 2)..."
+# FIX APPLIED: Ensure NO spaces are after the backslash (\)
+aptos move run \
+  --profile $PROFILE \
+  --function-id $ACCOUNT::rwa_hub::initialize_rwa_ecosystem \
+  --type-args 0x1::aptos_coin::AptosCoin \
+  --max-gas $MAX_GAS \
+  --assume-yes
+
+echo ""
+echo "📝 Initializing token registry..."
+# FIX APPLIED: Ensure NO spaces are after the backslash (\)
+aptos move run \
+  --profile $PROFILE \
+  --function-id $ACCOUNT::token_registry::initialize \
+  --max-gas $MAX_GAS \
+  --assume-yes
 
 echo ""
 echo "✅ DEPLOYMENT COMPLETE!"
-echo "Visit faucet: https://faucet.testnet.aptos.dev/?address=$ACCOUNT"
-EOF
+echo "Address: $ACCOUNT"

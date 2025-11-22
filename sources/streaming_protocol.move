@@ -2,7 +2,7 @@
 // sources/streaming_protocol.move
 // Core Streaming Protocol Module with REAL MONEY
 // ===================================================================
-module aptos_rwa::streaming_protocol {
+module continuum::streaming_protocol {
     use std::signer;
     use std::error;
     use aptos_framework::timestamp;
@@ -12,9 +12,9 @@ module aptos_rwa::streaming_protocol {
     use aptos_std::table::{Self, Table};
 
     // Make StreamRegistry and functions accessible to other modules
-    friend aptos_rwa::asset_yield_protocol;
-    friend aptos_rwa::compliance_guard;
-    friend aptos_rwa::rwa_hub;
+    friend continuum::asset_yield_protocol;
+    friend continuum::compliance_guard;
+    friend continuum::rwa_hub;
 
     // Error codes
     const E_STREAM_NOT_FOUND: u64 = 1;

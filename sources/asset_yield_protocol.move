@@ -2,7 +2,7 @@
 // sources/asset_yield_protocol.move
 // RWA Asset Yield Protocol - NOW PROPERLY COUPLED TO NFT OWNERSHIP
 // ===================================================================
-module aptos_rwa::asset_yield_protocol {
+module continuum::asset_yield_protocol {
     use std::signer;
     use std::error;
     use aptos_framework::event::{Self, EventHandle};
@@ -16,7 +16,7 @@ module aptos_rwa::asset_yield_protocol {
     // -------------------
 
     use aptos_std::table::{Self, Table};
-    use aptos_rwa::streaming_protocol;
+    use continuum::streaming_protocol;
 
     // Error codes
     const E_ASSET_NOT_REGISTERED: u64 = 10;

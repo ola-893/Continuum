@@ -1,13 +1,14 @@
 // ===================================================================
 // sources/rwa_hub.move
-// Integration Hub: Complete RWA Ecosystem
+// Integration Hub: Complete RWA Ecosystem with Auto Token Registration
 // ===================================================================
-module aptos_rwa::rwa_hub {
+module continuum::rwa_hub {
     use std::signer;
     use std::error;
-    use aptos_rwa::streaming_protocol;
-    use aptos_rwa::asset_yield_protocol;
-    use aptos_rwa::compliance_guard;
+    use continuum::streaming_protocol;
+    use continuum::asset_yield_protocol;
+    use continuum::compliance_guard;
+    use continuum::token_registry;
 
     // Error codes
     const E_NOT_AUTHORIZED: u64 = 100;
@@ -18,10 +19,12 @@ module aptos_rwa::rwa_hub {
         streaming_protocol::initialize<CoinType>(deployer);
         asset_yield_protocol::initialize<CoinType>(deployer);
         compliance_guard::initialize(deployer);
+        token_registry::initialize(deployer);
     }
 
-    /// Create a compliant RWA yield stream with full verification
+    /// Create a compliant RWA yield stream with full verification and auto-registration
     /// This is the main entry point for creating asset-backed yield streams
+    /// NOTE: stream_id must be provided by caller (get it from stream creation event or counter)
     public entry fun create_compliant_rwa_stream<CoinType>(
         issuer: &signer,
         stream_registry_addr: address,
@@ -31,6 +34,8 @@ module aptos_rwa::rwa_hub {
         total_yield: u64,
         duration: u64,
         asset_type: u8, // 1=Real Estate, 2=Securities, 3=Commodities, 4=Art
+        metadata_uri: vector<u8>, // NFT metadata URI for registry
+        expected_stream_id: u64, // Caller must predict/track stream_id
     ) {
         let issuer_addr = signer::address_of(issuer);
         
@@ -52,6 +57,25 @@ module aptos_rwa::rwa_hub {
             total_yield,
             duration,
         );
+
+        // Convert asset_type from compliance types (1-4) to registry types (0-based)
+        let registry_asset_type = if (asset_type == 1) {
+            0u8 // Real Estate
+        } else if (asset_type == 2) {
+            1u8 // Securities (mapped as Car for now)
+        } else if (asset_type == 3) {
+            2u8 // Commodities
+        } else {
+            0u8 // Default to Real Estate for Art/others
+        };
+
+        // Automatically register the token in the registry
+        token_registry::register_token(
+            token_obj_addr,
+            registry_asset_type,
+            expected_stream_id,
+            metadata_uri,
+        );
     }
 
     /// Simplified version for real estate (most common use case)
@@ -63,6 +87,8 @@ module aptos_rwa::rwa_hub {
         token_obj_addr: address,
         total_yield: u64,
         duration: u64,
+        metadata_uri: vector<u8>,
+        expected_stream_id: u64,
     ) {
         create_compliant_rwa_stream<CoinType>(
             issuer,
@@ -73,6 +99,60 @@ module aptos_rwa::rwa_hub {
             total_yield,
             duration,
             1, // ASSET_TYPE_REAL_ESTATE
+            metadata_uri,
+            expected_stream_id,
+        );
+    }
+
+    /// Create securities/bonds stream
+    public entry fun create_securities_stream<CoinType>(
+        issuer: &signer,
+        stream_registry_addr: address,
+        yield_registry_addr: address,
+        compliance_addr: address,
+        token_obj_addr: address,
+        total_yield: u64,
+        duration: u64,
+        metadata_uri: vector<u8>,
+        expected_stream_id: u64,
+    ) {
+        create_compliant_rwa_stream<CoinType>(
+            issuer,
+            stream_registry_addr,
+            yield_registry_addr,
+            compliance_addr,
+            token_obj_addr,
+            total_yield,
+            duration,
+            2, // ASSET_TYPE_SECURITIES
+            metadata_uri,
+            expected_stream_id,
+        );
+    }
+
+    /// Create commodities stream
+    public entry fun create_commodities_stream<CoinType>(
+        issuer: &signer,
+        stream_registry_addr: address,
+        yield_registry_addr: address,
+        compliance_addr: address,
+        token_obj_addr: address,
+        total_yield: u64,
+        duration: u64,
+        metadata_uri: vector<u8>,
+        expected_stream_id: u64,
+    ) {
+        create_compliant_rwa_stream<CoinType>(
+            issuer,
+            stream_registry_addr,
+            yield_registry_addr,
+            compliance_addr,
+            token_obj_addr,
+            total_yield,
+            duration,
+            3, // ASSET_TYPE_COMMODITIES
+            metadata_uri,
+            expected_stream_id,
         );
     }
 
@@ -206,6 +286,7 @@ module aptos_rwa::rwa_hub {
         streaming_protocol::initialize<CoinType>(admin);
         asset_yield_protocol::initialize<CoinType>(admin);
         compliance_guard::initialize(admin);
+        token_registry::initialize(admin);
 
         // Setup admin KYC
         compliance_guard::register_identity(
@@ -284,5 +365,44 @@ module aptos_rwa::rwa_hub {
         );
         
         (is_admin, has_kyc, can_trade_real_estate)
+    }
+
+    #[view]
+    /// Get all registered tokens from registry
+    public fun get_all_marketplace_tokens(): vector<token_registry::TokenIndexEntry> {
+        token_registry::get_all_tokens()
+    }
+
+    #[view]
+    /// Get paginated tokens for marketplace
+    public fun get_marketplace_tokens_paginated(
+        offset: u64,
+        limit: u64,
+    ): vector<token_registry::TokenIndexEntry> {
+        token_registry::get_all_tokens_paginated(offset, limit)
+    }
+
+    #[view]
+    /// Get tokens by asset type for filtered marketplace views
+    public fun get_tokens_by_asset_type(asset_type: u8): vector<token_registry::TokenIndexEntry> {
+        token_registry::get_tokens_by_type(asset_type)
+    }
+
+    #[view]
+    /// Get total token count for marketplace pagination
+    public fun get_total_token_count(): u64 {
+        token_registry::get_token_count()
+    }
+
+    #[view]
+    /// Get token details by address
+    public fun get_token_details(token_address: address): token_registry::TokenIndexEntry {
+        token_registry::get_token(token_address)
+    }
+
+    #[view]
+    /// Get token by stream ID (for yield lookup integration)
+    public fun get_token_by_stream(stream_id: u64): token_registry::TokenIndexEntry {
+        token_registry::get_token_by_stream_id(stream_id)
     }
 }

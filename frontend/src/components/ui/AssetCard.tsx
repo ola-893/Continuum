@@ -5,12 +5,16 @@ import { StreamVisualization } from './StreamVisualization';
 import { Badge } from './Badge';
 import type { StreamInfo } from '../../hooks/useStreamBalance';
 
-export interface AssetCardProps {
+export interface Asset {
     tokenAddress: string;
-    assetType: string;
-    title: string;
+    assetType?: string;
+    title?: string;
     imageUrl?: string;
     streamInfo: StreamInfo | null;
+}
+
+export interface AssetCardProps {
+    asset: Asset;
     className?: string;
 }
 
@@ -21,15 +25,16 @@ const assetTypeColors: Record<string, string> = {
     'Art': 'var(--color-info)',
 };
 
-export const AssetCard: React.FC<AssetCardProps> = ({
-    tokenAddress,
-    assetType,
-    title,
-    imageUrl,
-    streamInfo,
-    className = '',
-}) => {
+export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) => {
     const navigate = useNavigate();
+
+    const {
+        tokenAddress,
+        assetType = 'Real Estate',
+        title = `Asset ${tokenAddress?.slice(0, 6) || 'Unknown'}`,
+        imageUrl,
+        streamInfo,
+    } = asset || {};
 
     const handleClick = () => {
         navigate(`/asset/${tokenAddress}`);
@@ -66,7 +71,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({
                 {title}
             </h3>
             <p className="text-muted" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-lg)' }}>
-                {tokenAddress.slice(0, 10)}...{tokenAddress.slice(-8)}
+                {tokenAddress ? `${tokenAddress.slice(0, 10)}...${tokenAddress.slice(-8)}` : 'No address'}
             </p>
 
             {/* Live Balance - The "WOW" Moment */}

@@ -1,12 +1,13 @@
 [package]
-name = "aptos_rwa"
+name = "continuum"
 version = "1.0.0"
 authors = []
 
 [addresses]
-aptos_rwa = "_"
+continuum = "0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b"
 # Explicitly define the address for token objects to be safe (standard is 0x4)
 aptos_token_objects = "0x4"
+
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-framework.git"

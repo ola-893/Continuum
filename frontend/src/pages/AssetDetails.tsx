@@ -7,9 +7,9 @@ import { Badge } from '../components/ui/Badge';
 import { LiveBalance } from '../components/ui/LiveBalance';
 import { StreamVisualization } from '../components/ui/StreamVisualization';
 import { FlashAdvanceModal } from '../components/ui/FlashAdvanceModal';
-import { getAssetByAddress } from '../data/mockAssets';
 import { formatCurrency } from '../utils/formatting';
 import { useContinuum } from '../hooks/useContinuum';
+import { useAssetStream } from '../hooks/useRealAssetStream';
 
 export const AssetDetails: React.FC = () => {
     const { tokenId } = useParams<{ tokenId: string }>();
@@ -19,13 +19,24 @@ export const AssetDetails: React.FC = () => {
     const [isRepaying, setIsRepaying] = useState(false);
     const [txStatus, setTxStatus] = useState<string>('');
 
-    const asset = tokenId ? getAssetByAddress(tokenId) : null;
+    // Fetch real asset data from blockchain
+    const { streamInfo, loading: loadingAsset, error } = useAssetStream(tokenId || '');
 
-    if (!asset) {
+    if (loadingAsset) {
         return (
             <div className="container" style={{ paddingTop: 'var(--spacing-2xl)' }}>
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-2xl)' }}>
-                    <p>Asset not found</p>
+                    <p>Loading asset data from blockchain...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!streamInfo || error) {
+        return (
+            <div className="container" style={{ paddingTop: 'var(--spacing-2xl)' }}>
+                <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-2xl)' }}>
+                    <p>{error || 'Asset not found or not registered on blockchain'}</p>
                     <Button variant="ghost" onClick={() => navigate('/dashboard')} style={{ marginTop: 'var(--spacing-md)' }}>
                         Back to Dashboard
                     </Button>
@@ -33,6 +44,29 @@ export const AssetDetails: React.FC = () => {
             </div>
         );
     }
+
+    // Transform blockchain data to asset object format
+    const asset = {
+        tokenAddress: tokenId || '',
+        assetType: 'Real Estate',
+        title: `Asset ${tokenId?.slice(0, 6)}...${tokenId?.slice(-4)}`,
+        imageUrl: undefined,
+        streamInfo: {
+            startTime: streamInfo.startTime,
+            flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
+            amountWithdrawn: streamInfo.amountWithdrawn,
+            totalAmount: streamInfo.totalAmount,
+            stopTime: streamInfo.stopTime,
+            isActive: streamInfo.status === 0,
+        },
+        metadata: {
+            'Stream ID': streamInfo.startTime.toString(),
+            'Start Time': new Date(streamInfo.startTime * 1000).toLocaleString(),
+            'Flow Rate': `${(streamInfo.flowRate / 100_000_000).toFixed(8)} APT/sec`,
+            'Total Amount': `${(streamInfo.totalAmount / 100_000_000).toFixed(2)} APT`,
+            'Status': streamInfo.status === 0 ? 'Active' : 'Inactive',
+        },
+    };
 
     const currentStreamInfo = isRepaying
         ? { ...asset.streamInfo, isActive: false }

@@ -133,7 +133,29 @@ export const AssetFactory: React.FC = () => {
 
             await createYieldStream(tokenAddress, yieldInOctas, durationInSeconds);
 
-            setTxStatus('✅ Success! NFT minted and stream created!');
+            setTxStatus('✅ Stream created!\nStep 3/3: Registering in global registry...');
+
+            // STEP 3: Register token in global registry for discovery
+            try {
+                const registerTx = {
+                    data: {
+                        function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::token_registry::register_token`,
+                        functionArguments: [
+                            tokenAddress,
+                            assetType,
+                            btoa(tokenUri), // Base64 encode the metadata URI
+                        ],
+                    },
+                };
+
+                await signAndSubmitTransaction(registerTx);
+                console.log('✅ Token registered in global registry');
+            } catch (registryError) {
+                console.warn('Registry registration failed (non-critical):', registryError);
+                // Don't fail the whole operation if registry fails
+            }
+
+            setTxStatus('✅ Success! NFT minted, stream created, and registered!');
 
             // Reset forms
             setMintData({
