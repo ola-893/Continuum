@@ -2,8 +2,6 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
 import { PetraWallet } from 'petra-plugin-wallet-adapter';
-import { MartianWallet } from '@martianwallet/aptos-wallet-adapter';
-import { PontemWallet } from '@pontem/wallet-adapter-plugin';
 import { Navbar } from './components/ui/Navbar';
 import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
@@ -11,7 +9,7 @@ import { AssetDetails } from './pages/AssetDetails';
 import { Admin } from './pages/Admin';
 import './index.css';
 
-const wallets = [new PetraWallet(), new MartianWallet(), new PontemWallet()];
+const wallets = [new PetraWallet()];
 
 const App: React.FC = () => {
     return (
