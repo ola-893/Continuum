@@ -244,7 +244,12 @@ export const AssetFactory: React.FC = () => {
                                 <p style={{ marginBottom: 'var(--spacing-sm)', color: 'var(--color-warning)' }}>
                                     Collection "YieldStream RWA" not found
                                 </p>
-                                <Button variant="secondary" onClick={handleCreateCollection} disabled={loading}>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleCreateCollection}
+                                    disabled={loading}
+                                >
                                     Create Collection First
                                 </Button>
                             </div>

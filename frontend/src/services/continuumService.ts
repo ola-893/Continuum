@@ -337,7 +337,9 @@ export class ContinuumService {
     static createRealEstateStream(
         tokenAddress: string,
         totalYield: number,
-        durationInSeconds: number
+        durationInSeconds: number,
+        metadataUri: string = "",
+        expectedStreamId: number = 0
     ): InputTransactionData {
         return {
             data: {
@@ -353,6 +355,8 @@ export class ContinuumService {
                     tokenAddress,
                     totalYield,
                     durationInSeconds,
+                    metadataUri,           // NEW: metadata_uri
+                    expectedStreamId,      // NEW: expected_stream_id
                 ],
             },
         };
