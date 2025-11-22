@@ -441,9 +441,26 @@ export class ContinuumService {
     }
 
     /**
-     * Register KYC for a user
+     * Simulate KYC verification (Testnet only)
      */
-    static registerKYC(
+    static simulateKYC(): InputTransactionData {
+        return {
+            data: {
+                function: buildFunctionId(
+                    CONTRACT_CONFIG.MODULES.COMPLIANCE_GUARD,
+                    "simulate_kyc"
+                ),
+                functionArguments: [
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
+                ],
+            },
+        };
+    }
+
+    /**
+     * Register identity (Admin only)
+     */
+    static registerIdentity(
         userAddress: string,
         jurisdiction: string = "US",
         verificationLevel: number = 1,
@@ -459,7 +476,7 @@ export class ContinuumService {
                     CONTRACT_CONFIG.MODULE_ADDRESS,
                     userAddress,
                     true, // is_kyc_verified
-                    jurisdiction,
+                    Array.from(new TextEncoder().encode(jurisdiction)),
                     verificationLevel,
                     expiryTime,
                 ],

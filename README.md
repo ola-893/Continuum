@@ -73,6 +73,27 @@ Visit `http://localhost:5173`
 
 ---
 
+## 🌐 Deployed Contracts (Aptos Testnet)
+
+**Network**: Aptos Testnet  
+**Module Address**: `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b`
+
+### Live Contracts
+
+| Module | Address | Explorer |
+|--------|---------|----------|
+| **RWA Hub** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::rwa_hub` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/rwa_hub?network=testnet) |
+| **Asset Yield Protocol** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::asset_yield_protocol` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/asset_yield_protocol?network=testnet) |
+| **Streaming Protocol** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::streaming_protocol` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/streaming_protocol?network=testnet) |
+| **Compliance Guard** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::compliance_guard` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/compliance_guard?network=testnet) |
+| **Token Registry** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::token_registry` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/token_registry?network=testnet) |
+
+### Test with Faucet
+
+Get testnet APT tokens: [Aptos Faucet](https://aptoslabs.com/testnet-faucet)
+
+---
+
 ## 💡 Usage
 
 ### For Users
