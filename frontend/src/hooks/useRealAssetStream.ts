@@ -19,7 +19,6 @@ export interface RealStreamInfo {
 export function useAssetStream(tokenAddress: string | null) {
     const [streamId, setStreamId] = useState<number | null>(null);
     const [streamInfo, setStreamInfo] = useState<RealStreamInfo | null>(null);
-    const [claimableBalance, setClaimableBalance] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -68,10 +67,6 @@ export function useAssetStream(tokenAddress: string | null) {
                     if (info) {
                         setStreamInfo({ ...info, assetType });
                     }
-
-                    // Get current claimable balance
-                    const balance = await ContinuumService.getClaimableBalance(id);
-                    setClaimableBalance(balance);
                 }
             } catch (err) {
                 console.error("Error loading stream data:", err);
@@ -82,26 +77,11 @@ export function useAssetStream(tokenAddress: string | null) {
         };
 
         loadStreamData();
-
-        // Update claimable balance every 5 seconds for real-time effect
-        const interval = setInterval(async () => {
-            if (streamId !== null) {
-                try {
-                    const balance = await ContinuumService.getClaimableBalance(streamId);
-                    setClaimableBalance(balance);
-                } catch (err) {
-                    console.error("Error updating balance:", err);
-                }
-            }
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, [tokenAddress, streamId]);
+    }, [tokenAddress]);
 
     return {
         streamId,
         streamInfo,
-        claimableBalance,
         loading,
         error,
     };

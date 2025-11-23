@@ -1,7 +1,14 @@
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import { CONTRACT_CONFIG } from "../config/contracts";
 
-const config = new AptosConfig({ network: Network.TESTNET });
+const config = new AptosConfig({
+    network: Network.TESTNET,
+    clientConfig: {
+        HEADERS: {
+            "Authorization": "Bearer AG-74SF1GVWQ8QFNVQAFRMTTNCJYDPCSBW52"
+        }
+    }
+});
 export const aptosClient = new Aptos(config);
 
 /**

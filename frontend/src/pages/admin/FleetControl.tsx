@@ -7,6 +7,7 @@ import { AssetLocation } from '../../types/continuum';
 import { formatCurrency } from '../../utils/formatting';
 import { ContinuumService } from '../../services/continuumService';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { calculateTotalStreamed } from '../../utils/streamCalculations';
 
 export const FleetControl: React.FC = () => {
     const { signAndSubmitTransaction } = useWallet();
@@ -51,6 +52,16 @@ export const FleetControl: React.FC = () => {
                             return typeMap[type] || 'machinery';
                         };
 
+                        // Transform streamInfo to match expected format for calculations
+                        const streamInfoForCalc = streamInfo ? {
+                            startTime: streamInfo.startTime,
+                            flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
+                            amountWithdrawn: streamInfo.amountWithdrawn / 100_000_000, // Convert to APT
+                            totalAmount: streamInfo.totalAmount / 100_000_000, // Convert to APT
+                            stopTime: streamInfo.stopTime,
+                            isActive: streamInfo.status === 0,
+                        } : null;
+
                         return {
                             id: `TOKEN-${index + 1}`,
                             type: getAssetTypeOrDefault(assetType),
@@ -63,9 +74,9 @@ export const FleetControl: React.FC = () => {
                                 city: 'San Francisco Bay Area',
                             },
                             streamId: streamId || undefined,
-                            currentValue: streamInfo ? Number(streamInfo.totalAmount) : 0,
-                            yieldRate: streamInfo ? Number(streamInfo.flowRate) : 0,
-                            totalEarned: streamInfo ? Number(streamInfo.amountWithdrawn) : 0,
+                            currentValue: streamInfo ? Number(streamInfo.totalAmount) / 100_000_000 : 0,
+                            yieldRate: streamInfo ? Number(streamInfo.flowRate) / 100_000_000 : 0,
+                            totalEarned: streamInfo ? calculateTotalStreamed(streamInfoForCalc) : 0,
                             lastUpdate: Date.now(),
                         };
                     })

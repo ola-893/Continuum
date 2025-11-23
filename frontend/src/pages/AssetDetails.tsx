@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Zap, DollarSign } from 'lucide-react';
@@ -10,6 +10,8 @@ import { FlashAdvanceModal } from '../components/ui/FlashAdvanceModal';
 import { formatCurrency } from '../utils/formatting';
 import { useContinuum } from '../hooks/useContinuum';
 import { useAssetStream } from '../hooks/useRealAssetStream';
+import { calculateTotalStreamed } from '../utils/streamCalculations';
+import { ContinuumService } from '../services/continuumService';
 
 export const AssetDetails: React.FC = () => {
     const { tokenId } = useParams<{ tokenId: string }>();
@@ -20,9 +22,29 @@ export const AssetDetails: React.FC = () => {
     const [txStatus, setTxStatus] = useState('');
     const [isClaiming, setIsClaiming] = useState(false);
     const [isFlashing, setIsFlashing] = useState(false);
+    const [streamStatus, setStreamStatus] = useState<{ claimable: number, escrowBalance: number, remaining: number, isFrozen: boolean } | null>(null);
 
     // Fetch real asset data from blockchain
     const { streamId, streamInfo, loading: loadingAsset, error } = useAssetStream(tokenId || '');
+
+    // Fetch stream status from blockchain (must be before early returns!)
+    useEffect(() => {
+        const fetchStreamStatus = async () => {
+            if (streamId) {
+                try {
+                    const status = await ContinuumService.getStreamStatus(streamId);
+                    setStreamStatus(status);
+                } catch (error) {
+                    console.error('Error fetching stream status:', error);
+                }
+            }
+        };
+        fetchStreamStatus();
+
+        // Refresh every 10 seconds for real-time updates
+        const interval = setInterval(fetchStreamStatus, 10000);
+        return () => clearInterval(interval);
+    }, [streamId]);
 
     if (loadingAsset) {
         return (
@@ -66,8 +88,8 @@ export const AssetDetails: React.FC = () => {
         streamInfo: {
             startTime: streamInfo.startTime,
             flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
-            amountWithdrawn: streamInfo.amountWithdrawn,
-            totalAmount: streamInfo.totalAmount,
+            amountWithdrawn: streamInfo.amountWithdrawn / 100_000_000, // Convert to APT
+            totalAmount: streamInfo.totalAmount / 100_000_000, // Convert to APT
             stopTime: streamInfo.stopTime,
             isActive: streamInfo.status === 0,
         },
@@ -229,9 +251,34 @@ export const AssetDetails: React.FC = () => {
                                 <StreamVisualization streamInfo={currentStreamInfo} />
 
                                 <div className="flex justify-between">
+                                    <span style={{ color: 'var(--color-text-secondary)' }}>Total Streamed</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>
+                                        {formatCurrency(calculateTotalStreamed(asset.streamInfo), 2)}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between">
                                     <span style={{ color: 'var(--color-text-secondary)' }}>Amount Withdrawn</span>
                                     <span>{formatCurrency(asset.streamInfo.amountWithdrawn, 2)}</span>
                                 </div>
+
+                                {streamStatus && (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span style={{ color: 'var(--color-text-secondary)' }}>Claimable (Live)</span>
+                                            <span style={{ fontWeight: 600, color: 'var(--color-success)' }}>
+                                                {formatCurrency(streamStatus.claimable / 100_000_000, 2)}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex justify-between">
+                                            <span style={{ color: 'var(--color-text-secondary)' }}>Remaining to Vest</span>
+                                            <span style={{ color: 'var(--color-text-secondary)' }}>
+                                                {formatCurrency(streamStatus.remaining / 100_000_000, 2)}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 

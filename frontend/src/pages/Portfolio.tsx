@@ -1,43 +1,153 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { AssetCard } from '../components/ui/AssetCard';
-import { useAssetList } from '../hooks/useAssetList';
 import { ContinuumService } from '../services/continuumService';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
 import { RefreshCw } from 'lucide-react';
+import { generateMockAssetData, getMockImage } from '../utils/mockDataGenerator';
+
+interface PortfolioAsset {
+    tokenAddress: string;
+    streamInfo: {
+        startTime: number;
+        flowRate: number;
+        amountWithdrawn: number;
+        totalAmount: number;
+        stopTime: number;
+        isActive: boolean;
+    };
+    assetType: string;
+    title: string;
+    imageUrl: string;
+}
 
 export const Portfolio: React.FC = () => {
     const { connected, account } = useWallet();
-    const [tokenAddresses, setTokenAddresses] = useState<string[]>([]);
+    const [assets, setAssets] = useState<PortfolioAsset[]>([]);
     const [loading, setLoading] = useState(false);
     const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
 
-    const { assets: userStreams } = useAssetList(tokenAddresses);
-
-    // Auto-detect owned RWA NFTs when wallet connects
+    /**
+     * Portfolio Strategy: Show assets where user is the YIELD RECIPIENT
+     * In YieldStream, "owning" an asset means receiving its yield stream,
+     * not necessarily holding the NFT object.
+     */
     useEffect(() => {
-        const fetchOwnedTokens = async () => {
+        const loadPortfolio = async () => {
             if (!connected || !account) {
-                setTokenAddresses([]);
+                setAssets([]);
                 return;
             }
 
             setLoading(true);
             try {
-                const ownedTokens = await ContinuumService.getOwnedRWATokens(account.address);
-                console.log('Auto-detected owned RWA tokens:', ownedTokens);
-                setTokenAddresses(ownedTokens);
+                console.log(`[Portfolio] Loading portfolio for: ${account.address}`);
+
+                // Get ALL registered tokens from the marketplace
+                const allTokens = await ContinuumService.getAllRegisteredTokens();
+                console.log(`[Portfolio] Found ${allTokens.length} registered tokens`);
+
+                // Process all tokens in parallel and filter for owned assets
+                const allAssetsData = await Promise.all(
+                    allTokens.map(async (token: any) => {
+                        try {
+                            const tokenAddress = token.token_address || token.tokenAddress;
+                            const assetTypeNumber = token.asset_type !== undefined
+                                ? Number(token.asset_type)
+                                : (token.assetType !== undefined ? Number(token.assetType) : 0);
+                            const streamId = Number(token.stream_id || token.streamId || 0);
+
+                            // Skip tokens without a stream
+                            if (streamId === 0) {
+                                console.log(`[Portfolio] Skipping ${tokenAddress} - no stream`);
+                                return null;
+                            }
+
+                            // Get stream info to check recipient
+                            const streamInfo = await ContinuumService.getStreamInfo(streamId);
+                            if (!streamInfo) {
+                                console.log(`[Portfolio] Skipping ${tokenAddress} - no stream info`);
+                                return null;
+                            }
+
+                            // Check if current user is the yield recipient
+                            const isRecipient = streamInfo.recipient.toLowerCase() === account.address.toLowerCase();
+                            if (!isRecipient) {
+                                console.log(`[Portfolio] Skipping ${tokenAddress} - not recipient (recipient: ${streamInfo.recipient})`);
+                                return null;
+                            }
+
+                            console.log(`[Portfolio] ✓ Found owned asset: ${tokenAddress}`);
+
+                            // Get asset type name
+                            let assetType = 'Real Estate';
+                            switch (assetTypeNumber) {
+                                case 0: assetType = 'Real Estate'; break;
+                                case 1: assetType = 'Vehicle'; break;
+                                case 2: assetType = 'Commodities'; break;
+                            }
+
+                            // Fetch NFT metadata
+                            let assetName = '';
+                            let assetImage = '';
+                            try {
+                                const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
+                                assetName = nftMetadata.name || '';
+                            } catch (error) {
+                                // Silent fail - will use mock data
+                            }
+
+                            // Use smart mock data if needed
+                            if (!assetName) {
+                                const mockData = generateMockAssetData(assetTypeNumber, tokenAddress, 'portfolio');
+                                assetName = mockData.name;
+                                assetImage = mockData.image;
+                            } else {
+                                assetImage = getMockImage(assetTypeNumber, tokenAddress);
+                            }
+
+                            // Format stream info
+                            const formattedStreamInfo = {
+                                startTime: streamInfo.startTime,
+                                flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
+                                amountWithdrawn: streamInfo.amountWithdrawn,
+                                totalAmount: streamInfo.totalAmount,
+                                stopTime: streamInfo.stopTime,
+                                isActive: streamInfo.status === 0,
+                            };
+
+                            return {
+                                tokenAddress,
+                                streamInfo: formattedStreamInfo,
+                                assetType,
+                                title: assetName,
+                                imageUrl: assetImage,
+                            };
+                        } catch (error) {
+                            console.warn(`[Portfolio] Error processing token:`, error);
+                            return null;
+                        }
+                    })
+                );
+
+                // Filter out nulls (non-owned assets)
+                const ownedAssets = allAssetsData.filter((asset): asset is PortfolioAsset => asset !== null);
+
+                console.log(`[Portfolio] Total owned assets: ${ownedAssets.length}`);
+                setAssets(ownedAssets);
             } catch (error) {
-                console.error('Error fetching owned tokens:', error);
+                console.error('[Portfolio] Error loading portfolio:', error);
+                setAssets([]);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchOwnedTokens();
+        loadPortfolio();
     }, [connected, account, lastRefresh]);
 
     const handleRefresh = () => {
+        console.log('[Portfolio] Manual refresh triggered');
         setLastRefresh(Date.now());
     };
 
@@ -45,10 +155,10 @@ export const Portfolio: React.FC = () => {
         return (
             <div style={{ padding: 'var(--spacing-2xl)' }}>
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)' }}>Lock:</div>
+                    <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)' }}>🔒</div>
                     <h2 style={{ marginBottom: 'var(--spacing-md)' }}>Connect Your Wallet</h2>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
-                        Connect your wallet to view your RWA portfolio
+                        Connect your wallet to view your yield-bearing assets
                     </p>
                 </div>
             </div>
@@ -56,41 +166,27 @@ export const Portfolio: React.FC = () => {
     }
 
     if (loading) {
-        return <LoadingScreen message="Loading your RWA portfolio..." />;
+        return <LoadingScreen message="Loading your yield portfolio..." />;
     }
 
     return (
         <div style={{ padding: 'var(--spacing-2xl)' }}>
-            {/* Header with Refresh */}
+            {/* Header */}
             <div style={{ marginBottom: 'var(--spacing-2xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 style={{ marginBottom: 'var(--spacing-xs)' }}>My Portfolio</h1>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                        {tokenAddresses.length} RWA NFT{tokenAddresses.length !== 1 ? 's' : ''} detected
+                        {assets.length} yield-bearing asset{assets.length !== 1 ? 's' : ''}
                     </p>
                 </div>
                 <button
                     onClick={handleRefresh}
+                    className="btn-secondary"
                     style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: 'var(--spacing-sm)',
                         padding: 'var(--spacing-sm) var(--spacing-md)',
-                        background: 'rgba(0, 217, 255, 0.1)',
-                        border: '1px solid rgba(0, 217, 255, 0.3)',
-                        borderRadius: 'var(--border-radius-md)',
-                        color: 'var(--color-primary)',
-                        fontSize: 'var(--font-size-sm)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.2)';
-                        e.currentTarget.style.borderColor = 'var(--color-primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
                     }}
                 >
                     <RefreshCw size={16} />
@@ -99,36 +195,29 @@ export const Portfolio: React.FC = () => {
             </div>
 
             {/* Assets Grid */}
-            {tokenAddresses.length === 0 ? (
+            {assets.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>Bank:</div>
-                    <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No RWA NFTs Found</h3>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📊</div>
+                    <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No Yield Streams Found</h3>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
-                        You don't own any RWA NFTs yet. Browse the marketplace to discover yield-bearing assets.
+                        You don't have any yield-bearing assets yet. Browse the marketplace to find assets that generate income.
                     </p>
                     <a
                         href="/dashboard"
+                        className="btn-primary"
                         style={{
                             display: 'inline-block',
                             padding: 'var(--spacing-sm) var(--spacing-lg)',
-                            background: 'var(--color-primary)',
-                            color: 'white',
-                            borderRadius: 'var(--border-radius-md)',
                             textDecoration: 'none',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: 600,
-                            transition: 'opacity 0.2s ease',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                     >
-                        Browse Marketplace
+                        Explore Assets
                     </a>
                 </div>
             ) : (
                 <div className="grid grid-cols-3 gap-xl">
-                    {userStreams.map((stream, index) => (
-                        <AssetCard key={`portfolio-${index}`} asset={stream} />
+                    {assets.map((asset) => (
+                        <AssetCard key={`portfolio-${asset.tokenAddress}`} asset={asset} />
                     ))}
                 </div>
             )}

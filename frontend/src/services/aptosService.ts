@@ -5,6 +5,11 @@ import { AccountInfo } from "@aptos-labs/wallet-adapter-react";
 // Initialize Aptos client
 const aptosConfig = new AptosConfig({
     network: NETWORK as Network,
+    clientConfig: {
+        HEADERS: {
+            "Authorization": "Bearer AG-74SF1GVWQ8QFNVQAFRMTTNCJYDPCSBW52"
+        }
+    }
 });
 export const aptos = new Aptos(aptosConfig);
 
