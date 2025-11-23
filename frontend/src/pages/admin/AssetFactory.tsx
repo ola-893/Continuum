@@ -126,37 +126,19 @@ export const AssetFactory: React.FC = () => {
                 throw new Error('Failed to extract token address from mint transaction. Check console for details.');
             }
 
-            setTxStatus(`✅ NFT minted! Address: ${tokenAddress.slice(0, 10)}...\nStep 2/2: Creating yield stream...`);
+            setTxStatus(`✅ NFT minted! Address: ${tokenAddress.slice(0, 10)}...\\nStep 2/2: Creating yield stream...`);
 
             // STEP 2: Create yield stream with the minted NFT address
+            // NOTE: This calls rwa_hub::create_real_estate_stream which automatically:
+            // 1. Creates the stream via streaming_protocol
+            // 2. Registers the asset in asset_yield_protocol
+            // 3. Registers the token in token_registry (auto-handled by Hub)
             const yieldInOctas = Math.floor(parseFloat(streamData.totalYield) * 100_000_000);
             const durationInSeconds = parseInt(streamData.duration) * 86400;
 
             await createYieldStream(tokenAddress, yieldInOctas, durationInSeconds);
 
-            setTxStatus('✅ Stream created!\nStep 3/3: Registering in global registry...');
-
-            // STEP 3: Register token in global registry for discovery
-            try {
-                const registerTx = {
-                    data: {
-                        function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::token_registry::register_token`,
-                        functionArguments: [
-                            tokenAddress,
-                            assetType,
-                            btoa(tokenUri), // Base64 encode the metadata URI
-                        ],
-                    },
-                };
-
-                await signAndSubmitTransaction(registerTx);
-                console.log('✅ Token registered in global registry');
-            } catch (registryError) {
-                console.warn('Registry registration failed (non-critical):', registryError);
-                // Don't fail the whole operation if registry fails
-            }
-
-            setTxStatus('✅ Success! NFT minted, stream created, and registered!');
+            setTxStatus('✅ Success! NFT minted, stream created, and auto-registered in global registry!');
 
             // Reset forms
             setMintData({
