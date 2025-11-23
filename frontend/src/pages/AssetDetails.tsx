@@ -17,14 +17,12 @@ export const AssetDetails: React.FC = () => {
     const { claimYield, flashAdvance, loading } = useContinuum();
     const [showFlashModal, setShowFlashModal] = useState(false);
     const [isRepaying, setIsRepaying] = useState(false);
-    const [claimAmount, setClaimAmount] = useState('');
-    const [flashAmount, setFlashAmount] = useState('');
     const [txStatus, setTxStatus] = useState('');
     const [isClaiming, setIsClaiming] = useState(false);
     const [isFlashing, setIsFlashing] = useState(false);
 
     // Fetch real asset data from blockchain
-    const { streamInfo, loading: loadingAsset, error } = useAssetStream(tokenId || '');
+    const { streamId, streamInfo, loading: loadingAsset, error } = useAssetStream(tokenId || '');
 
     if (loadingAsset) {
         return (
@@ -55,6 +53,7 @@ export const AssetDetails: React.FC = () => {
         assetType: 'Real Estate',
         title: `Asset ${tokenId?.slice(0, 6)}...${tokenId?.slice(-4)}`,
         imageUrl: undefined,
+        streamId: streamId || undefined, // Add streamId for flash advance balance checking
         streamInfo: {
             startTime: streamInfo.startTime,
             flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
@@ -78,34 +77,21 @@ export const AssetDetails: React.FC = () => {
 
     // Handle claim yield transaction
     const handleClaimYield = async () => {
-        // Assuming 'account' and 'tokenAddress' are available in the context or defined elsewhere
-        // For this snippet, we'll use asset.tokenAddress as tokenAddress
         const tokenAddress = asset.tokenAddress;
-        if (!tokenAddress) return; // Removed `!account` as it's not defined in the provided context
+        if (!tokenAddress) return;
 
         try {
             setIsClaiming(true);
             setTxStatus('Preparing claim transaction...');
 
-            // Assuming claimAmount is set via an input field, for now, let's use a placeholder or derive it
-            // If claimAmount is meant to be dynamic, an input field would be needed.
-            // For now, let's assume a fixed amount or that claimAmount state is managed elsewhere.
-            // Since the original `claimYield` didn't take an amount, this part might need adjustment based on actual `claimYield` signature.
-            // For the purpose of this edit, I'll use a placeholder if `claimAmount` is empty.
-            const amountToClaim = claimAmount ? parseFloat(claimAmount) : 0; // Placeholder
-            const claimAmountOctas = Math.floor(amountToClaim * 100_000_000);
-
             setTxStatus('Please approve transaction in your wallet...');
-            // Assuming ContinuumService and signAndSubmitTransaction are available
-            // await ContinuumService.claimYield(tokenAddress, claimAmountOctas, signAndSubmitTransaction);
-            await claimYield(tokenAddress); // Reverting to original `claimYield` call as `ContinuumService` is not defined and `claimYield` doesn't take amount.
+            await claimYield(tokenAddress);
 
-            setTxStatus(`Successfully claimed yield!`); // Adjusted message as amount is not passed to original claimYield
+            setTxStatus('Successfully claimed all available yield!');
             setTimeout(() => {
                 setTxStatus('');
                 setIsClaiming(false);
             }, 3000);
-            setClaimAmount('');
         } catch (error: any) {
             console.error('Claim failed:', error);
             setTxStatus(`Claim failed: ${error?.message || 'Please try again'}`);
@@ -118,33 +104,25 @@ export const AssetDetails: React.FC = () => {
 
     // Handle flash advance transaction
     const handleFlashAdvance = async (amount: number) => {
-        // Assuming 'account' and 'tokenAddress' are available in the context or defined elsewhere
         const tokenAddress = asset.tokenAddress;
-        if (!tokenAddress) return; // Removed `!account` as it's not defined in the provided context
+        if (!tokenAddress) return;
 
         try {
             setIsFlashing(true);
             setTxStatus('Preparing flash advance...');
 
-            // The `amount` parameter is already passed to this function, so `flashAmount` state might be redundant here
-            // or `handleFlashAdvance` should be called without an argument and use `flashAmount` state.
-            // Sticking to the provided diff, which uses `flashAmount` state.
-            const amountToFlash = flashAmount ? parseFloat(flashAmount) : amount; // Use `amount` if `flashAmount` is empty
-            const flashAmountOctas = Math.floor(amountToFlash * 100_000_000);
+            const flashAmountOctas = Math.floor(amount * 100_000_000);
 
             setTxStatus('Please approve flash advance in your wallet...');
-            // Assuming ContinuumService and signAndSubmitTransaction are available
-            // await ContinuumService.flashAdvance(tokenAddress, flashAmountOctas, signAndSubmitTransaction);
-            await flashAdvance(tokenAddress, flashAmountOctas); // Reverting to original `flashAdvance` call as `ContinuumService` is not defined.
+            await flashAdvance(tokenAddress, flashAmountOctas);
 
-            setTxStatus(`Flash advance of ${amountToFlash} APT successful! Remember to repay.`);
+            setTxStatus(`Flash advance of ${amount} APT successful! Remember to repay.`);
             setTimeout(() => {
                 setTxStatus('');
                 setIsFlashing(false);
             }, 3000);
-            setFlashAmount('');
-            setShowFlashModal(false); // Keep original behavior of closing modal
-            setIsRepaying(true); // Keep original behavior of setting repaying state
+            setShowFlashModal(false);
+            setIsRepaying(true);
         } catch (error: any) {
             console.error('Flash advance failed:', error);
             setTxStatus(`Flash advance failed: ${error?.message || 'Please try again'}`);
@@ -268,8 +246,8 @@ export const AssetDetails: React.FC = () => {
                                 variant="secondary"
                                 leftIcon={<DollarSign size={18} />}
                                 onClick={handleClaimYield}
-                                disabled={isRepaying || loading}
-                                isLoading={loading && txStatus.includes('Claiming')}
+                                disabled={isRepaying || loading || isClaiming}
+                                isLoading={isClaiming}
                                 style={{ flex: 1 }}
                             >
                                 Claim Yield
@@ -278,7 +256,8 @@ export const AssetDetails: React.FC = () => {
                                 variant="primary"
                                 leftIcon={<Zap size={18} />}
                                 onClick={() => setShowFlashModal(true)}
-                                disabled={isRepaying || loading}
+                                disabled={isRepaying || loading || isFlashing}
+                                isLoading={isFlashing}
                                 style={{ flex: 1 }}
                             >
                                 Flash Advance

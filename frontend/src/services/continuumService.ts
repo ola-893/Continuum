@@ -1,6 +1,12 @@
 import { InputTransactionData } from "@aptos-labs/wallet-adapter-react";
 import { aptosClient, buildFunctionId } from "./aptosClient";
 import { CONTRACT_CONFIG } from "../config/contracts";
+import {
+    TokenIndexEntry,
+    StreamInfo,
+    RentalDetails,
+    ComplianceStatus
+} from "../types/continuum";
 
 /**
  * Service layer for interacting with YieldStream smart contracts
@@ -42,7 +48,7 @@ export class ContinuumService {
     /**
      * Get user's compliance status
      */
-    static async getUserComplianceStatus(userAddress: string) {
+    static async getUserComplianceStatus(userAddress: string): Promise<ComplianceStatus> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -76,7 +82,7 @@ export class ContinuumService {
      * Get all registered tokens from the global registry
      * Uses rwa_hub wrapper for better compatibility
      */
-    static async getAllRegisteredTokens(): Promise<any[]> {
+    static async getAllRegisteredTokens(): Promise<TokenIndexEntry[]> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -84,7 +90,7 @@ export class ContinuumService {
                     functionArguments: [],
                 },
             });
-            return result[0] as any[] || [];
+            return result[0] as TokenIndexEntry[] || [];
         } catch (error) {
             console.error("Error fetching all registered tokens:", error);
             return [];
@@ -100,8 +106,8 @@ export class ContinuumService {
             // Get all registered RWA tokens first
             const registeredTokens = await this.getAllRegisteredTokens();
             const registeredAddresses = new Set(
-                registeredTokens.map((token: any) =>
-                    token.token_address || token.tokenAddress
+                registeredTokens.map((token) =>
+                    token.token_address
                 )
             );
 
@@ -118,7 +124,6 @@ export class ContinuumService {
                 })
                 .map((asset: any) => asset.token_data_id || asset.current_token_data?.token_data_id);
 
-            console.log('Owned RWA tokens:', ownedRWATokens);
             return ownedRWATokens;
         } catch (error) {
             console.error("Error fetching owned RWA tokens:", error);
@@ -128,7 +133,7 @@ export class ContinuumService {
     /**
      * Get paginated tokens for marketplace
      */
-    static async getTokensPaginated(offset: number, limit: number): Promise<any[]> {
+    static async getTokensPaginated(offset: number, limit: number): Promise<TokenIndexEntry[]> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -136,7 +141,7 @@ export class ContinuumService {
                     functionArguments: [offset.toString(), limit.toString()],
                 },
             });
-            return result[0] as any[] || [];
+            return result[0] as TokenIndexEntry[] || [];
         } catch (error) {
             console.error("Error fetching paginated tokens:", error);
             return [];
@@ -146,7 +151,7 @@ export class ContinuumService {
     /**
      * Get tokens by asset type
      */
-    static async getTokensByType(assetType: number): Promise<any[]> {
+    static async getTokensByType(assetType: number): Promise<TokenIndexEntry[]> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -154,7 +159,7 @@ export class ContinuumService {
                     functionArguments: [assetType],
                 },
             });
-            return result[0] as any[] || [];
+            return result[0] as TokenIndexEntry[] || [];
         } catch (error) {
             console.error("Error fetching tokens by type:", error);
             return [];
@@ -164,7 +169,7 @@ export class ContinuumService {
     /**
      * Get token details from registry
      */
-    static async getTokenDetailsFromRegistry(tokenAddress: string) {
+    static async getTokenDetailsFromRegistry(tokenAddress: string): Promise<TokenIndexEntry> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -175,7 +180,7 @@ export class ContinuumService {
                     functionArguments: [tokenAddress],
                 },
             });
-            return result[0];
+            return result[0] as TokenIndexEntry;
         } catch (error) {
             console.error('Failed to get token details:', error);
             throw error;
@@ -235,7 +240,7 @@ export class ContinuumService {
      * Get detailed rental information
      * Returns: { tenant, landlord, timeRemaining, totalPaidSoFar, isActive }
      */
-    static async getRentalDetails(streamId: number): Promise<any> {
+    static async getRentalDetails(streamId: number): Promise<RentalDetails | null> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -277,30 +282,9 @@ export class ContinuumService {
     }
 
     /**
-     * Get all registered tokens from the registry
-     */
-    static async getAllRegisteredTokens() {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.TOKEN_REGISTRY,
-                        "get_all_tokens"
-                    ),
-                    functionArguments: [],
-                },
-            });
-            return result[0] as any[];
-        } catch (error) {
-            console.error('Error fetching all registered tokens:', error);
-            return [];
-        }
-    }
-
-    /**
      * Get token by stream ID
      */
-    static async getTokenByStreamId(streamId: number): Promise<any | null> {
+    static async getTokenByStreamId(streamId: number): Promise<TokenIndexEntry | null> {
         try {
             const result = await aptosClient.view({
                 payload: {
@@ -308,7 +292,7 @@ export class ContinuumService {
                     functionArguments: [streamId.toString()],
                 },
             });
-            return result[0] || null;
+            return result[0] as TokenIndexEntry || null;
         } catch (error) {
             console.error("Error fetching token by stream ID:", error);
             return null;
@@ -372,7 +356,7 @@ export class ContinuumService {
     /**
      * Get stream information
      */
-    static async getStreamInfo(streamId: number) {
+    static async getStreamInfo(streamId: number): Promise<StreamInfo | null> {
         try {
             const result = await aptosClient.view({
                 payload: {

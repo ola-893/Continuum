@@ -21,7 +21,7 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
         const x = ((lng - lngMin) / (lngMax - lngMin)) * 100;
         const y = ((latMax - lat) / (latMax - latMin)) * 100;
 
-        return { x: `${ Math.max(2, Math.min(98, x)) }% `, y: `${ Math.max(2, Math.min(98, y)) }% ` };
+        return { x: `${Math.max(2, Math.min(98, x))}% `, y: `${Math.max(2, Math.min(98, y))}% ` };
     };
 
     const getStatusColor = (status: string) => {
@@ -57,24 +57,52 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
             style={{
                 position: 'relative',
                 width: '100%',
-                height: '500px',
-                background: 'linear-gradient(135deg, #0a0e27 0%, #1a1027 100%)',
+                height: '600px',
+                background: '#0f172a',
                 borderRadius: 'var(--border-radius-lg)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 overflow: 'hidden',
+                boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)',
             }}
         >
+            {/* Map Background Image (Abstract) */}
+            <div
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    opacity: 0.2,
+                    backgroundImage: 'radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%)',
+                }}
+            />
+
             {/* Grid overlay */}
             <div
                 style={{
                     position: 'absolute',
                     inset: 0,
                     backgroundImage: `
-linear - gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
-    linear - gradient(90deg, rgba(0, 217, 255, 0.1) 1px, transparent 1px)
-        `,
-                    backgroundSize: '50px 50px',
+                        linear-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(56, 189, 248, 0.1) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '40px 40px',
                     opacity: 0.3,
+                }}
+            />
+
+            {/* Radar Scan Effect */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: '100%',
+                    height: '100%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'conic-gradient(from 0deg, transparent 0deg, rgba(56, 189, 248, 0.1) 60deg, transparent 60deg)',
+                    borderRadius: '50%',
+                    animation: 'spin 10s linear infinite',
+                    opacity: 0.1,
+                    pointerEvents: 'none',
                 }}
             />
 
@@ -85,15 +113,21 @@ linear - gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
                     top: 'var(--spacing-md)',
                     left: 'var(--spacing-md)',
                     padding: 'var(--spacing-sm) var(--spacing-md)',
-                    background: 'rgba(0, 0, 0, 0.5)',
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    backdropFilter: 'blur(8px)',
                     borderRadius: 'var(--border-radius-md)',
                     fontSize: 'var(--font-size-sm)',
                     color: 'var(--color-primary)',
-                    border: '1px solid rgba(0, 217, 255, 0.3)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    zIndex: 20,
                 }}
             >
-                <Map size={20} style={{ display: 'inline', marginRight: '8px' }} />
-                San Francisco Bay Area
+                <Map size={20} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                <span style={{ fontWeight: 600, letterSpacing: '0.5px' }}>SAN FRANCISCO BAY AREA</span>
+                <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                    LIVE SATELLITE FEED • ACTIVE
+                </div>
             </div>
 
             {/* Asset dots */}
@@ -111,25 +145,56 @@ linear - gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
                             top: pos.y,
                             transform: 'translate(-50%, -50%)',
                             cursor: 'pointer',
-                            zIndex: isHovered ? 10 : 1,
+                            zIndex: isHovered ? 30 : 10,
                         }}
                         onMouseEnter={() => setHoveredAsset(asset.id)}
                         onMouseLeave={() => setHoveredAsset(null)}
                         onClick={() => onAssetClick?.(asset)}
                     >
-                        {/* Dot */}
+                        {/* Marker Pin */}
                         <div
-                            className={`asset - dot ${ asset.status } `}
                             style={{
-                                width: isHovered ? '16px' : '12px',
-                                height: isHovered ? '16px' : '12px',
-                                borderRadius: '50%',
-                                background: getStatusColor(asset.status),
-                                boxShadow: `0 0 ${ isHovered ? '30px' : '20px' } ${ getStatusColor(asset.status) } `,
-                                animation: asset.status === 'active' ? 'pulse 2s infinite' : 'none',
-                                transition: 'all 0.3s ease',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                transform: isHovered ? 'scale(1.2)' : 'scale(1)',
+                                transition: 'transform 0.2s ease',
                             }}
-                        />
+                        >
+                            <div
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50% 50% 50% 0',
+                                    background: getStatusColor(asset.status),
+                                    transform: 'rotate(-45deg)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: `0 4px 12px ${getStatusColor(asset.status)}66`,
+                                    border: '2px solid white',
+                                }}
+                            >
+                                <div style={{ transform: 'rotate(45deg)' }}>
+                                    {getAssetMarker(asset.type)}
+                                </div>
+                            </div>
+                            {/* Pulse Effect for Active Assets */}
+                            {asset.status === 'active' && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        width: '100%',
+                                        height: '100%',
+                                        borderRadius: '50%',
+                                        background: getStatusColor(asset.status),
+                                        opacity: 0.5,
+                                        animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+                                        zIndex: -1,
+                                    }}
+                                />
+                            )}
+                        </div>
 
                         {/* Tooltip */}
                         {isHovered && (
@@ -138,38 +203,56 @@ linear - gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
                                 style={{
                                     position: 'absolute',
                                     left: '50%',
-                                    bottom: '20px',
+                                    bottom: '45px',
                                     transform: 'translateX(-50%)',
-                                    padding: 'var(--spacing-sm) var(--spacing-md)',
+                                    padding: 'var(--spacing-md)',
                                     borderRadius: 'var(--border-radius-md)',
                                     whiteSpace: 'nowrap',
                                     fontSize: 'var(--font-size-sm)',
                                     pointerEvents: 'none',
-                                    minWidth: '200px',
+                                    minWidth: '220px',
+                                    background: 'rgba(15, 23, 42, 0.9)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+                                    backdropFilter: 'blur(12px)',
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
-                                    <span style={{ fontSize: '18px' }}>{getAssetIcon(asset.type)}</span>
-                                    <strong>{asset.name}</strong>
-                                </div>
-                                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                    {asset.location.city}
-                                </div>
-                                {asset.streamId && (
-                                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)', marginTop: 'var(--spacing-xs)' }}>
-                                        Earned: ${asset.totalEarned.toLocaleString()}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
+                                    <div style={{
+                                        padding: '6px',
+                                        borderRadius: '8px',
+                                        background: `${getStatusColor(asset.status)}22`,
+                                        color: getStatusColor(asset.status)
+                                    }}>
+                                        {getAssetMarker(asset.type)}
                                     </div>
-                                )}
-                                <div
-                                    style={{
-                                        fontSize: 'var(--font-size-xs)',
-                                        color: getStatusColor(asset.status),
-                                        marginTop: 'var(--spacing-xs)',
-                                        textTransform: 'uppercase',
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    {asset.status}
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '14px' }}>{asset.name}</div>
+                                        <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>ID: {asset.id}</div>
+                                    </div>
+                                </div>
+
+                                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
+                                    <div>
+                                        <div style={{ color: 'var(--color-text-secondary)', fontSize: '10px' }}>LOCATION</div>
+                                        <div>{asset.location.city}</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ color: 'var(--color-text-secondary)', fontSize: '10px' }}>STATUS</div>
+                                        <div style={{ color: getStatusColor(asset.status), fontWeight: 600, textTransform: 'uppercase' }}>
+                                            {asset.status}
+                                        </div>
+                                    </div>
+                                    {asset.streamId && (
+                                        <div style={{ gridColumn: 'span 2' }}>
+                                            <div style={{ color: 'var(--color-text-secondary)', fontSize: '10px' }}>YIELD GENERATED</div>
+                                            <div style={{ color: 'var(--color-success)', fontWeight: 600 }}>
+                                                ${asset.totalEarned.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -183,28 +266,41 @@ linear - gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
                     position: 'absolute',
                     bottom: 'var(--spacing-md)',
                     right: 'var(--spacing-md)',
-                    padding: 'var(--spacing-sm)',
-                    background: 'rgba(0, 0, 0, 0.5)',
+                    padding: 'var(--spacing-sm) var(--spacing-md)',
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    backdropFilter: 'blur(8px)',
                     borderRadius: 'var(--border-radius-md)',
                     fontSize: 'var(--font-size-xs)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
             >
-                <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+                <div style={{ display: 'flex', gap: 'var(--spacing-lg)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
-                        <span>Active</span>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                        <span style={{ color: '#e2e8f0' }}>Active</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
-                        <span>Frozen</span>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
+                        <span style={{ color: '#e2e8f0' }}>Frozen</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6b7280' }} />
-                        <span>Idle</span>
+                        <span style={{ color: '#e2e8f0' }}>Idle</span>
                     </div>
                 </div>
             </div>
+
+            <style>
+                {`
+                    @keyframes spin {
+                        from { transform: translate(-50%, -50%) rotate(0deg); }
+                        to { transform: translate(-50%, -50%) rotate(360deg); }
+                    }
+                    @keyframes ping {
+                        75%, 100% { transform: scale(2); opacity: 0; }
+                    }
+                `}
+            </style>
         </div>
     );
 };

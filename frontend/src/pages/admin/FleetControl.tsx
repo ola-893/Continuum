@@ -3,7 +3,7 @@ import { AlertTriangle, X, Lock, Car, Home, Wrench, MapPin, Rocket } from 'lucid
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { type AssetLocation } from '../../data/mockAdminData';
+import { AssetLocation } from '../../types/continuum';
 import { formatCurrency } from '../../utils/formatting';
 import { ContinuumService } from '../../services/continuumService';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';

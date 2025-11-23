@@ -39,7 +39,6 @@ export const Navbar: React.FC = () => {
                         <Link to="/" className="flex items-center gap-md">
                             <Infinity
                                 size={32}
-                                className="animate-float"
                                 style={{ color: 'var(--color-primary)' }}
                             />
                             <span className="text-2xl font-bold gradient-text">Continuum</span>

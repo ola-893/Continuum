@@ -53,19 +53,31 @@ export const LandingPage: React.FC = () => {
                     </motion.h1>
 
                     {/* Sub-headline */}
-                    <motion.p
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.8, delay: 0.6 }}
                         style={{
-                            fontSize: 'var(--font-size-xl)',
-                            color: 'var(--color-text-secondary)',
                             marginBottom: 'var(--spacing-2xl)',
                             maxWidth: '600px',
+                            margin: '0 auto var(--spacing-2xl) auto',
                         }}
                     >
-                        Turn physical assets into continuous streams of income. Welcome to the future of yield generation.
-                    </motion.p>
+                        <p style={{
+                            fontSize: 'var(--font-size-xl)',
+                            color: 'var(--color-text-secondary)',
+                            marginBottom: 'var(--spacing-sm)',
+                        }}>
+                            Turn physical assets into continuous streams of income.
+                        </p>
+                        <p style={{
+                            fontSize: 'var(--font-size-xl)',
+                            color: 'var(--color-text-secondary)',
+                            textAlign: 'center',
+                        }}>
+                            Welcome to the future of yield generation.
+                        </p>
+                    </motion.div>
 
                     {/* 3D Visual Concept (CSS-based) */}
                     <motion.div
@@ -98,7 +110,7 @@ export const LandingPage: React.FC = () => {
                                     fontSize: '50px',
                                 }}
                             >
-                                Home:
+                                🏘️
                             </div>
 
                             {/* Flowing Stream (animated gradient line) */}
@@ -133,7 +145,7 @@ export const LandingPage: React.FC = () => {
                                     fontSize: '50px',
                                 }}
                             >
-                                Money:
+                                💰
                             </div>
                         </div>
                     </motion.div>

@@ -247,17 +247,6 @@ a:hover {
   }
 }
 
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-}
 
 @keyframes spin {
   from {
@@ -304,9 +293,6 @@ a:hover {
   animation: glow 2s ease-in-out infinite;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
 
 /* ==========================================
    CARD COMPONENTS
@@ -493,33 +479,64 @@ a:hover {
   gap: var(--spacing-xl);
 }
 
+/* ==========================================
+   RESPONSIVE GRID SYSTEM
+   ========================================== */
 .grid {
   display: grid;
+  gap: var(--spacing-lg);
 }
 
-.grid-cols-1 {
+/* Mobile First - Default to 1 column */
+.grid-cols-1,
+.grid-cols-2,
+.grid-cols-3,
+.grid-cols-4 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
-.grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/* Auto-responsive grid (Best for cards) */
+.grid-responsive {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
-.grid-cols-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+/* Tablet (md) */
+@media (min-width: 768px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-/* ==========================================
-   RESPONSIVE DESIGN
-   ========================================== */
+/* Desktop (lg) */
+@media (min-width: 1024px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Large Desktop (xl) */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+/* Mobile Typography Adjustments */
 @media (max-width: 768px) {
   html {
     font-size: 14px;
-  }
-
-  .grid-cols-3,
-  .grid-cols-2 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
   h1 {
@@ -528,6 +545,10 @@ a:hover {
 
   h2 {
     font-size: var(--font-size-3xl);
+  }
+
+  .container {
+    padding: 0 var(--spacing-md);
   }
 }
 

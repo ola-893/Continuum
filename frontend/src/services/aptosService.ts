@@ -1,5 +1,6 @@
 import { Aptos, AptosConfig, Network, InputViewFunctionData } from "@aptos-labs/ts-sdk";
 import { NETWORK, APTOS_COIN } from "../config/constants";
+import { AccountInfo } from "@aptos-labs/wallet-adapter-react";
 
 // Initialize Aptos client
 const aptosConfig = new AptosConfig({
@@ -23,7 +24,7 @@ export interface TransactionResponse {
  * Corresponds to: rwa_hub::initialize_rwa_ecosystem
  */
 export async function initializeEcosystem(
-    account: any // Wallet account object
+    account: AccountInfo
 ): Promise<TransactionResponse> {
     const transaction = await aptos.transaction.build.simple({
         sender: account.address,
@@ -59,7 +60,7 @@ export async function initializeEcosystem(
  * Corresponds to: compliance_guard::register_identity
  */
 export async function registerIdentity(
-    account: any,
+    account: AccountInfo,
     complianceAddr: string,
     user: string,
     isKycVerified: boolean,
@@ -104,7 +105,7 @@ export async function registerIdentity(
  * Corresponds to: compliance_guard::whitelist_address
  */
 export async function whitelistAddress(
-    account: any,
+    account: AccountInfo,
     complianceAddr: string,
     user: string,
     assetTypes: number[] // e.g., [1] for Real Estate
@@ -143,7 +144,7 @@ export async function whitelistAddress(
  * Corresponds to: rwa_hub::create_real_estate_stream
  */
 export async function createRealEstateStream(
-    account: any,
+    account: AccountInfo,
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,
@@ -189,7 +190,7 @@ export async function createRealEstateStream(
  * Note: assetType removed - auto-lookup from token registry
  */
 export async function claimYield(
-    account: any,
+    account: AccountInfo,
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,
@@ -231,7 +232,7 @@ export async function claimYield(
  * Note: assetType removed - auto-lookup from token registry
  */
 export async function flashAdvance(
-    account: any,
+    account: AccountInfo,
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,

@@ -3,14 +3,20 @@ import React, { useState, useEffect } from 'react';
 import { Activity, DollarSign, Zap, TrendingUp, Car, Home, Wrench } from 'lucide-react';
 import { StatCard } from '../../components/admin/StatCard';
 import { AssetMap } from '../../components/admin/AssetMap';
-import { globalStats, type AssetLocation } from '../../data/mockAdminData';
 import { formatCurrency } from '../../utils/formatting';
 import { ContinuumService } from '../../services/continuumService';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { TokenIndexEntry, AssetLocation } from '../../types/continuum';
 
 export const GodView: React.FC = () => {
     const [assets, setAssets] = useState<AssetLocation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        activeStreams: 0,
+        totalValueLocked: 0,
+        totalYieldDistributed: 0,
+        iotUptime: 99.9, // Placeholder for now as IoT isn't fully integrated
+    });
 
     useEffect(() => {
         const fetchRealAssets = async () => {
@@ -22,10 +28,10 @@ export const GodView: React.FC = () => {
 
                 // Convert token registry entries to AssetLocation format
                 const transformedAssets: AssetLocation[] = await Promise.all(
-                    tokens.map(async (token: any, index: number) => {
-                        const tokenAddress = token.token_address || token.tokenAddress;
-                        const streamId = Number(token.stream_id || token.streamId);
-                        const assetType = Number(token.asset_type || token.assetType || 0);
+                    tokens.map(async (token: TokenIndexEntry, index: number) => {
+                        const tokenAddress = token.token_address;
+                        const streamId = Number(token.stream_id);
+                        const assetType = Number(token.asset_type || 0);
 
                         // Fetch stream info if stream ID exists
                         let streamInfo = null;
@@ -47,9 +53,9 @@ export const GodView: React.FC = () => {
                         };
 
                         return {
-                            id: `TOKEN - ${index + 1} `,
+                            id: `TOKEN-${index + 1}`,
                             type: typeMap[assetType] || 'real_estate',
-                            name: `Asset #${index + 1} `,
+                            name: `Asset #${index + 1}`,
                             tokenAddress,
                             status: streamStatus?.isFrozen ? 'frozen' : streamInfo ? 'active' : 'idle',
                             location: {
@@ -67,6 +73,19 @@ export const GodView: React.FC = () => {
                 );
 
                 setAssets(transformedAssets);
+
+                // Calculate stats from real data
+                const activeStreams = transformedAssets.filter(a => a.status === 'active').length;
+                const totalValueLocked = transformedAssets.reduce((sum, a) => sum + (a.currentValue || 0), 0);
+                const totalYieldDistributed = transformedAssets.reduce((sum, a) => sum + (a.totalEarned || 0), 0);
+
+                setStats({
+                    activeStreams,
+                    totalValueLocked,
+                    totalYieldDistributed,
+                    iotUptime: 99.9,
+                });
+
             } catch (error) {
                 console.error('Error fetching real assets:', error);
                 // Keep empty array on error
@@ -78,7 +97,7 @@ export const GodView: React.FC = () => {
         fetchRealAssets();
     }, []);
 
-    const handleAssetClick = (asset: any) => {
+    const handleAssetClick = (asset: AssetLocation) => {
         console.log('Asset clicked:', asset);
         // Can navigate to fleet control with this asset selected
     };
@@ -89,36 +108,6 @@ export const GodView: React.FC = () => {
 
     return (
         <div style={{ padding: 'var(--spacing-2xl)' }}>
-            {/* Top Stats Bar */}
-            <div className="grid grid-cols-4 gap-lg" style={{ marginBottom: 'var(--spacing-2xl)' }}>
-                <StatCard
-                    label="Active Streams"
-                    value={globalStats.activeStreams}
-                    glow={true}
-                    icon={<Activity size={24} style={{ color: 'var(--color-success)' }} />}
-                    trend="up"
-                    trendValue="+3 this week"
-                />
-                <StatCard
-                    label="Total Value Locked"
-                    value={formatCurrency(globalStats.totalValueLocked, 0)}
-                    icon={<DollarSign size={24} style={{ color: 'var(--color-primary)' }} />}
-                />
-                <StatCard
-                    label="Yield Distributed"
-                    value={formatCurrency(globalStats.totalYieldDistributed, 0)}
-                    icon={<TrendingUp size={24} style={{ color: 'var(--color-secondary)' }} />}
-                    trend="up"
-                    trendValue="+12.5%"
-                />
-                <StatCard
-                    label="IoT Uptime"
-                    value={`${globalStats.iotUptime}% `}
-                    glow={true}
-                    icon={<Zap size={24} style={{ color: 'var(--color-success)' }} />}
-                />
-            </div>
-
             {/* Live Map */}
             <div style={{ marginBottom: 'var(--spacing-2xl)' }}>
                 <div style={{ marginBottom: 'var(--spacing-md)' }}>
@@ -140,6 +129,36 @@ export const GodView: React.FC = () => {
                         </p>
                     </div>
                 )}
+            </div>
+
+            {/* Top Stats Bar */}
+            <div className="grid grid-cols-4 gap-lg" style={{ marginBottom: 'var(--spacing-2xl)' }}>
+                <StatCard
+                    label="Active Streams"
+                    value={stats.activeStreams}
+                    glow={true}
+                    icon={<Activity size={24} style={{ color: 'var(--color-success)' }} />}
+                    trend="up"
+                    trendValue="Live"
+                />
+                <StatCard
+                    label="Total Value Locked"
+                    value={formatCurrency(stats.totalValueLocked, 0)}
+                    icon={<DollarSign size={24} style={{ color: 'var(--color-primary)' }} />}
+                />
+                <StatCard
+                    label="Yield Distributed"
+                    value={formatCurrency(stats.totalYieldDistributed, 0)}
+                    icon={<TrendingUp size={24} style={{ color: 'var(--color-secondary)' }} />}
+                    trend="up"
+                    trendValue="Real-time"
+                />
+                <StatCard
+                    label="IoT Uptime"
+                    value={`${stats.iotUptime}%`}
+                    glow={true}
+                    icon={<Zap size={24} style={{ color: 'var(--color-success)' }} />}
+                />
             </div>
 
             {/* Quick Actions */}

@@ -3,18 +3,7 @@ import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Car, Home, Wrench, Clock, XCircle, Zap, AlertTriangle, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ContinuumService } from '../services/continuumService';
-
-interface ActiveRental {
-    streamId: number;
-    tokenAddress: string;
-    assetType: number;
-    title: string;
-    pricePerHour: number;
-    startTime: number;
-    duration: number;
-    totalBudget: number;
-    amountSpent: number;
-}
+import { ActiveRental } from '../types/continuum';
 
 export const MyRentals: React.FC = () => {
     const { account, signAndSubmitTransaction } = useWallet();

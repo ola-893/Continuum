@@ -49,7 +49,7 @@ export const AssetFactory: React.FC = () => {
 
                 // Check if "YieldStream RWA" collection exists
                 const exists = collections.some(
-                    (col: any) => col.collection_name === mintData.collectionName
+                    (col: { collection_name: string }) => col.collection_name === mintData.collectionName
                 );
 
                 setCollectionExists(exists);
