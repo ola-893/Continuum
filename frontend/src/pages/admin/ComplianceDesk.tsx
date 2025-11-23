@@ -16,7 +16,7 @@ export const ComplianceDesk: React.FC = () => {
     const handleApprove = async (address: string, jurisdiction: string, verificationLevel: number) => {
         setProcessing(address);
         try {
-            const transaction = ContinuumService.registerKYC(address, jurisdiction, verificationLevel);
+            const transaction = ContinuumService.registerIdentity(address, jurisdiction, verificationLevel);
             await signAndSubmitTransaction(transaction);
 
             // Remove from pending

@@ -1,6 +1,6 @@
 import { Aptos, AptosConfig, Network, InputViewFunctionData } from "@aptos-labs/ts-sdk";
 import { NETWORK, APTOS_COIN } from "../config/constants";
-import { AccountInfo } from "@aptos-labs/wallet-adapter-react";
+import { InputTransactionData } from "@aptos-labs/wallet-adapter-react";
 
 // Initialize Aptos client
 const aptosConfig = new AptosConfig({
@@ -13,13 +13,6 @@ const aptosConfig = new AptosConfig({
 });
 export const aptos = new Aptos(aptosConfig);
 
-// Type for transaction responses
-export interface TransactionResponse {
-    hash: string;
-    success: boolean;
-    vm_status?: string;
-}
-
 // ==============================================================================
 // INITIALIZATION FUNCTIONS
 // ==============================================================================
@@ -28,31 +21,15 @@ export interface TransactionResponse {
  * Initialize the RWA ecosystem (StreamRegistry, AssetYieldRegistry, ComplianceRegistry)
  * Corresponds to: rwa_hub::initialize_rwa_ecosystem
  */
-export async function initializeEcosystem(
-    account: AccountInfo
-): Promise<TransactionResponse> {
-    const transaction = await aptos.transaction.build.simple({
-        sender: account.address,
+export function initializeEcosystem(
+    moduleAddress: string
+): InputTransactionData {
+    return {
         data: {
-            function: `${account.address}::rwa_hub::initialize_rwa_ecosystem`,
+            function: `${moduleAddress}::rwa_hub::initialize_rwa_ecosystem`,
             typeArguments: [APTOS_COIN],
             functionArguments: [],
         },
-    });
-
-    const committedTxn = await aptos.signAndSubmitTransaction({
-        signer: account,
-        transaction,
-    });
-
-    const executedTransaction = await aptos.waitForTransaction({
-        transactionHash: committedTxn.hash,
-    });
-
-    return {
-        hash: committedTxn.hash,
-        success: executedTransaction.success,
-        vm_status: executedTransaction.vm_status,
     };
 }
 
@@ -64,17 +41,15 @@ export async function initializeEcosystem(
  * Register identity (KYC) for a user
  * Corresponds to: compliance_guard::register_identity
  */
-export async function registerIdentity(
-    account: AccountInfo,
+export function registerIdentity(
     complianceAddr: string,
     user: string,
     isKycVerified: boolean,
     jurisdiction: string, // e.g., "US"
     verificationLevel: number,
     expiryTime: number
-): Promise<TransactionResponse> {
-    const transaction = await aptos.transaction.build.simple({
-        sender: account.address,
+): InputTransactionData {
+    return {
         data: {
             function: `${complianceAddr}::compliance_guard::register_identity`,
             typeArguments: [],
@@ -87,21 +62,6 @@ export async function registerIdentity(
                 expiryTime,
             ],
         },
-    });
-
-    const committedTxn = await aptos.signAndSubmitTransaction({
-        signer: account,
-        transaction,
-    });
-
-    const executedTransaction = await aptos.waitForTransaction({
-        transactionHash: committedTxn.hash,
-    });
-
-    return {
-        hash: committedTxn.hash,
-        success: executedTransaction.success,
-        vm_status: executedTransaction.vm_status,
     };
 }
 
@@ -109,34 +69,17 @@ export async function registerIdentity(
  * Whitelist an address for specific asset types
  * Corresponds to: compliance_guard::whitelist_address
  */
-export async function whitelistAddress(
-    account: AccountInfo,
+export function whitelistAddress(
     complianceAddr: string,
     user: string,
     assetTypes: number[] // e.g., [1] for Real Estate
-): Promise<TransactionResponse> {
-    const transaction = await aptos.transaction.build.simple({
-        sender: account.address,
+): InputTransactionData {
+    return {
         data: {
             function: `${complianceAddr}::compliance_guard::whitelist_address`,
             typeArguments: [],
             functionArguments: [complianceAddr, user, assetTypes],
         },
-    });
-
-    const committedTxn = await aptos.signAndSubmitTransaction({
-        signer: account,
-        transaction,
-    });
-
-    const executedTransaction = await aptos.waitForTransaction({
-        transactionHash: committedTxn.hash,
-    });
-
-    return {
-        hash: committedTxn.hash,
-        success: executedTransaction.success,
-        vm_status: executedTransaction.vm_status,
     };
 }
 
@@ -148,17 +91,15 @@ export async function whitelistAddress(
  * Create a real estate stream (most common use case)
  * Corresponds to: rwa_hub::create_real_estate_stream
  */
-export async function createRealEstateStream(
-    account: AccountInfo,
+export function createRealEstateStream(
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,
     tokenAddr: string,
     totalYield: number,
     duration: number
-): Promise<TransactionResponse> {
-    const transaction = await aptos.transaction.build.simple({
-        sender: account.address,
+): InputTransactionData {
+    return {
         data: {
             function: `${streamRegistryAddr}::rwa_hub::create_real_estate_stream`,
             typeArguments: [APTOS_COIN],
@@ -171,21 +112,6 @@ export async function createRealEstateStream(
                 duration,
             ],
         },
-    });
-
-    const committedTxn = await aptos.signAndSubmitTransaction({
-        signer: account,
-        transaction,
-    });
-
-    const executedTransaction = await aptos.waitForTransaction({
-        transactionHash: committedTxn.hash,
-    });
-
-    return {
-        hash: committedTxn.hash,
-        success: executedTransaction.success,
-        vm_status: executedTransaction.vm_status,
     };
 }
 
@@ -194,15 +120,13 @@ export async function createRealEstateStream(
  * Corresponds to: rwa_hub::compliant_claim_yield
  * Note: assetType removed - auto-lookup from token registry
  */
-export async function claimYield(
-    account: AccountInfo,
+export function claimYield(
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,
     tokenAddr: string
-): Promise<TransactionResponse> {
-    const transaction = await aptos.transaction.build.simple({
-        sender: account.address,
+): InputTransactionData {
+    return {
         data: {
             function: `${streamRegistryAddr}::rwa_hub::compliant_claim_yield`,
             typeArguments: [APTOS_COIN],
@@ -213,21 +137,6 @@ export async function claimYield(
                 tokenAddr,
             ],
         },
-    });
-
-    const committedTxn = await aptos.signAndSubmitTransaction({
-        signer: account,
-        transaction,
-    });
-
-    const executedTransaction = await aptos.waitForTransaction({
-        transactionHash: committedTxn.hash,
-    });
-
-    return {
-        hash: committedTxn.hash,
-        success: executedTransaction.success,
-        vm_status: executedTransaction.vm_status,
     };
 }
 
@@ -236,16 +145,14 @@ export async function claimYield(
  * Corresponds to: rwa_hub::compliant_flash_advance
  * Note: assetType removed - auto-lookup from token registry
  */
-export async function flashAdvance(
-    account: AccountInfo,
+export function flashAdvance(
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,
     tokenAddr: string,
     amountRequested: number
-): Promise<TransactionResponse> {
-    const transaction = await aptos.transaction.build.simple({
-        sender: account.address,
+): InputTransactionData {
+    return {
         data: {
             function: `${streamRegistryAddr}::rwa_hub::compliant_flash_advance`,
             typeArguments: [APTOS_COIN],
@@ -257,21 +164,6 @@ export async function flashAdvance(
                 amountRequested,
             ],
         },
-    });
-
-    const committedTxn = await aptos.signAndSubmitTransaction({
-        signer: account,
-        transaction,
-    });
-
-    const executedTransaction = await aptos.waitForTransaction({
-        transactionHash: committedTxn.hash,
-    });
-
-    return {
-        hash: committedTxn.hash,
-        success: executedTransaction.success,
-        vm_status: executedTransaction.vm_status,
     };
 }
 

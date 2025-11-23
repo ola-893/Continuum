@@ -4,7 +4,7 @@ import { registerIdentity, whitelistAddress } from '../services/aptosService';
 import { ASSET_TYPES } from '../config/constants';
 
 const ComplianceSetup: React.FC = () => {
-    const { account } = useWallet();
+    const { account, signAndSubmitTransaction } = useWallet();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -33,8 +33,7 @@ const ComplianceSetup: React.FC = () => {
         setResult('');
 
         try {
-            const txn = await registerIdentity(
-                account,
+            const transaction = registerIdentity(
                 complianceAddr,
                 userAddr,
                 true, // isKycVerified
@@ -42,7 +41,8 @@ const ComplianceSetup: React.FC = () => {
                 verificationLevel,
                 expiryTime
             );
-            setResult(`KYC registered! Transaction: ${txn.hash}`);
+            const result = await signAndSubmitTransaction(transaction);
+            setResult(`KYC registered! Transaction: ${(result as any).hash}`);
         } catch (err: any) {
             setError(`Error: ${err.message || err}`);
         } finally {
@@ -62,13 +62,13 @@ const ComplianceSetup: React.FC = () => {
         setResult('');
 
         try {
-            const txn = await whitelistAddress(
-                account,
+            const transaction = whitelistAddress(
                 whitelistComplianceAddr,
                 whitelistUserAddr,
                 selectedAssetTypes
             );
-            setResult(`Address whitelisted! Transaction: ${txn.hash}`);
+            const result = await signAndSubmitTransaction(transaction);
+            setResult(`Address whitelisted! Transaction: ${(result as any).hash}`);
         } catch (err: any) {
             setError(`Error: ${err.message || err}`);
         } finally {

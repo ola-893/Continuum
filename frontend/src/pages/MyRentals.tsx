@@ -40,8 +40,8 @@ export const MyRentals: React.FC = () => {
             const activeRentals: ActiveRental[] = [];
 
             for (const token of allTokens) {
-                const tokenAddress = token.token_address || token.tokenAddress;
-                const assetType = token.asset_type !== undefined ? Number(token.asset_type) : (token.assetType !== undefined ? Number(token.assetType) : undefined);
+                const tokenAddress = token.token_address;
+                const assetType = token.asset_type !== undefined ? Number(token.asset_type) : 0;
 
                 try {
                     // Check if this asset has an active rental using the new view function
@@ -134,7 +134,7 @@ export const MyRentals: React.FC = () => {
         }
     };
 
-    const handleCancelRental = async (tokenAddress: string, streamId: number, assetTitle: string) => {
+    const handleCancelRental = async (streamId: number, assetTitle: string) => {
         if (!account) return;
 
         const confirmCancel = window.confirm(
@@ -268,7 +268,7 @@ export const MyRentals: React.FC = () => {
                                     {!isCompleted ? (
                                         <Button
                                             variant="secondary"
-                                            onClick={() => handleCancelRental(rental.tokenAddress, rental.streamId, rental.title)}
+                                            onClick={() => handleCancelRental(rental.streamId, rental.title)}
                                             disabled={cancellingId === rental.streamId}
                                             isLoading={cancellingId === rental.streamId}
                                             leftIcon={<XCircle size={16} />}

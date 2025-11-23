@@ -81,7 +81,7 @@ export const AssetExplorer: React.FC = () => {
                                 stopTime: streamInfo.stopTime,
                                 isActive: streamInfo.status === 0,
                             },
-                        };
+                        } as ExplorerAsset;
                     } catch (error) {
                         console.error(`[AssetExplorer] Error loading stream for ${tokenAddress}:`, error);
                         return null;
@@ -90,7 +90,9 @@ export const AssetExplorer: React.FC = () => {
             );
 
             // Filter out null results
-            const validAssets = assetsWithStreams.filter((asset): asset is ExplorerAsset => asset !== null);
+            const validAssets: ExplorerAsset[] = assetsWithStreams.filter(
+                (asset): asset is ExplorerAsset => asset !== null
+            );
 
             console.log('[AssetExplorer] Loaded assets:', validAssets.length);
             setAssets(validAssets);

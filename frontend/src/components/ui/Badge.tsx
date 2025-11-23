@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, Lock, XCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 
 export interface BadgeProps {
     children: React.ReactNode;

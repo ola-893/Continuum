@@ -18,13 +18,6 @@ export interface AssetCardProps {
     className?: string;
 }
 
-const assetTypeColors: Record<string, string> = {
-    'Real Estate': 'var(--color-primary)',
-    'Securities': 'var(--color-secondary)',
-    'Commodities': 'var(--color-warning)',
-    'Art': 'var(--color-info)',
-};
-
 export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) => {
     const navigate = useNavigate();
 

@@ -3,7 +3,7 @@ import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { initializeEcosystem } from '../services/aptosService';
 
 const InitializeEcosystem: React.FC = () => {
-    const { account } = useWallet();
+    const { account, signAndSubmitTransaction } = useWallet();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -19,8 +19,9 @@ const InitializeEcosystem: React.FC = () => {
         setResult('');
 
         try {
-            const txn = await initializeEcosystem(account);
-            setResult(`Ecosystem initialized! Transaction: ${txn.hash}`);
+            const transaction = initializeEcosystem(account.address);
+            const result = await signAndSubmitTransaction(transaction);
+            setResult(`Ecosystem initialized! Transaction: ${(result as any).hash}`);
         } catch (err: any) {
             setError(`Error: ${err.message || err}`);
         } finally {

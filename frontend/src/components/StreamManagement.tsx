@@ -4,7 +4,7 @@ import { createRealEstateStream, claimYield, flashAdvance } from '../services/ap
 import { ONE_APT, THIRTY_DAYS_SECONDS } from '../config/constants';
 
 const StreamManagement: React.FC = () => {
-    const { account } = useWallet();
+    const { account, signAndSubmitTransaction } = useWallet();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -42,8 +42,7 @@ const StreamManagement: React.FC = () => {
         setResult('');
 
         try {
-            const txn = await createRealEstateStream(
-                account,
+            const transaction = createRealEstateStream(
                 streamRegistryAddr,
                 yieldRegistryAddr,
                 complianceAddr,
@@ -51,7 +50,8 @@ const StreamManagement: React.FC = () => {
                 totalYield,
                 duration
             );
-            setResult(`Stream created! Transaction: ${txn.hash}`);
+            const result = await signAndSubmitTransaction(transaction);
+            setResult(`Stream created! Transaction: ${(result as any).hash}`);
         } catch (err: any) {
             setError(`Error: ${err.message || err}`);
         } finally {
@@ -71,14 +71,14 @@ const StreamManagement: React.FC = () => {
         setResult('');
 
         try {
-            const txn = await claimYield(
-                account,
+            const transaction = claimYield(
                 claimStreamRegistry,
                 claimYieldRegistry,
                 claimCompliance,
                 claimTokenAddr
             );
-            setResult(`Yield claimed! Transaction: ${txn.hash}`);
+            const result = await signAndSubmitTransaction(transaction);
+            setResult(`Yield claimed! Transaction: ${(result as any).hash}`);
         } catch (err: any) {
             setError(`Error: ${err.message || err}`);
         } finally {
@@ -98,15 +98,15 @@ const StreamManagement: React.FC = () => {
         setResult('');
 
         try {
-            const txn = await flashAdvance(
-                account,
+            const transaction = flashAdvance(
                 flashStreamRegistry,
                 flashYieldRegistry,
                 flashCompliance,
                 flashTokenAddr,
                 flashAmount
             );
-            setResult(`Flash advance executed! Transaction: ${txn.hash}`);
+            const result = await signAndSubmitTransaction(transaction);
+            setResult(`Flash advance executed! Transaction: ${(result as any).hash}`);
         } catch (err: any) {
             setError(`Error: ${err.message || err}`);
         } finally {
