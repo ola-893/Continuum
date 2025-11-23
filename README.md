@@ -2,6 +2,8 @@
 
 > **Tokenized Real-World Assets with Live Yield Streaming on Aptos**
 
+📊 **[View Pitch Deck](https://www.canva.com/design/DAG5h9VH2_0/G-h4K2yC4yjSU-DoLZES-w/view?utm_content=DAG5h9VH2_0&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0aae785077)**
+
 ## The Problem: The "Rich Asset, Poor Liquidity" Paradox
 
 In the current Real World Asset (RWA) market, asset ownership is static while financial needs are dynamic.
