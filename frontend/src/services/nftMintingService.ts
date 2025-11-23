@@ -110,7 +110,7 @@ export class NFTMintingService {
                     const resourceType = change.data?.type || '';
                     if (resourceType.includes('aptos_token_objects::token::Token') ||
                         resourceType.includes('0x4::token::Token')) {
-                        console.log('✅ Found Token object at address:', change.address);
+                        console.log('Found Token object at address:', change.address);
                         return change.address;
                     }
                 }
@@ -121,13 +121,13 @@ export class NFTMintingService {
             for (const event of events) {
                 if (event.type?.includes('CreateTokenEvent') || event.type?.includes('MintEvent')) {
                     if (event.data?.token) {
-                        console.log('✅ Found token address in event:', event.data.token);
+                        console.log('Found token address in event:', event.data.token);
                         return event.data.token;
                     }
                 }
             }
 
-            console.error('❌ Could not find token address in transaction changes or events');
+            console.error('Could not find token address in transaction changes or events');
             console.error('Transaction:', transaction);
             return null;
         } catch (error) {

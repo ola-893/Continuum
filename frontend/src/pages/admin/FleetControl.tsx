@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, Lock, Car, Home, Wrench, MapPin, Rocket } from 'lucide-react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -92,15 +92,16 @@ export const FleetControl: React.FC = () => {
     };
 
     const getAssetIcon = (type: string) => {
+        const iconSize = 20;
         switch (type) {
             case 'car':
-                return '🚗';
+                return <Car size={iconSize} />;
             case 'real_estate':
-                return '🏢';
+                return <Home size={iconSize} />;
             case 'machinery':
-                return '🚜';
+                return <Wrench size={iconSize} />;
             default:
-                return '📍';
+                return <MapPin size={iconSize} />;
         }
     };
 
@@ -120,13 +121,13 @@ export const FleetControl: React.FC = () => {
             );
 
             await signAndSubmitTransaction(transaction);
-            alert(`✅ Asset ${selectedAsset.name} has been frozen on-chain!`);
+            alert(`Success: Asset ${selectedAsset.name} has been frozen on-chain!`);
             setSelectedAsset(null);
 
             // In production, refresh asset list here
         } catch (error) {
             console.error('Freeze failed:', error);
-            alert('❌ Failed to freeze asset. Check console for details.');
+            alert('Error: Failed to freeze asset. Check console for details.');
         }
     };
 
@@ -145,7 +146,7 @@ export const FleetControl: React.FC = () => {
 
             {assets.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>🚀</div>
+                    <Rocket size={48} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.3 }} />
                     <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No Assets Registered</h3>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
                         Assets will appear here once they are registered in the token registry
@@ -295,7 +296,8 @@ export const FleetControl: React.FC = () => {
                                         }}
                                     >
                                         <p style={{ color: '#ef4444', fontSize: 'var(--font-size-sm)' }}>
-                                            🔒 This asset is currently frozen
+                                            <Lock size={16} style={{ display: 'inline', marginRight: '4px' }} />
+                                            This asset is currently frozen
                                         </p>
                                     </div>
                                 )}

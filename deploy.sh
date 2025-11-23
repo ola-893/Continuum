@@ -6,7 +6,7 @@ PROFILE="continuum-v3"
 MAX_GAS="150000"
 
 echo "================================"
-echo "🚀 Continuum Protocol Deployment"
+echo "Continuum Protocol Deployment"
 echo "================================"
 echo "Target Address: $ACCOUNT"
 echo "Using Profile:  $PROFILE"
@@ -16,7 +16,7 @@ echo ""
 aptos account list --profile $PROFILE
 
 echo ""
-echo "📦 Publishing contract (Max Gas $MAX_GAS)..."
+echo "Publishing contract (Max Gas $MAX_GAS)..."
 aptos move publish \
   --profile $PROFILE \
   --named-addresses continuum=$ACCOUNT \
@@ -24,7 +24,7 @@ aptos move publish \
   --assume-yes
 
 echo ""
-echo "👤 Setting up Admin & Initializing Ecosystem..."
+echo "Setting up Admin & Initializing Ecosystem..."
 # This ONE function initializes streaming, yield, compliance, and registry!
 aptos move run \
   --profile $PROFILE \
@@ -35,5 +35,5 @@ aptos move run \
   --assume-yes
 
 echo ""
-echo "✅ DEPLOYMENT COMPLETE!"
+echo "DEPLOYMENT COMPLETE!"
 echo "Address: $ACCOUNT"

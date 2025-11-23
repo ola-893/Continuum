@@ -21,10 +21,10 @@ export const ComplianceDesk: React.FC = () => {
 
             // Remove from pending
             setPendingRequests(prev => prev.filter(req => req.address !== address));
-            alert(`✅ User ${truncateAddress(address)} approved!`);
+            alert(`Success: User ${truncateAddress(address)} approved!`);
         } catch (error) {
             console.error('Approval failed:', error);
-            alert('❌ Failed to approve user');
+            alert('Error: Failed to approve user');
         } finally {
             setProcessing(null);
         }

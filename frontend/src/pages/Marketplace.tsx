@@ -53,7 +53,7 @@ export const Marketplace: React.FC = () => {
                 <LoadingScreen message="Loading marketplace from blockchain..." />
             ) : publicTokenAddresses.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>🏪</div>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>Store:</div>
                     <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No Assets Listed Yet</h3>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
                         Minted RWAs will appear here once registered on the blockchain

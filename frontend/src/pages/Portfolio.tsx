@@ -45,7 +45,7 @@ export const Portfolio: React.FC = () => {
         return (
             <div style={{ padding: 'var(--spacing-2xl)' }}>
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)' }}>🔒</div>
+                    <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)' }}>Lock:</div>
                     <h2 style={{ marginBottom: 'var(--spacing-md)' }}>Connect Your Wallet</h2>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
                         Connect your wallet to view your RWA portfolio
@@ -101,7 +101,7 @@ export const Portfolio: React.FC = () => {
             {/* Assets Grid */}
             {tokenAddresses.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>🏦</div>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>Bank:</div>
                     <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No RWA NFTs Found</h3>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
                         You don't own any RWA NFTs yet. Browse the marketplace to discover yield-bearing assets.

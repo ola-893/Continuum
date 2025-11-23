@@ -83,7 +83,7 @@ module continuum::asset_yield_protocol {
 
     /// Create an asset-backed yield stream with REAL COIN LOCKING
     /// Token owner is determined dynamically via NFT ownership at claim time
-    /// 🔧 CRITICAL FIX: Now returns the actual stream_id instead of relying on user prediction
+    /// CRITICAL FIX: Now returns the actual stream_id instead of relying on user prediction
     public fun create_asset_yield_stream<CoinType>(
         creator: &signer,
         stream_registry_addr: address,
@@ -142,7 +142,7 @@ module continuum::asset_yield_protocol {
             duration,
         });
 
-        // 🔧 CRITICAL FIX: Return the actual stream_id
+        // CRITICAL FIX: Return the actual stream_id
         stream_id
     }
 

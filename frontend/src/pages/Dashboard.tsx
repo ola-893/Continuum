@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Wallet, ShoppingCart } from 'lucide-react';
+import { Wallet, ShoppingCart, Zap } from 'lucide-react';
 import { Portfolio } from './Portfolio';
 import { Marketplace } from './Marketplace';
+import { MyRentals } from './MyRentals';
 
-type TabType = 'portfolio' | 'marketplace';
+type TabType = 'portfolio' | 'marketplace' | 'rentals';
 
 export const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('portfolio');
@@ -11,6 +12,7 @@ export const Dashboard: React.FC = () => {
     const tabs = [
         { id: 'portfolio' as TabType, label: 'My Portfolio', icon: Wallet },
         { id: 'marketplace' as TabType, label: 'Marketplace', icon: ShoppingCart },
+        { id: 'rentals' as TabType, label: 'Active Rentals', icon: Zap },
     ];
 
     return (
@@ -71,6 +73,7 @@ export const Dashboard: React.FC = () => {
             <div>
                 {activeTab === 'portfolio' && <Portfolio />}
                 {activeTab === 'marketplace' && <Marketplace />}
+                {activeTab === 'rentals' && <MyRentals />}
             </div>
         </div>
     );

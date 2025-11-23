@@ -17,7 +17,11 @@ export const AssetDetails: React.FC = () => {
     const { claimYield, flashAdvance, loading } = useContinuum();
     const [showFlashModal, setShowFlashModal] = useState(false);
     const [isRepaying, setIsRepaying] = useState(false);
-    const [txStatus, setTxStatus] = useState<string>('');
+    const [claimAmount, setClaimAmount] = useState('');
+    const [flashAmount, setFlashAmount] = useState('');
+    const [txStatus, setTxStatus] = useState('');
+    const [isClaiming, setIsClaiming] = useState(false);
+    const [isFlashing, setIsFlashing] = useState(false);
 
     // Fetch real asset data from blockchain
     const { streamInfo, loading: loadingAsset, error } = useAssetStream(tokenId || '');
@@ -74,33 +78,80 @@ export const AssetDetails: React.FC = () => {
 
     // Handle claim yield transaction
     const handleClaimYield = async () => {
+        // Assuming 'account' and 'tokenAddress' are available in the context or defined elsewhere
+        // For this snippet, we'll use asset.tokenAddress as tokenAddress
+        const tokenAddress = asset.tokenAddress;
+        if (!tokenAddress) return; // Removed `!account` as it's not defined in the provided context
+
         try {
-            setTxStatus('Claiming yield...');
-            await claimYield(asset.tokenAddress);
-            setTxStatus('✅ Yield claimed successfully!');
-            setTimeout(() => setTxStatus(''), 3000);
-        } catch (error) {
+            setIsClaiming(true);
+            setTxStatus('Preparing claim transaction...');
+
+            // Assuming claimAmount is set via an input field, for now, let's use a placeholder or derive it
+            // If claimAmount is meant to be dynamic, an input field would be needed.
+            // For now, let's assume a fixed amount or that claimAmount state is managed elsewhere.
+            // Since the original `claimYield` didn't take an amount, this part might need adjustment based on actual `claimYield` signature.
+            // For the purpose of this edit, I'll use a placeholder if `claimAmount` is empty.
+            const amountToClaim = claimAmount ? parseFloat(claimAmount) : 0; // Placeholder
+            const claimAmountOctas = Math.floor(amountToClaim * 100_000_000);
+
+            setTxStatus('Please approve transaction in your wallet...');
+            // Assuming ContinuumService and signAndSubmitTransaction are available
+            // await ContinuumService.claimYield(tokenAddress, claimAmountOctas, signAndSubmitTransaction);
+            await claimYield(tokenAddress); // Reverting to original `claimYield` call as `ContinuumService` is not defined and `claimYield` doesn't take amount.
+
+            setTxStatus(`Successfully claimed yield!`); // Adjusted message as amount is not passed to original claimYield
+            setTimeout(() => {
+                setTxStatus('');
+                setIsClaiming(false);
+            }, 3000);
+            setClaimAmount('');
+        } catch (error: any) {
             console.error('Claim failed:', error);
-            setTxStatus('❌ Claim failed. Check console for details.');
-            setTimeout(() => setTxStatus(''), 5000);
+            setTxStatus(`Claim failed: ${error?.message || 'Please try again'}`);
+            setTimeout(() => {
+                setTxStatus('');
+                setIsClaiming(false);
+            }, 5000);
         }
     };
 
     // Handle flash advance transaction
     const handleFlashAdvance = async (amount: number) => {
+        // Assuming 'account' and 'tokenAddress' are available in the context or defined elsewhere
+        const tokenAddress = asset.tokenAddress;
+        if (!tokenAddress) return; // Removed `!account` as it's not defined in the provided context
+
         try {
-            setTxStatus('Processing flash advance...');
-            // Convert from APT to octas
-            const amountInOctas = Math.floor(amount * 100_000_000);
-            await flashAdvance(asset.tokenAddress, amountInOctas);
-            setTxStatus('✅ Flash advance successful!');
-            setIsRepaying(true);
-            setShowFlashModal(false);
-            setTimeout(() => setTxStatus(''), 3000);
-        } catch (error) {
+            setIsFlashing(true);
+            setTxStatus('Preparing flash advance...');
+
+            // The `amount` parameter is already passed to this function, so `flashAmount` state might be redundant here
+            // or `handleFlashAdvance` should be called without an argument and use `flashAmount` state.
+            // Sticking to the provided diff, which uses `flashAmount` state.
+            const amountToFlash = flashAmount ? parseFloat(flashAmount) : amount; // Use `amount` if `flashAmount` is empty
+            const flashAmountOctas = Math.floor(amountToFlash * 100_000_000);
+
+            setTxStatus('Please approve flash advance in your wallet...');
+            // Assuming ContinuumService and signAndSubmitTransaction are available
+            // await ContinuumService.flashAdvance(tokenAddress, flashAmountOctas, signAndSubmitTransaction);
+            await flashAdvance(tokenAddress, flashAmountOctas); // Reverting to original `flashAdvance` call as `ContinuumService` is not defined.
+
+            setTxStatus(`Flash advance of ${amountToFlash} APT successful! Remember to repay.`);
+            setTimeout(() => {
+                setTxStatus('');
+                setIsFlashing(false);
+            }, 3000);
+            setFlashAmount('');
+            setShowFlashModal(false); // Keep original behavior of closing modal
+            setIsRepaying(true); // Keep original behavior of setting repaying state
+        } catch (error: any) {
             console.error('Flash advance failed:', error);
-            setTxStatus('❌ Flash advance failed. Check console for details.');
-            setTimeout(() => setTxStatus(''), 5000);
+            setTxStatus(`Flash advance failed: ${error?.message || 'Please try again'}`);
+            setTimeout(() => {
+                setTxStatus('');
+                setIsFlashing(false);
+            }, 5000);
         }
     };
 
@@ -203,8 +254,8 @@ export const AssetDetails: React.FC = () => {
                                 className="card"
                                 style={{
                                     marginBottom: 'var(--spacing-lg)',
-                                    background: txStatus.includes('✅') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                                    border: txStatus.includes('✅') ? '1px solid var(--color-success)' : '1px solid var(--color-warning)',
+                                    background: txStatus.includes('Success:') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                    border: txStatus.includes('Success:') ? '1px solid var(--color-success)' : '1px solid var(--color-warning)',
                                 }}
                             >
                                 <p>{txStatus}</p>
@@ -230,7 +281,7 @@ export const AssetDetails: React.FC = () => {
                                 disabled={isRepaying || loading}
                                 style={{ flex: 1 }}
                             >
-                                ⚡ Flash Advance
+                                Flash Advance
                             </Button>
                         </div>
 
@@ -243,7 +294,7 @@ export const AssetDetails: React.FC = () => {
                                 }}
                             >
                                 <p style={{ color: 'var(--color-warning)', fontSize: 'var(--font-size-sm)' }}>
-                                    🔒 Stream is currently repaying a flash advance. All yield is being automatically allocated to repayment.
+                                    Lock: Stream is currently repaying a flash advance. All yield is being automatically allocated to repayment.
                                 </p>
                             </div>
                         )}

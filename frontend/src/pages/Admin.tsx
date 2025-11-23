@@ -105,7 +105,7 @@ export const Admin: React.FC = () => {
                             </button>
                             <div>
                                 <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: '4px' }}>
-                                    🎛️ Continuum Command Center
+                                    Control: Continuum Command Center
                                 </h2>
                                 <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                                     Operator: {account?.address.slice(0, 10)}...{account?.address.slice(-6)}

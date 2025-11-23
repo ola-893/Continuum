@@ -2,7 +2,37 @@
 
 > **Tokenized Real-World Assets with Live Yield Streaming on Aptos**
 
-Continuum is a next-generation RWA (Real World Asset) protocol built on Aptos that enables tokenization of real-world assets with continuous yield distribution through on-chain streaming.
+## The Problem: The "Rich Asset, Poor Liquidity" Paradox
+
+In the current Real World Asset (RWA) market, asset ownership is static while financial needs are dynamic.
+
+- **The Liquidity Trap**: An asset owner (e.g., a landlord) might own a property worth $1M generating $5,000/month, but they cannot access that future income today to pay for immediate expenses (like a roof repair) without taking out a high-interest bank loan with weeks of paperwork.
+- **The "Decoupling" Risk**: When a tokenized asset is sold on a secondary market (like an NFT marketplace), the income stream often fails to move with it automatically. This creates a chaotic scenario where the old owner keeps receiving rent that belongs to the new owner, requiring manual reconciliation.
+- **Compliance Friction**: RWA protocols struggle to enforce real-time regulatory checks (KYC/AML) at the exact moment of income withdrawal, exposing issuers to regulatory fines if funds stream to a sanctioned wallet.
+
+## The Solution: Continuum - The Solvency-Aware RWA Protocol
+
+YieldStream is a compliant, object-oriented streaming protocol on Aptos that turns static assets into liquid, programmable cash flow.
+
+### 1. Instant Liquidity via "Flash Advance" (The Innovation)
+
+**How it works**: We utilise the deterministic nature of money streaming to allow asset owners to "borrow" from their own future.
+
+**The Fix**: Instead of waiting 30 days for rent, a landlord can trigger a Flash Advance to withdraw 3 months of future income instantly. The smart contract mathematically guarantees solvency by "pausing" their future withdrawals until time catches up to the debt. No banks, no interest, just time-travelling liquidity.
+
+### 2. True Asset-Yield Coupling (The Architecture)
+
+**How it works**: By leveraging Aptos Objects, we bind the income stream directly to the NFT, not a user address.
+
+**The Fix**: If Alice sells her Real Estate NFT to Bob on a marketplace, the stream instantly redirects the very next second of yield to Bob. There is no manual transfer required; the yield follows the asset, ensuring 100% fair distribution during secondary sales.
+
+### 3. The "Compliance Guard" Layer (The Safety)
+
+**How it works**: A modular governance wrapper that intercepts every withdrawal request.
+
+**The Fix**: Before a single USDC leaves the contract, the system verifies the recipient’s on-chain Identity (DID). If a user's KYC has expired or they are sanctioned, the stream automatically freezes, protecting the issuer from regulatory liability.
+
+Continuum is a next-generation RWA (Real World Asset) protocol built on Aptos that enables tokenisation of real-world assets with continuous yield distribution through on-chain streaming.
 
 ---
 
@@ -35,41 +65,6 @@ A premium React + Vite app with:
 - **Admin Command Center** - Mint assets, manage KYC, emergency controls
 - **Live Balance Updates** - Real-time ticking yield display
 - **Public Streams Gallery** - Explore all minted RWAs
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- [Aptos CLI](https://aptos.dev/cli-tools/aptos-cli-tool/install-aptos-cli)
-- [Node.js 18+](https://nodejs.org/)
-- An Aptos wallet (Petra, Martian, or Pontem)
-
-### 1. Deploy Smart Contracts
-
-```bash
-# Compile contracts
-aptos move compile
-
-# Deploy to testnet
-./deploy.sh
-```
-
-The deployment script will:
-1. Publish all contracts
-2. Set up admin privileges
-3. Initialize the ecosystem  
-4. Initialize the token registry
-
-### 2. Run Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Visit `http://localhost:5173`
 
 ---
 
@@ -136,7 +131,7 @@ export const CONTRACT_CONFIG = {
     RWA_HUB: "rwa_hub",
     ASSET_YIELD: "asset_yield_protocol",
     STREAMING: "streaming_protocol",
-    COMPLIANCE: "complaince_guard",
+    COMPLIANCE: "compliance_guard",
   },
   // ...
 };
@@ -173,19 +168,6 @@ continuum/
 - **`useAssetStream.ts`** - Real-time yield tracking
 - **`useAssetList.ts`** - Multi-asset portfolio management
 - **`nftMintingService.ts`** - NFT creation helpers
-
----
-
-## 🧪 Testing
-
-```bash
-# Test smart contracts
-aptos move test
-
-# Test frontend
-cd frontend
-npm run build
-```
 
 ---
 
@@ -226,26 +208,10 @@ All interactions check KYC status:
 
 ---
 
-## 📜 License
-
-MIT License - See LICENSE file
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
----
-
 ## 📞 Support
 
-- **Documentation**: [Coming Soon]
-- **Discord**: [Coming Soon]
-- **Twitter**: [Coming Soon]
+- **website**: [Coming Soon]
+- **contact**: [https://www.linkedin.com/in/olaoluwa-marvellous/](https://www.linkedin.com/in/olaoluwa-marvellous/)
 
 ---
 

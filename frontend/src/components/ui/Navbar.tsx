@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Infinity, Wallet } from 'lucide-react';
+import { Infinity, Wallet, Zap } from 'lucide-react';
 import { truncateAddress } from '../../utils/formatting';
 import { useContinuum } from '../../hooks/useContinuum';
 import { ProfileModal } from './ProfileModal';
@@ -10,6 +10,7 @@ export const Navbar: React.FC = () => {
     const { account, connected, connect, wallets } = useWallet();
     const { complianceStatus } = useContinuum();
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+    const location = useLocation();
 
     const handleConnectWallet = async () => {
         try {
@@ -43,6 +44,44 @@ export const Navbar: React.FC = () => {
                             />
                             <span className="text-2xl font-bold gradient-text">Continuum</span>
                         </Link>
+
+                        {/* Navigation Links */}
+                        {connected && (
+                            <div style={{ display: 'flex', gap: 'var(--spacing-lg)' }}>
+                                <Link
+                                    to="/dashboard"
+                                    style={{
+                                        padding: 'var(--spacing-sm) var(--spacing-md)',
+                                        borderRadius: 'var(--border-radius-md)',
+                                        background: location.pathname === '/dashboard' ? 'rgba(0, 217, 255, 0.1)' : 'transparent',
+                                        border: location.pathname === '/dashboard' ? '1px solid var(--color-primary)' : '1px solid transparent',
+                                        transition: 'all 0.2s ease',
+                                        textDecoration: 'none',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    to="/rentals"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 'var(--spacing-xs)',
+                                        padding: 'var(--spacing-sm) var(--spacing-md)',
+                                        borderRadius: 'var(--border-radius-md)',
+                                        background: location.pathname === '/rentals' ? 'rgba(0, 217, 255, 0.1)' : 'transparent',
+                                        border: location.pathname === '/rentals' ? '1px solid var(--color-primary)' : '1px solid transparent',
+                                        transition: 'all 0.2s ease',
+                                        textDecoration: 'none',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    <Zap size={16} />
+                                    Rent Assets
+                                </Link>
+                            </div>
+                        )}
 
                         {/* Wallet Connection */}
                         <div className="flex items-center gap-md">
@@ -92,11 +131,11 @@ export const Navbar: React.FC = () => {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
                                             {complianceStatus.hasKYC ? (
                                                 <span style={{ fontSize: '11px', color: 'var(--color-success)' }}>
-                                                    ✓ KYC Verified
+                                                    KYC Verified
                                                 </span>
                                             ) : (
                                                 <span style={{ fontSize: '11px', color: 'var(--color-warning)' }}>
-                                                    ⚠ No KYC
+                                                    No KYC
                                                 </span>
                                             )}
                                             {complianceStatus.isAdmin && (

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# ♾️ CONTINUUM RWA PROTOCOL - DEPLOYMENT & USER FLOW SCRIPT
+# CONTINUUM RWA PROTOCOL - DEPLOYMENT & USER FLOW SCRIPT
 # ==============================================================================
 
 # 1. CONFIGURATION
@@ -10,11 +10,11 @@ PROFILE="default"          # The Aptos CLI profile to use (usually 'default')
 NAMED_ADDRESS="aptos_rwa"  # The named address in Move.toml
 PACKAGE_DIR="."            # Directory containing Move.toml
 
-# ⚠️ REPLACE THIS WITH YOUR OWN ADDRESS AFTER INITIALIZING PROFILE
+# REPLACE THIS WITH YOUR OWN ADDRESS AFTER INITIALIZING PROFILE
 # Run: aptos init --profile default
 DEPLOYER_ADDR=$(aptos account lookup-address --profile $PROFILE)
 
-# ⚠️ REPLACE THIS WITH A REAL NFT OBJECT ADDRESS YOU OWN
+# REPLACE THIS WITH A REAL NFT OBJECT ADDRESS YOU OWN
 # If you don't have one, create a collection via CLI or GUI and paste the address here.
 # The protocol NEEDS an Asset Object to attach the stream to.
 ASSET_TOKEN_ADDR="0x1234567890123456789012345678901234567890123456789012345678901234" 
@@ -25,26 +25,26 @@ ONE_APT=100000000 # 1 APT (8 decimals)
 DURATION=2592000  # 30 Days in seconds
 ASSET_TYPE_REAL_ESTATE=1
 
-echo "♾️  Starting Continuum Deployment Sequence..."
+echo "Starting Continuum Deployment Sequence..."
 echo "   Deployer: $DEPLOYER_ADDR"
 echo "   Asset Target: $ASSET_TOKEN_ADDR"
 echo "----------------------------------------------------------------"
 
 # 2. PUBLISH MODULES
 # ------------------------------------------------------------------------------
-echo "📦 Step 1: Compiling and Publishing Smart Contracts..."
+echo "Step 1: Compiling and Publishing Smart Contracts..."
 
 aptos move publish \
   --named-addresses $NAMED_ADDRESS=$DEPLOYER_ADDR \
   --profile $PROFILE \
   --assume-yes
 
-echo "✅ Contracts Published."
+echo "Contracts Published."
 echo "----------------------------------------------------------------"
 
 # 3. INITIALIZE ECOSYSTEM
 # ------------------------------------------------------------------------------
-echo "🏗️  Step 2: Initializing RWA Ecosystem (Stream, Yield, Compliance)..."
+echo "Step 2: Initializing RWA Ecosystem (Stream, Yield, Compliance)..."
 # Calls rwa_hub::initialize_rwa_ecosystem
 # This creates the resource accounts for StreamRegistry, AssetYieldRegistry, etc.
 
@@ -54,12 +54,12 @@ aptos move run \
   --profile $PROFILE \
   --assume-yes
 
-echo "✅ Ecosystem Initialized."
+echo "Ecosystem Initialized."
 echo "----------------------------------------------------------------"
 
 # 4. COMPLIANCE SETUP (KYC & Whitelisting)
 # ------------------------------------------------------------------------------
-echo "🛡️  Step 3: Setting up Compliance (KYC & Whitelist)..."
+echo "Step 3: Setting up Compliance (KYC & Whitelist)..."
 
 # A. Register Identity (KYC) for the Deployer (simulating the Investor/Owner)
 # Arguments: user, is_kyc_verified, jurisdiction(bytes), level, expiry
@@ -79,12 +79,12 @@ aptos move run \
   --profile $PROFILE \
   --assume-yes
 
-echo "✅ User KYC'd and Whitelisted."
+echo "User KYC'd and Whitelisted."
 echo "----------------------------------------------------------------"
 
 # 5. CREATE RWA STREAM (The "Issuer" Flow)
 # ------------------------------------------------------------------------------
-echo "💧 Step 4: Creating Asset-Bound Stream..."
+echo "Step 4: Creating Asset-Bound Stream..."
 echo "   Streaming 10 APT to Asset: $ASSET_TOKEN_ADDR"
 
 # Arguments: 
@@ -109,12 +109,12 @@ aptos move run \
   --profile $PROFILE \
   --assume-yes
 
-echo "✅ Stream Active! Funds are now flowing to the Asset Object."
+echo "Stream Active! Funds are now flowing to the Asset Object."
 echo "----------------------------------------------------------------"
 
 # 6. CLAIM YIELD (The "Investor" Flow)
 # ------------------------------------------------------------------------------
-echo "💰 Step 5: Claiming Yield..."
+echo "Step 5: Claiming Yield..."
 echo "   Verifying ownership of $ASSET_TOKEN_ADDR..."
 
 # Note: This will only work if the PROFILE account actually OWNS the ASSET_TOKEN_ADDR.
@@ -132,12 +132,12 @@ aptos move run \
   --profile $PROFILE \
   --assume-yes
 
-echo "✅ Yield Claimed Successfully."
+echo "Yield Claimed Successfully."
 echo "----------------------------------------------------------------"
 
 # 7. FLASH ADVANCE (The "Innovation" Flow)
 # ------------------------------------------------------------------------------
-echo "⚡ Step 6: Requesting Flash Advance (Time Travel Loan)..."
+echo "Step 6: Requesting Flash Advance (Time Travel Loan)..."
 echo "   Requesting 0.5 APT advance from future earnings."
 
 aptos move run \
@@ -153,6 +153,6 @@ aptos move run \
   --profile $PROFILE \
   --assume-yes
 
-echo "✅ Flash Advance Executed. Future yield intercepted."
+echo "Flash Advance Executed. Future yield intercepted."
 echo "----------------------------------------------------------------"
-echo "♾️  Continuum Flow Complete."
+echo "Continuum Flow Complete."

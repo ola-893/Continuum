@@ -17,6 +17,23 @@ function convertToStreamInfo(blockchainInfo: any): StreamInfo {
 }
 
 /**
+ * Convert numeric asset type to display string
+ * Registry uses: 0=Real Estate, 1=Car/Vehicle, 2=Commodities
+ */
+function getAssetTypeName(assetType: number): string {
+    switch (assetType) {
+        case 0:
+            return 'Real Estate';
+        case 1:
+            return 'Vehicle';
+        case 2:
+            return 'Commodities';
+        default:
+            return 'Real Estate';
+    }
+}
+
+/**
  * Hook to load real stream data from blockchain for multiple assets (Dashboard grid)
  */
 export function useAssetList(tokenAddresses: string[]) {
@@ -46,11 +63,22 @@ export function useAssetList(tokenAddresses: string[]) {
                             // Get stream info
                             const streamInfo = await ContinuumService.getStreamInfo(streamId);
 
+                            // Get token details from registry to fetch asset type
+                            let assetType = 'Real Estate'; // fallback
+                            try {
+                                const tokenDetails = await ContinuumService.getTokenDetails(tokenAddress);
+                                if (tokenDetails && tokenDetails.asset_type !== undefined) {
+                                    assetType = getAssetTypeName(Number(tokenDetails.asset_type));
+                                }
+                            } catch (error) {
+                                console.warn(`Could not fetch asset type for ${tokenAddress}, using default`);
+                            }
+
                             if (streamInfo) {
                                 loadedAssets.push({
                                     tokenAddress,
                                     streamInfo: convertToStreamInfo(streamInfo),
-                                    assetType: 'Real Estate', // Default, could be enhanced
+                                    assetType, // Now uses actual type from registry!
                                     title: `Asset #${tokenAddress.slice(-4)}`,
                                 });
                             }

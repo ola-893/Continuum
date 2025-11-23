@@ -98,7 +98,7 @@ export const LandingPage: React.FC = () => {
                                     fontSize: '50px',
                                 }}
                             >
-                                🏠
+                                Home:
                             </div>
 
                             {/* Flowing Stream (animated gradient line) */}
@@ -133,7 +133,7 @@ export const LandingPage: React.FC = () => {
                                     fontSize: '50px',
                                 }}
                             >
-                                💰
+                                Money:
                             </div>
                         </div>
                     </motion.div>

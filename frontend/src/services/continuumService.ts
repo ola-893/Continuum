@@ -162,6 +162,103 @@ export class ContinuumService {
     }
 
     /**
+     * Get token details from registry
+     */
+    static async getTokenDetailsFromRegistry(tokenAddress: string) {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: buildFunctionId(
+                        CONTRACT_CONFIG.MODULES.TOKEN_REGISTRY,
+                        "get_token"
+                    ),
+                    functionArguments: [tokenAddress],
+                },
+            });
+            return result[0];
+        } catch (error) {
+            console.error('Failed to get token details:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get NFT name and description directly from blockchain
+     */
+    static async getNFTMetadata(tokenAddress: string): Promise<{ name: string, description: string }> {
+        try {
+            // Fetch the token object's properties using Aptos SDK
+            const resource = await aptosClient.getAccountResource({
+                accountAddress: tokenAddress,
+                resourceType: '0x4::token::Token',
+            });
+
+            // Extract name from the token object
+            const name = (resource.data as any)?.name || `Asset #${tokenAddress.slice(-4)}`;
+            const description = (resource.data as any)?.description || '';
+
+            return { name, description };
+        } catch (error) {
+            console.warn(`Could not fetch NFT metadata from blockchain for ${tokenAddress}:`, error);
+            // Fallback to fetching from URI if available
+            return {
+                name: `Asset #${tokenAddress.slice(-4)}`,
+                description: '',
+            };
+        }
+    }
+
+    /**
+     * Check if an asset has an active rental
+     * Returns: { isRented: boolean, streamId: number }
+     */
+    static async getActiveRental(tokenAddress: string): Promise<{ isRented: boolean, streamId: number }> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: buildFunctionId(CONTRACT_CONFIG.MODULES.RWA_HUB, "get_active_rental"),
+                    functionArguments: [tokenAddress],
+                },
+            });
+
+            const isRented = result[0] as boolean;
+            const streamId = Number(result[1]);
+
+            return { isRented, streamId };
+        } catch (error) {
+            console.error('Error checking active rental:', error);
+            return { isRented: false, streamId: 0 };
+        }
+    }
+
+    /**
+     * Get detailed rental information
+     * Returns: { tenant, landlord, timeRemaining, totalPaidSoFar, isActive }
+     */
+    static async getRentalDetails(streamId: number): Promise<any> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: buildFunctionId(CONTRACT_CONFIG.MODULES.RWA_HUB, "get_rental_details"),
+                    typeArguments: ["0x1::aptos_coin::AptosCoin"],
+                    functionArguments: [CONTRACT_CONFIG.MODULE_ADDRESS, streamId.toString()],
+                },
+            });
+
+            return {
+                tenant: result[0] as string,
+                landlord: result[1] as string,
+                timeRemaining: Number(result[2]),
+                totalPaidSoFar: Number(result[3]),
+                isActive: result[4] as boolean,
+            };
+        } catch (error) {
+            console.error('Error fetching rental details:', error);
+            return null;
+        }
+    }
+
+    /**
      * Get count of all registered tokens
      */
     static async getTokenCount(): Promise<number> {
@@ -180,20 +277,23 @@ export class ContinuumService {
     }
 
     /**
-     * Get token details by address
+     * Get all registered tokens from the registry
      */
-    static async getTokenDetails(tokenAddress: string): Promise<any | null> {
+    static async getAllRegisteredTokens() {
         try {
             const result = await aptosClient.view({
                 payload: {
-                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_token_details`,
-                    functionArguments: [tokenAddress],
+                    function: buildFunctionId(
+                        CONTRACT_CONFIG.MODULES.TOKEN_REGISTRY,
+                        "get_all_tokens"
+                    ),
+                    functionArguments: [],
                 },
             });
-            return result[0] || null;
+            return result[0] as any[];
         } catch (error) {
-            console.error("Error fetching token details:", error);
-            return null;
+            console.error('Error fetching all registered tokens:', error);
+            return [];
         }
     }
 

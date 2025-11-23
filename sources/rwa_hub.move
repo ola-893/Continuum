@@ -8,6 +8,7 @@ module continuum::rwa_hub {
     use aptos_framework::object;
     use aptos_framework::timestamp;
     use aptos_token_objects::token::Token;
+    use aptos_std::table::{Self, Table};
     use continuum::streaming_protocol;
     use continuum::asset_yield_protocol;
     use continuum::compliance_guard;
@@ -17,17 +18,31 @@ module continuum::rwa_hub {
     const E_NOT_AUTHORIZED: u64 = 100;
     const E_COMPLIANCE_CHECK_FAILED: u64 = 101;
 
+    /// Registry to track ACTIVE rentals for assets
+    struct RentalRegistry has key {
+        // Maps Asset Object Address -> Active Stream ID
+        active_rentals: Table<address, u64>, 
+    }
+
     /// Initialize the complete RWA ecosystem for a specific coin type
     public entry fun initialize_rwa_ecosystem<CoinType>(deployer: &signer) {
         streaming_protocol::initialize<CoinType>(deployer);
         asset_yield_protocol::initialize<CoinType>(deployer);
         compliance_guard::initialize(deployer);
         token_registry::initialize(deployer);
+
+        // Initialize Rental Registry
+        let deployer_addr = signer::address_of(deployer);
+        if (!exists<RentalRegistry>(deployer_addr)) {
+            move_to(deployer, RentalRegistry {
+                active_rentals: table::new(),
+            });
+        };
     }
 
     /// Create a compliant RWA yield stream with full verification and auto-registration
     /// This is the main entry point for creating asset-backed yield streams
-    /// 🔧 CRITICAL FIX: No more expected_stream_id - we capture the real ID!
+    /// CRITICAL FIX: No more expected_stream_id - we capture the real ID!
     public entry fun create_compliant_rwa_stream<CoinType>(
         issuer: &signer,
         stream_registry_addr: address,
@@ -38,7 +53,7 @@ module continuum::rwa_hub {
         duration: u64,
         asset_type: u8, // 1=Real Estate, 2=Securities, 3=Commodities, 4=Art
         metadata_uri: vector<u8>, // NFT metadata URI for registry
-        // 🔧 REMOVED: expected_stream_id parameter - no longer needed!
+        // REMOVED: expected_stream_id parameter - no longer needed!
     ) {
         let issuer_addr = signer::address_of(issuer);
         
@@ -51,7 +66,7 @@ module continuum::rwa_hub {
         
         assert!(is_authorized, error::permission_denied(E_NOT_AUTHORIZED));
 
-        // 🔧 CRITICAL FIX: Capture the actual stream_id returned from creation
+        // CRITICAL FIX: Capture the actual stream_id returned from creation
         let actual_stream_id = asset_yield_protocol::create_asset_yield_stream<CoinType>(
             issuer,
             stream_registry_addr,
@@ -72,7 +87,7 @@ module continuum::rwa_hub {
             0u8 // Default to Real Estate for Art/others
         };
 
-        // 🔧 CRITICAL FIX: Register using the ACTUAL stream_id
+        // CRITICAL FIX: Register using the ACTUAL stream_id
         token_registry::register_token(
             token_obj_addr,
             registry_asset_type,
@@ -157,7 +172,7 @@ module continuum::rwa_hub {
     }
 
     // ===================================================================
-    // 🔧 BUG FIX: Auto-Lookup Compliance Check Functions
+    // BUG FIX: Auto-Lookup Compliance Check Functions
     // ===================================================================
 
     /// Claim yield with AUTO-LOOKUP compliance check (Fixes the bug)
@@ -300,6 +315,13 @@ module continuum::rwa_hub {
         compliance_guard::initialize(admin);
         token_registry::initialize(admin);
 
+        // Initialize Rental Registry
+        if (!exists<RentalRegistry>(admin_addr)) {
+            move_to(admin, RentalRegistry {
+                active_rentals: table::new(),
+            });
+        };
+
         // Setup admin KYC
         compliance_guard::register_identity(
             admin,
@@ -321,10 +343,10 @@ module continuum::rwa_hub {
     }
 
     // ===================================================================
-    // 🚗🏠 RENTAL & IoT INTEGRATION (Pay-as-you-go Access)
+    // RENTAL & IoT INTEGRATION (Pay-as-you-go Access)
     // ===================================================================
 
-    /// 🚗 RENTAL INNOVATION: Pay-as-you-go Access
+    /// RENTAL INNOVATION: Pay-as-you-go Access
     /// Tenant streams money to the Asset Owner to gain physical access.
     /// No whitelisting required for the Tenant (Open Access).
     /// 
@@ -338,7 +360,7 @@ module continuum::rwa_hub {
         token_obj_addr: address, // The Asset (Car/House)
         payment_amount: u64,     // Total budget for this session
         duration: u64,           // How long this budget should last (in seconds)
-    ) {
+    ) acquires RentalRegistry {
         // 1. Find out who owns the Asset right now (The Landlord/Car Rental Co.)
         let token_obj = object::address_to_object<Token>(token_obj_addr);
         let current_owner = object::owner(token_obj);
@@ -349,7 +371,7 @@ module continuum::rwa_hub {
 
         // 3. Create the stream FROM Tenant TO Landlord
         // Tenant's coins are locked, Landlord receives them over time
-        streaming_protocol::create_stream_with_addr<CoinType>(
+        let stream_id = streaming_protocol::create_stream_with_addr<CoinType>(
             stream_registry_addr,
             tenant,               // Sender (Tenant locks money)
             current_owner,        // Recipient (Landlord gets paid)
@@ -358,10 +380,21 @@ module continuum::rwa_hub {
             duration,
             payment_amount
         );
+
+        // 4. Register this as the ACTIVE rental in the registry
+        let rental_registry = borrow_global_mut<RentalRegistry>(@continuum);
+
+        // If there was an old rental, remove it (overwrite)
+        if (table::contains(&rental_registry.active_rentals, token_obj_addr)) {
+            table::remove(&mut rental_registry.active_rentals, token_obj_addr);
+        };
+        
+        // Save the new stream ID
+        table::add(&mut rental_registry.active_rentals, token_obj_addr, stream_id);
     }
 
     #[view]
-    /// 🤖 IoT Check: Should the device operate?
+    /// IoT Check: Should the device operate?
     /// Returns TRUE if the tenant has an active stream paying the landlord.
     /// 
     /// Called by: Tesla Head Unit / Smart Lock / IoT Gateway / Industrial Equipment
@@ -495,5 +528,58 @@ module continuum::rwa_hub {
     /// Get token by stream ID (for yield lookup integration)
     public fun get_token_by_stream(stream_id: u64): token_registry::TokenIndexEntry {
         token_registry::get_token_by_stream_id(stream_id)
+    }
+
+    // ===================================================================
+    // Rental View Functions
+    // ===================================================================
+
+    #[view]
+    /// Check if an asset is currently rented
+    /// Returns: (IsRented, ActiveStreamId)
+    public fun get_active_rental(token_obj_addr: address): (bool, u64) acquires RentalRegistry {
+        if (!exists<RentalRegistry>(@continuum)) {
+            return (false, 0)
+        };
+        let registry = borrow_global<RentalRegistry>(@continuum);
+        
+        if (table::contains(&registry.active_rentals, token_obj_addr)) {
+            let stream_id = *table::borrow(&registry.active_rentals, token_obj_addr);
+            (true, stream_id)
+        } else {
+            (false, 0)
+        }
+    }
+
+    #[view]
+    /// Get detailed Dashboard Data for a Rental
+    /// Returns: (Tenant, Landlord, TimeRemaining, TotalPaidSoFar, IsActive)
+    public fun get_rental_details<CoinType>(
+        stream_registry_addr: address,
+        stream_id: u64
+    ): (address, address, u64, u64, bool) {
+        // 1. Get raw info
+        let (sender, recipient, total, _, start, stop, withdrawn, status) = 
+            streaming_protocol::get_stream_info<CoinType>(stream_registry_addr, stream_id);
+        
+        // 2. Calculate time remaining
+        let current_time = timestamp::now_seconds();
+        let time_remaining = if (current_time >= stop) { 0 } else { stop - current_time };
+        
+        // 3. Status check (0 = Active)
+        let is_active = status == 0;
+
+        (sender, recipient, time_remaining, withdrawn, is_active)
+    }
+
+    /// EMERGENCY FIX: Initialize ONLY the Rental Registry
+    /// Run this if you are upgrading an existing contract!
+    public entry fun initialize_rental_registry_only(deployer: &signer) {
+        let deployer_addr = signer::address_of(deployer);
+        if (!exists<RentalRegistry>(deployer_addr)) {
+            move_to(deployer, RentalRegistry {
+                active_rentals: table::new(),
+            });
+        };
     }
 }

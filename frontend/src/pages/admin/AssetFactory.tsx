@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { NFTMintingService } from '../../services/nftMintingService';
@@ -29,6 +29,7 @@ export const AssetFactory: React.FC = () => {
     const [txStatus, setTxStatus] = useState('');
     const [collectionExists, setCollectionExists] = useState(false);
     const [checkingCollection, setCheckingCollection] = useState(true);
+    const [currentStep, setCurrentStep] = useState<number>(0); // 0 = idle, 1 = minting, 2 = creating stream
 
     // Check if collection exists on mount
     useEffect(() => {
@@ -74,12 +75,12 @@ export const AssetFactory: React.FC = () => {
                 10000
             );
             await signAndSubmitTransaction(transaction);
-            setTxStatus('✅ Collection created!');
+            setTxStatus('Success: Collection created!');
             setCollectionExists(true);
             setTimeout(() => setTxStatus(''), 3000);
         } catch (error) {
             console.error('Collection creation failed:', error);
-            setTxStatus('❌ Failed to create collection');
+            setTxStatus('Error: Failed to create collection');
             setTimeout(() => setTxStatus(''), 5000);
         }
     };
@@ -89,6 +90,7 @@ export const AssetFactory: React.FC = () => {
 
         try {
             // STEP 1: Mint NFT
+            setCurrentStep(1);
             setTxStatus('Step 1/2: Minting NFT...');
 
             const tokenUri = NFTMintingService.generateTokenMetadata(
@@ -117,7 +119,7 @@ export const AssetFactory: React.FC = () => {
                 throw new Error('No transaction hash returned from mint transaction');
             }
 
-            setTxStatus(`NFT transaction submitted (${txHash.slice(0, 10)}...).\nFetching token address from blockchain...`);
+            setTxStatus(`Step 1/2: NFT minted! Fetching token address...`);
 
             // Extract the token address by fetching full transaction details
             const tokenAddress = await NFTMintingService.extractTokenAddress(aptosClient, txHash);
@@ -126,9 +128,15 @@ export const AssetFactory: React.FC = () => {
                 throw new Error('Failed to extract token address from mint transaction. Check console for details.');
             }
 
-            setTxStatus(`✅ NFT minted! Address: ${tokenAddress.slice(0, 10)}...\\nStep 2/2: Creating yield stream...`);
+            setTxStatus(`Success: Step 1/2 Complete!\nNFT Address: ${tokenAddress.slice(0, 10)}...`);
 
-            // STEP 2: Create yield stream with the minted NFT address
+            // Small delay for user to see step 1 completion
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // STEP 2: Create yield stream
+            setCurrentStep(2);
+            setTxStatus('Step 2/2: Creating yield stream & registering...');
+
             // NOTE: This calls rwa_hub::create_real_estate_stream which automatically:
             // 1. Creates the stream via streaming_protocol
             // 2. Registers the asset in asset_yield_protocol
@@ -138,7 +146,8 @@ export const AssetFactory: React.FC = () => {
 
             await createYieldStream(tokenAddress, yieldInOctas, durationInSeconds);
 
-            setTxStatus('✅ Success! NFT minted, stream created, and auto-registered in global registry!');
+            setCurrentStep(0);
+            setTxStatus('Success: Success! NFT minted, stream created, and auto-registered in global registry!');
 
             // Reset forms
             setMintData({
@@ -156,7 +165,8 @@ export const AssetFactory: React.FC = () => {
 
         } catch (error: any) {
             console.error('Minting or stream creation failed:', error);
-            setTxStatus(`❌ Failed: ${error?.message || 'Check console for details'}`);
+            setCurrentStep(0);
+            setTxStatus(`Error: Failed: ${error?.message || 'Check console for details'}`);
             setTimeout(() => setTxStatus(''), 8000);
         }
     };
@@ -185,8 +195,8 @@ export const AssetFactory: React.FC = () => {
                     style={{
                         marginBottom: 'var(--spacing-xl)',
                         padding: 'var(--spacing-md)',
-                        background: txStatus.includes('✅') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                        border: txStatus.includes('✅') ? '1px solid var(--color-success)' : '1px solid var(--color-warning)',
+                        background: txStatus.includes('Success:') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                        border: txStatus.includes('Success:') ? '1px solid var(--color-success)' : '1px solid var(--color-warning)',
                         whiteSpace: 'pre-line',
                     }}
                 >
@@ -238,7 +248,8 @@ export const AssetFactory: React.FC = () => {
                                 }}
                             >
                                 <p style={{ color: 'var(--color-success)' }}>
-                                    ✅ Collection "YieldStream RWA" is ready!
+                                    <CheckCircle size={16} style={{ display: 'inline', marginRight: '4px', color: 'var(--color-success)' }} />
+                                    Collection "YieldStream RWA" is ready!
                                 </p>
                             </div>
                         )}
@@ -253,9 +264,9 @@ export const AssetFactory: React.FC = () => {
                                 onChange={(e) => setAssetType(parseInt(e.target.value))}
                                 style={{ width: '100%' }}
                             >
-                                <option value={CONTRACT_CONFIG.ASSET_TYPES.CAR}>🚗 Vehicle</option>
-                                <option value={CONTRACT_CONFIG.ASSET_TYPES.REAL_ESTATE}>🏢 Real Estate</option>
-                                <option value={CONTRACT_CONFIG.ASSET_TYPES.COMMODITIES}>🚜 Heavy Machinery</option>
+                                <option value={CONTRACT_CONFIG.ASSET_TYPES.CAR}>Vehicle</option>
+                                <option value={CONTRACT_CONFIG.ASSET_TYPES.REAL_ESTATE}>Real Estate</option>
+                                <option value={CONTRACT_CONFIG.ASSET_TYPES.COMMODITIES}>Heavy Machinery</option>
                             </select>
                         </div>
 
@@ -366,19 +377,112 @@ export const AssetFactory: React.FC = () => {
                 </div>
 
                 <div style={{ marginTop: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        leftIcon={<Sparkles size={20} />}
-                        disabled={loading || !collectionExists}
-                        isLoading={loading}
-                        style={{ minWidth: '300px' }}
-                    >
-                        Mint NFT & Create Stream
-                    </Button>
-                    <p style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                        Transaction 1: Mint NFT → Transaction 2: Create yield stream
-                    </p>
+                    {currentStep > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
+                            {/* Step Progress Indicator */}
+                            <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center' }}>
+                                {/* Step 1 */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--spacing-sm)',
+                                    padding: 'var(--spacing-sm) var(--spacing-md)',
+                                    borderRadius: 'var(--border-radius-md)',
+                                    background: currentStep === 1 ? 'rgba(0, 217, 255, 0.2)' : currentStep > 1 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                    border: `2px solid ${currentStep === 1 ? 'var(--color-primary)' : currentStep > 1 ? 'var(--color-success)' : 'transparent'}`,
+                                    transition: 'all 0.3s ease',
+                                }}>
+                                    <div style={{
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '50%',
+                                        background: currentStep === 1 ? 'var(--color-primary)' : currentStep > 1 ? 'var(--color-success)' : 'rgba(255, 255, 255, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 'bold',
+                                        fontSize: '12px',
+                                    }}>
+                                        {currentStep > 1 ? '' : '1'}
+                                    </div>
+                                    <span style={{ fontWeight: 500, fontSize: '14px' }}>Minting NFT</span>
+                                </div>
+
+                                {/* Connector */}
+                                <div style={{
+                                    width: '40px',
+                                    height: '2px',
+                                    background: currentStep > 1 ? 'var(--color-success)' : 'rgba(255, 255, 255, 0.1)',
+                                    transition: 'all 0.3s ease',
+                                }} />
+
+                                {/* Step 2 */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--spacing-sm)',
+                                    padding: 'var(--spacing-sm) var(--spacing-md)',
+                                    borderRadius: 'var(--border-radius-md)',
+                                    background: currentStep === 2 ? 'rgba(0, 217, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                    border: `2px solid ${currentStep === 2 ? 'var(--color-primary)' : 'transparent'}`,
+                                    transition: 'all 0.3s ease',
+                                }}>
+                                    <div style={{
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '50%',
+                                        background: currentStep === 2 ? 'var(--color-primary)' : 'rgba(255, 255, 255, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 'bold',
+                                        fontSize: '12px',
+                                    }}>
+                                        2
+                                    </div>
+                                    <span style={{ fontWeight: 500, fontSize: '14px' }}>Creating Stream</span>
+                                </div>
+                            </div>
+
+                            {/* Loading indicator */}
+                            <div style={{
+                                width: '100%',
+                                maxWidth: '300px',
+                                height: '4px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '2px',
+                                overflow: 'hidden',
+                            }}>
+                                <div style={{
+                                    height: '100%',
+                                    width: currentStep === 1 ? '50%' : '100%',
+                                    background: 'linear-gradient(90deg, var(--color-primary), var(--color-secondary))',
+                                    transition: 'width 0.5s ease',
+                                    animation: 'pulse 1.5s ease-in-out infinite',
+                                }} />
+                            </div>
+
+                            <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
+                                {currentStep === 1 ? 'Please confirm the transaction in your wallet...' : 'Registering in global marketplace...'}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                leftIcon={<Sparkles size={20} />}
+                                disabled={loading || !collectionExists}
+                                isLoading={loading}
+                                style={{ minWidth: '300px' }}
+                            >
+                                Mint NFT & Create Stream
+                            </Button>
+                            <p style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                                Step 1: Mint NFT → Step 2: Create yield stream
+                            </p>
+                        </>
+                    )}
                 </div>
             </form>
         </div>

@@ -29,7 +29,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             const transaction = ContinuumService.simulateKYC();
             await signAndSubmitTransaction(transaction);
 
-            setTxStatus('✅ Identity Verified Successfully!');
+            setTxStatus('Success: Identity Verified Successfully!');
             setTimeout(() => {
                 setVerifying(false);
                 setTxStatus('');
@@ -38,7 +38,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             }, 2000);
         } catch (error) {
             console.error('KYC verification failed:', error);
-            setTxStatus('❌ Verification Failed');
+            setTxStatus('Error: Verification Failed');
             setTimeout(() => {
                 setVerifying(false);
                 setTxStatus('');

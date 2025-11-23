@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { AssetLocation } from '../../data/mockAdminData';
+import { Car, Home, Wrench, MapPin, Map } from 'lucide-react';
 
 interface AssetMapProps {
     assets: AssetLocation[];
@@ -20,7 +21,7 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
         const x = ((lng - lngMin) / (lngMax - lngMin)) * 100;
         const y = ((latMax - lat) / (latMax - latMin)) * 100;
 
-        return { x: `${Math.max(2, Math.min(98, x))}%`, y: `${Math.max(2, Math.min(98, y))}%` };
+        return { x: `${ Math.max(2, Math.min(98, x)) }% `, y: `${ Math.max(2, Math.min(98, y)) }% ` };
     };
 
     const getStatusColor = (status: string) => {
@@ -36,16 +37,18 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
         }
     };
 
-    const getAssetIcon = (type: string) => {
+    const getAssetMarker = (type: string) => {
+        const iconSize = 20;
+        const iconColor = 'white';
         switch (type) {
             case 'car':
-                return '🚗';
+                return <Car size={iconSize} color={iconColor} />;
             case 'real_estate':
-                return '🏢';
+                return <Home size={iconSize} color={iconColor} />;
             case 'machinery':
-                return '🚜';
+                return <Wrench size={iconSize} color={iconColor} />;
             default:
-                return '📍';
+                return <MapPin size={iconSize} color={iconColor} />;
         }
     };
 
@@ -67,9 +70,9 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                     position: 'absolute',
                     inset: 0,
                     backgroundImage: `
-            linear-gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 217, 255, 0.1) 1px, transparent 1px)
-          `,
+linear - gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
+    linear - gradient(90deg, rgba(0, 217, 255, 0.1) 1px, transparent 1px)
+        `,
                     backgroundSize: '50px 50px',
                     opacity: 0.3,
                 }}
@@ -89,7 +92,8 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                     border: '1px solid rgba(0, 217, 255, 0.3)',
                 }}
             >
-                🗺️ San Francisco Bay Area
+                <Map size={20} style={{ display: 'inline', marginRight: '8px' }} />
+                San Francisco Bay Area
             </div>
 
             {/* Asset dots */}
@@ -115,13 +119,13 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                     >
                         {/* Dot */}
                         <div
-                            className={`asset-dot ${asset.status}`}
+                            className={`asset - dot ${ asset.status } `}
                             style={{
                                 width: isHovered ? '16px' : '12px',
                                 height: isHovered ? '16px' : '12px',
                                 borderRadius: '50%',
                                 background: getStatusColor(asset.status),
-                                boxShadow: `0 0 ${isHovered ? '30px' : '20px'} ${getStatusColor(asset.status)}`,
+                                boxShadow: `0 0 ${ isHovered ? '30px' : '20px' } ${ getStatusColor(asset.status) } `,
                                 animation: asset.status === 'active' ? 'pulse 2s infinite' : 'none',
                                 transition: 'all 0.3s ease',
                             }}

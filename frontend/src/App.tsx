@@ -6,6 +6,7 @@ import { Navbar } from './components/ui/Navbar';
 import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
 import { AssetDetails } from './pages/AssetDetails';
+import { Rentals } from './pages/Rentals';
 import { Admin } from './pages/Admin';
 import './index.css';
 
@@ -27,6 +28,15 @@ const App: React.FC = () => {
                                 <>
                                     <Navbar />
                                     <Dashboard />
+                                </>
+                            }
+                        />
+                        <Route
+                            path="/rentals"
+                            element={
+                                <>
+                                    <Navbar />
+                                    <Rentals />
                                 </>
                             }
                         />

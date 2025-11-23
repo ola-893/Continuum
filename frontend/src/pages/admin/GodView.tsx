@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Activity, DollarSign, Zap, TrendingUp } from 'lucide-react';
+import { Activity, DollarSign, Zap, TrendingUp, Car, Home, Wrench } from 'lucide-react';
 import { StatCard } from '../../components/admin/StatCard';
 import { AssetMap } from '../../components/admin/AssetMap';
 import { globalStats, type AssetLocation } from '../../data/mockAdminData';
@@ -34,7 +35,7 @@ export const GodView: React.FC = () => {
                                 streamInfo = await ContinuumService.getStreamInfo(streamId);
                                 streamStatus = await ContinuumService.getStreamStatus(streamId);
                             } catch (error) {
-                                console.warn(`Failed to fetch stream info for stream ${streamId}:`, error);
+                                console.warn(`Failed to fetch stream info for stream ${streamId}: `, error);
                             }
                         }
 
@@ -46,9 +47,9 @@ export const GodView: React.FC = () => {
                         };
 
                         return {
-                            id: `TOKEN-${index + 1}`,
+                            id: `TOKEN - ${index + 1} `,
                             type: typeMap[assetType] || 'real_estate',
-                            name: `Asset #${index + 1}`,
+                            name: `Asset #${index + 1} `,
                             tokenAddress,
                             status: streamStatus?.isFrozen ? 'frozen' : streamInfo ? 'active' : 'idle',
                             location: {
@@ -112,7 +113,7 @@ export const GodView: React.FC = () => {
                 />
                 <StatCard
                     label="IoT Uptime"
-                    value={`${globalStats.iotUptime}%`}
+                    value={`${globalStats.iotUptime}% `}
                     glow={true}
                     icon={<Zap size={24} style={{ color: 'var(--color-success)' }} />}
                 />
@@ -132,7 +133,7 @@ export const GodView: React.FC = () => {
                     <AssetMap assets={assets} onAssetClick={handleAssetClick} />
                 ) : (
                     <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📍</div>
+                        <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>Pin:</div>
                         <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No Assets Registered Yet</h3>
                         <p style={{ color: 'var(--color-text-secondary)' }}>
                             Assets will appear on the map once they are registered in the token registry
@@ -144,19 +145,25 @@ export const GodView: React.FC = () => {
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-md">
                 <div className="card" style={{ padding: 'var(--spacing-lg)', background: 'rgba(0, 217, 255, 0.05)', border: '1px solid var(--color-primary)' }}>
-                    <h4 style={{ marginBottom: 'var(--spacing-xs)' }}>🚗 Fleet Status</h4>
+                    <h4 style={{ marginBottom: 'var(--spacing-xs)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                        <Car size={18} /> Fleet Status
+                    </h4>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                         {assets.filter(a => a.type === 'car' && a.status === 'active').length} vehicles active, {assets.filter(a => a.type === 'car' && a.status === 'frozen').length} frozen
                     </p>
                 </div>
                 <div className="card" style={{ padding: 'var(--spacing-lg)', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid var(--color-success)' }}>
-                    <h4 style={{ marginBottom: 'var(--spacing-xs)' }}>🏢 Properties</h4>
+                    <h4 style={{ marginBottom: 'var(--spacing-xs)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                        <Home size={18} /> Properties
+                    </h4>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                         {assets.filter(a => a.type === 'real_estate' && a.status === 'active').length} with active streams, {assets.filter(a => a.type === 'real_estate' && a.status === 'idle').length} idle
                     </p>
                 </div>
                 <div className="card" style={{ padding: 'var(--spacing-lg)', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid var(--color-warning)' }}>
-                    <h4 style={{ marginBottom: 'var(--spacing-xs)' }}>🚜 Machinery</h4>
+                    <h4 style={{ marginBottom: 'var(--spacing-xs)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                        <Wrench size={18} /> Machinery
+                    </h4>
                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                         {assets.filter(a => a.type === 'machinery').length} units deployed
                     </p>
