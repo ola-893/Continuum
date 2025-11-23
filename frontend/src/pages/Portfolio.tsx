@@ -1,22 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Plus } from 'lucide-react';
 import { AssetCard } from '../components/ui/AssetCard';
-import { Button } from '../components/ui/Button';
 import { useAssetList } from '../hooks/useAssetList';
+import { ContinuumService } from '../services/continuumService';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { RefreshCw } from 'lucide-react';
 
 export const Portfolio: React.FC = () => {
-    const { connected } = useWallet();
+    const { connected, account } = useWallet();
     const [tokenAddresses, setTokenAddresses] = useState<string[]>([]);
-    const [newTokenAddress, setNewTokenAddress] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
 
     const { assets: userStreams } = useAssetList(tokenAddresses);
 
-    const handleAddAsset = () => {
-        if (newTokenAddress && !tokenAddresses.includes(newTokenAddress)) {
-            setTokenAddresses([...tokenAddresses, newTokenAddress]);
-            setNewTokenAddress('');
-        }
+    // Auto-detect owned RWA NFTs when wallet connects
+    useEffect(() => {
+        const fetchOwnedTokens = async () => {
+            if (!connected || !account) {
+                setTokenAddresses([]);
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const ownedTokens = await ContinuumService.getOwnedRWATokens(account.address);
+                console.log('Auto-detected owned RWA tokens:', ownedTokens);
+                setTokenAddresses(ownedTokens);
+            } catch (error) {
+                console.error('Error fetching owned tokens:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOwnedTokens();
+    }, [connected, account, lastRefresh]);
+
+    const handleRefresh = () => {
+        setLastRefresh(Date.now());
     };
 
     if (!connected) {
@@ -26,43 +48,82 @@ export const Portfolio: React.FC = () => {
                     <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)' }}>🔒</div>
                     <h2 style={{ marginBottom: 'var(--spacing-md)' }}>Connect Your Wallet</h2>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
-                        Connect your wallet to track your RWA portfolio
+                        Connect your wallet to view your RWA portfolio
                     </p>
                 </div>
             </div>
         );
     }
 
+    if (loading) {
+        return <LoadingScreen message="Loading your RWA portfolio..." />;
+    }
+
     return (
         <div style={{ padding: 'var(--spacing-2xl)' }}>
-            {/* Add Asset Section */}
-            <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-                <div style={{ display: 'flex', gap: 'var(--spacing-md)', maxWidth: '600px' }}>
-                    <input
-                        type="text"
-                        className="input"
-                        placeholder="Enter token address (0x...)"
-                        value={newTokenAddress}
-                        onChange={(e) => setNewTokenAddress(e.target.value)}
-                        style={{ flex: 1 }}
-                    />
-                    <Button onClick={handleAddAsset} disabled={!newTokenAddress.trim()}>
-                        <Plus size={16} /> Add Asset
-                    </Button>
+            {/* Header with Refresh */}
+            <div style={{ marginBottom: 'var(--spacing-2xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1 style={{ marginBottom: 'var(--spacing-xs)' }}>My Portfolio</h1>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                        {tokenAddresses.length} RWA NFT{tokenAddresses.length !== 1 ? 's' : ''} detected
+                    </p>
                 </div>
-                <p style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                    Add NFT token addresses to track your yield streams
-                </p>
+                <button
+                    onClick={handleRefresh}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-sm)',
+                        padding: 'var(--spacing-sm) var(--spacing-md)',
+                        background: 'rgba(0, 217, 255, 0.1)',
+                        border: '1px solid rgba(0, 217, 255, 0.3)',
+                        borderRadius: 'var(--border-radius-md)',
+                        color: 'var(--color-primary)',
+                        fontSize: 'var(--font-size-sm)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.2)';
+                        e.currentTarget.style.borderColor = 'var(--color-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+                    }}
+                >
+                    <RefreshCw size={16} />
+                    Refresh
+                </button>
             </div>
 
             {/* Assets Grid */}
             {tokenAddresses.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📊</div>
-                    <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No Assets Yet</h3>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>
-                        Add token addresses above to start tracking your portfolio
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>🏦</div>
+                    <h3 style={{ marginBottom: 'var(--spacing-sm)' }}>No RWA NFTs Found</h3>
+                    <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
+                        You don't own any RWA NFTs yet. Browse the marketplace to discover yield-bearing assets.
                     </p>
+                    <a
+                        href="/dashboard"
+                        style={{
+                            display: 'inline-block',
+                            padding: 'var(--spacing-sm) var(--spacing-lg)',
+                            background: 'var(--color-primary)',
+                            color: 'white',
+                            borderRadius: 'var(--border-radius-md)',
+                            textDecoration: 'none',
+                            fontSize: 'var(--font-size-sm)',
+                            fontWeight: 600,
+                            transition: 'opacity 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                    >
+                        Browse Marketplace
+                    </a>
                 </div>
             ) : (
                 <div className="grid grid-cols-3 gap-xl">

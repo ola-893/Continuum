@@ -92,6 +92,40 @@ export class ContinuumService {
     }
 
     /**
+     * Get RWA tokens owned by a specific user
+     * Fetches all tokens owned by user and filters for registered RWA tokens
+     */
+    static async getOwnedRWATokens(ownerAddress: string): Promise<string[]> {
+        try {
+            // Get all registered RWA tokens first
+            const registeredTokens = await this.getAllRegisteredTokens();
+            const registeredAddresses = new Set(
+                registeredTokens.map((token: any) =>
+                    token.token_address || token.tokenAddress
+                )
+            );
+
+            // Get all digital assets owned by the user
+            const ownedAssets = await aptosClient.getOwnedDigitalAssets({
+                ownerAddress,
+            });
+
+            // Filter for RWA tokens (those in our registry)
+            const ownedRWATokens = ownedAssets
+                .filter((asset: any) => {
+                    const tokenAddress = asset.token_data_id || asset.current_token_data?.token_data_id;
+                    return tokenAddress && registeredAddresses.has(tokenAddress);
+                })
+                .map((asset: any) => asset.token_data_id || asset.current_token_data?.token_data_id);
+
+            console.log('Owned RWA tokens:', ownedRWATokens);
+            return ownedRWATokens;
+        } catch (error) {
+            console.error("Error fetching owned RWA tokens:", error);
+            return [];
+        }
+    }
+    /**
      * Get paginated tokens for marketplace
      */
     static async getTokensPaginated(offset: number, limit: number): Promise<any[]> {
@@ -333,13 +367,13 @@ export class ContinuumService {
 
     /**
      * Create a real estate yield stream
+     * Note: expected_stream_id removed - the contract now auto-generates and captures the stream ID
      */
     static createRealEstateStream(
         tokenAddress: string,
         totalYield: number,
         durationInSeconds: number,
-        metadataUri: string = "",
-        expectedStreamId: number = 0
+        metadataUri: string = ""
     ): InputTransactionData {
         return {
             data: {
@@ -355,8 +389,7 @@ export class ContinuumService {
                     tokenAddress,
                     totalYield,
                     durationInSeconds,
-                    metadataUri,           // NEW: metadata_uri
-                    expectedStreamId,      // NEW: expected_stream_id
+                    metadataUri,           // metadata_uri
                 ],
             },
         };
@@ -364,10 +397,10 @@ export class ContinuumService {
 
     /**
      * Claim yield for an asset
+     * Note: asset_type removed - auto-lookup from token registry prevents user error
      */
     static claimYield(
-        tokenAddress: string,
-        assetType: number = CONTRACT_CONFIG.ASSET_TYPES.REAL_ESTATE
+        tokenAddress: string
     ): InputTransactionData {
         return {
             data: {
@@ -381,7 +414,6 @@ export class ContinuumService {
                     CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr
                     CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
                     tokenAddress,
-                    assetType,
                 ],
             },
         };
@@ -389,11 +421,11 @@ export class ContinuumService {
 
     /**
      * Flash advance - withdraw future yield immediately
+     * Note: asset_type removed - auto-lookup from token registry prevents user error
      */
     static flashAdvance(
         tokenAddress: string,
-        amountRequested: number,
-        assetType: number = CONTRACT_CONFIG.ASSET_TYPES.REAL_ESTATE
+        amountRequested: number
     ): InputTransactionData {
         return {
             data: {
@@ -403,12 +435,11 @@ export class ContinuumService {
                 ),
                 typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
                 functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS,
-                    CONTRACT_CONFIG.MODULE_ADDRESS,
-                    CONTRACT_CONFIG.MODULE_ADDRESS,
-                    tokenAddress,
-                    amountRequested,
-                    assetType,
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr  
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
+                    tokenAddress,                    // token_obj_addr
+                    amountRequested.toString(),      // amount_requested (as string for u64)
                 ],
             },
         };
@@ -546,6 +577,91 @@ export class ContinuumService {
                     CONTRACT_CONFIG.MODULE_ADDRESS,
                     users,
                     assetTypes,
+                ],
+            },
+        };
+    }
+
+    // ============================================
+    // 5. RENTAL & IoT STREAMING (NEW)
+    // ============================================
+
+    /**
+     * Stream rent to asset (Pay-as-you-go rental)
+     * Use cases: Car rentals, apartment rentals, equipment rentals
+     * Tenant streams money to asset owner to gain physical access
+     */
+    static streamRentToAsset(
+        tokenAddress: string,
+        paymentAmount: number,
+        duration: number
+    ): InputTransactionData {
+        return {
+            data: {
+                function: buildFunctionId(
+                    CONTRACT_CONFIG.MODULES.RWA_HUB,
+                    "stream_rent_to_asset"
+                ),
+                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
+                functionArguments: [
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
+                    tokenAddress,                    // token_obj_addr (the asset)
+                    paymentAmount,                   // payment_amount
+                    duration,                        // duration in seconds
+                ],
+            },
+        };
+    }
+
+    /**
+     * Check access status for IoT devices
+     * Returns true if tenant has active payment stream to current asset owner
+     * Called by: Tesla, smart locks, IoT gateways, industrial equipment
+     */
+    static async checkAccessStatus(
+        streamId: number,
+        tokenAddress: string
+    ): Promise<boolean> {
+        try {
+            const result = await aptosClient.view({
+                payload: {
+                    function: buildFunctionId(
+                        CONTRACT_CONFIG.MODULES.RWA_HUB,
+                        "check_access_status"
+                    ),
+                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
+                    functionArguments: [
+                        CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
+                        streamId,
+                        tokenAddress,                    // token_obj_addr
+                    ],
+                },
+            });
+            return result[0] as boolean;
+        } catch (error) {
+            console.error("Error checking access status:", error);
+            return false;
+        }
+    }
+
+    /**
+     * Cancel a rental stream early and get refund
+     * Completes the "pay only for what you use" user journey
+     * Example: Rented car for $100/day, used 2 hours, get $91.50 refunded
+     */
+    static cancelStream(
+        streamId: number
+    ): InputTransactionData {
+        return {
+            data: {
+                function: buildFunctionId(
+                    CONTRACT_CONFIG.MODULES.STREAMING_PROTOCOL,
+                    "cancel"
+                ),
+                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
+                functionArguments: [
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // registry_addr
+                    streamId,
                 ],
             },
         };

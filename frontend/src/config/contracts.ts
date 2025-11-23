@@ -3,8 +3,8 @@
  */
 
 export const CONTRACT_CONFIG = {
-    // Newly deployed Continuum contract address
-    MODULE_ADDRESS: "0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b",
+    // Newly deployed Continuum contract address (continuum-v3)
+    MODULE_ADDRESS: "0xf630676ecb561cf2b2fadc1a34daa8a054d24f0e936439f2e63a90d2651b87ef",
 
     // Network
     NETWORK: "testnet" as const,

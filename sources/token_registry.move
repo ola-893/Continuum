@@ -304,4 +304,25 @@ module continuum::token_registry {
             timestamp: timestamp::now_seconds(),
         });
     }
+
+    // ===================================================================
+    // 🔧 BUG FIX: Helper function to read asset_type from entry
+    // ===================================================================
+    
+    // ✅ NEW CODE (What should be there):
+    #[view]
+    /// Helper to read asset type by token address
+    public fun get_asset_type_by_token(token_address: address): u8 acquires TokenRegistry {
+        let registry_addr = @continuum;
+        assert!(exists<TokenRegistry>(registry_addr), E_REGISTRY_NOT_INITIALIZED);
+        
+        let registry = borrow_global<TokenRegistry>(registry_addr);
+        assert!(
+            smart_table::contains(&registry.token_index, token_address),
+            E_TOKEN_NOT_FOUND
+        );
+        
+        let entry = smart_table::borrow(&registry.token_index, token_address);
+        entry.asset_type
+    }
 }

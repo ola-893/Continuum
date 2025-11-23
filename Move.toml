@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-continuum = "0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b"
+continuum = "0xf630676ecb561cf2b2fadc1a34daa8a054d24f0e936439f2e63a90d2651b87ef"
 # Explicitly define the address for token objects to be safe (standard is 0x4)
 aptos_token_objects = "0x4"
 

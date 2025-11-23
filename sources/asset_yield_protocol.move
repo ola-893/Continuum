@@ -83,14 +83,15 @@ module continuum::asset_yield_protocol {
 
     /// Create an asset-backed yield stream with REAL COIN LOCKING
     /// Token owner is determined dynamically via NFT ownership at claim time
-    public entry fun create_asset_yield_stream<CoinType>(
+    /// 🔧 CRITICAL FIX: Now returns the actual stream_id instead of relying on user prediction
+    public fun create_asset_yield_stream<CoinType>(
         creator: &signer,
         stream_registry_addr: address,
         yield_registry_addr: address,
         token_obj_addr: address, // The Aptos Token Object address
         total_yield_amount: u64,
         duration: u64,
-    ) acquires AssetYieldRegistry {
+    ): u64 acquires AssetYieldRegistry {
         let creator_addr = signer::address_of(creator);
         
         let yield_registry = borrow_global_mut<AssetYieldRegistry<CoinType>>(yield_registry_addr);
@@ -140,6 +141,9 @@ module continuum::asset_yield_protocol {
             total_yield_amount,
             duration,
         });
+
+        // 🔧 CRITICAL FIX: Return the actual stream_id
+        stream_id
     }
 
     /// Claim yield for an asset - OWNERSHIP VERIFIED VIA NFT

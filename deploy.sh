@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Your Account
-ACCOUNT="0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b"
-PROFILE="continuum-admin"
+ACCOUNT="0xf630676ecb561cf2b2fadc1a34daa8a054d24f0e936439f2e63a90d2651b87ef"
+PROFILE="continuum-v3"
 MAX_GAS="150000"
 
 echo "================================"
@@ -17,7 +17,6 @@ aptos account list --profile $PROFILE
 
 echo ""
 echo "📦 Publishing contract (Max Gas $MAX_GAS)..."
-# FIX APPLIED: Ensure NO spaces are after the backslash (\) for line continuation
 aptos move publish \
   --profile $PROFILE \
   --named-addresses continuum=$ACCOUNT \
@@ -25,32 +24,13 @@ aptos move publish \
   --assume-yes
 
 echo ""
-echo "👤 Setting up admin (Step 1)..."
-# FIX APPLIED: Ensure NO spaces are after the backslash (\)
+echo "👤 Setting up Admin & Initializing Ecosystem..."
+# This ONE function initializes streaming, yield, compliance, and registry!
 aptos move run \
   --profile $PROFILE \
   --function-id $ACCOUNT::rwa_hub::quick_setup_with_admin \
   --type-args 0x1::aptos_coin::AptosCoin \
   --args string:US u8:1 u64:9999999999 \
-  --max-gas $MAX_GAS \
-  --assume-yes
-
-echo ""
-echo "⚙️  Initializing ecosystem (Step 2)..."
-# FIX APPLIED: Ensure NO spaces are after the backslash (\)
-aptos move run \
-  --profile $PROFILE \
-  --function-id $ACCOUNT::rwa_hub::initialize_rwa_ecosystem \
-  --type-args 0x1::aptos_coin::AptosCoin \
-  --max-gas $MAX_GAS \
-  --assume-yes
-
-echo ""
-echo "📝 Initializing token registry..."
-# FIX APPLIED: Ensure NO spaces are after the backslash (\)
-aptos move run \
-  --profile $PROFILE \
-  --function-id $ACCOUNT::token_registry::initialize \
   --max-gas $MAX_GAS \
   --assume-yes
 

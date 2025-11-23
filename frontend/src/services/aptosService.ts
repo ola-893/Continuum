@@ -1,5 +1,5 @@
 import { Aptos, AptosConfig, Network, InputViewFunctionData } from "@aptos-labs/ts-sdk";
-import { NETWORK, MODULE_NAME, APTOS_COIN, getNetworkEndpoint } from "../config/constants";
+import { NETWORK, APTOS_COIN } from "../config/constants";
 
 // Initialize Aptos client
 const aptosConfig = new AptosConfig({
@@ -186,14 +186,14 @@ export async function createRealEstateStream(
 /**
  * Claim yield for an asset
  * Corresponds to: rwa_hub::compliant_claim_yield
+ * Note: assetType removed - auto-lookup from token registry
  */
 export async function claimYield(
     account: any,
     streamRegistryAddr: string,
     yieldRegistryAddr: string,
     complianceAddr: string,
-    tokenAddr: string,
-    assetType: number
+    tokenAddr: string
 ): Promise<TransactionResponse> {
     const transaction = await aptos.transaction.build.simple({
         sender: account.address,
@@ -205,7 +205,6 @@ export async function claimYield(
                 yieldRegistryAddr,
                 complianceAddr,
                 tokenAddr,
-                assetType,
             ],
         },
     });
@@ -229,6 +228,7 @@ export async function claimYield(
 /**
  * Request a flash advance (borrow against future yield)
  * Corresponds to: rwa_hub::compliant_flash_advance
+ * Note: assetType removed - auto-lookup from token registry
  */
 export async function flashAdvance(
     account: any,
@@ -236,8 +236,7 @@ export async function flashAdvance(
     yieldRegistryAddr: string,
     complianceAddr: string,
     tokenAddr: string,
-    amountRequested: number,
-    assetType: number
+    amountRequested: number
 ): Promise<TransactionResponse> {
     const transaction = await aptos.transaction.build.simple({
         sender: account.address,
@@ -250,7 +249,6 @@ export async function flashAdvance(
                 complianceAddr,
                 tokenAddr,
                 amountRequested,
-                assetType,
             ],
         },
     });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { createRealEstateStream, claimYield, flashAdvance } from '../services/aptosService';
-import { ASSET_TYPES, ONE_APT, THIRTY_DAYS_SECONDS } from '../config/constants';
+import { ONE_APT, THIRTY_DAYS_SECONDS } from '../config/constants';
 
 const StreamManagement: React.FC = () => {
     const { account } = useWallet();
@@ -22,7 +22,6 @@ const StreamManagement: React.FC = () => {
     const [claimYieldRegistry, setClaimYieldRegistry] = useState('');
     const [claimCompliance, setClaimCompliance] = useState('');
     const [claimTokenAddr, setClaimTokenAddr] = useState('');
-    const [claimAssetType, setClaimAssetType] = useState<number>(ASSET_TYPES.REAL_ESTATE);
 
     // Flash Advance Form
     const [flashStreamRegistry, setFlashStreamRegistry] = useState('');
@@ -30,7 +29,6 @@ const StreamManagement: React.FC = () => {
     const [flashCompliance, setFlashCompliance] = useState('');
     const [flashTokenAddr, setFlashTokenAddr] = useState('');
     const [flashAmount, setFlashAmount] = useState(0.5 * ONE_APT); // 0.5 APT default
-    const [flashAssetType, setFlashAssetType] = useState<number>(ASSET_TYPES.REAL_ESTATE);
 
     const handleCreateStream = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,8 +76,7 @@ const StreamManagement: React.FC = () => {
                 claimStreamRegistry,
                 claimYieldRegistry,
                 claimCompliance,
-                claimTokenAddr,
-                claimAssetType
+                claimTokenAddr
             );
             setResult(`Yield claimed! Transaction: ${txn.hash}`);
         } catch (err: any) {
@@ -107,8 +104,7 @@ const StreamManagement: React.FC = () => {
                 flashYieldRegistry,
                 flashCompliance,
                 flashTokenAddr,
-                flashAmount,
-                flashAssetType
+                flashAmount
             );
             setResult(`Flash advance executed! Transaction: ${txn.hash}`);
         } catch (err: any) {
@@ -244,19 +240,6 @@ const StreamManagement: React.FC = () => {
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Asset Type:</label>
-                        <select
-                            value={claimAssetType}
-                            onChange={(e) => setClaimAssetType(Number(e.target.value))}
-                        >
-                            <option value={ASSET_TYPES.REAL_ESTATE}>Real Estate (1)</option>
-                            <option value={ASSET_TYPES.SECURITIES}>Securities (2)</option>
-                            <option value={ASSET_TYPES.COMMODITIES}>Commodities (3)</option>
-                            <option value={ASSET_TYPES.ART}>Art (4)</option>
-                        </select>
-                    </div>
-
                     <button type="submit" disabled={loading || !account}>
                         {loading ? 'Claiming...' : 'Claim Yield'}
                     </button>
@@ -319,19 +302,6 @@ const StreamManagement: React.FC = () => {
                             onChange={(e) => setFlashAmount(Number(e.target.value))}
                             required
                         />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Asset Type:</label>
-                        <select
-                            value={flashAssetType}
-                            onChange={(e) => setFlashAssetType(Number(e.target.value))}
-                        >
-                            <option value={ASSET_TYPES.REAL_ESTATE}>Real Estate (1)</option>
-                            <option value={ASSET_TYPES.SECURITIES}>Securities (2)</option>
-                            <option value={ASSET_TYPES.COMMODITIES}>Commodities (3)</option>
-                            <option value={ASSET_TYPES.ART}>Art (4)</option>
-                        </select>
                     </div>
 
                     <button type="submit" disabled={loading || !account}>

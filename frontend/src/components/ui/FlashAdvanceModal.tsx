@@ -41,11 +41,16 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 flex items-center justify-center"
                 style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    position: 'fixed',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     backdropFilter: 'blur(8px)',
-                    zIndex: 1000,
+                    zIndex: 9999,
+                    padding: 'var(--spacing-xl)',
                 }}
                 onClick={onClose}
             >
@@ -56,10 +61,14 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                     className="glass"
                     style={{
                         maxWidth: '500px',
-                        width: '90%',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
                         padding: 'var(--spacing-2xl)',
-                        borderRadius: 'var(--radius-xl)',
+                        borderRadius: 'var(--border-radius-xl)',
                         border: '1px solid var(--color-primary)',
+                        boxShadow: '0 20px 60px rgba(0, 217, 255, 0.3)',
+                        position: 'relative',
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >

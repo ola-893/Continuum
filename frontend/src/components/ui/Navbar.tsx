@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
-import { Infinity } from 'lucide-react';
+import { Infinity, Wallet } from 'lucide-react';
 import { truncateAddress } from '../../utils/formatting';
 import { useContinuum } from '../../hooks/useContinuum';
 import { ProfileModal } from './ProfileModal';
@@ -11,6 +11,7 @@ export const Navbar: React.FC = () => {
     const { account, connected } = useWallet();
     const { complianceStatus } = useContinuum();
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+    const [showWalletModal, setShowWalletModal] = React.useState(false);
 
     return (
         <>
@@ -91,7 +92,71 @@ export const Navbar: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <WalletSelector />
+                                <>
+                                    {/* Custom Connect Wallet CTA Button */}
+                                    <button
+                                        onClick={() => setShowWalletModal(true)}
+                                        className="btn-primary"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 'var(--spacing-sm)',
+                                            padding: 'var(--spacing-md) var(--spacing-xl)',
+                                            fontSize: 'var(--font-size-base)',
+                                            fontWeight: 600,
+                                            background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+                                            border: 'none',
+                                            borderRadius: 'var(--border-radius-md)',
+                                            color: 'white',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)',
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                            e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 217, 255, 0.5)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                            e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 217, 255, 0.3)';
+                                        }}
+                                    >
+                                        <Wallet size={18} />
+                                        <span>Connect Wallet</span>
+                                    </button>
+
+                                    {/* Wallet Modal */}
+                                    {showWalletModal && (
+                                        <div
+                                            style={{
+                                                position: 'fixed',
+                                                inset: 0,
+                                                background: 'rgba(0, 0, 0, 0.8)',
+                                                backdropFilter: 'blur(4px)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                zIndex: 1000,
+                                            }}
+                                            onClick={() => setShowWalletModal(false)}
+                                        >
+                                            <div
+                                                className="card"
+                                                style={{
+                                                    maxWidth: '400px',
+                                                    width: '90%',
+                                                    padding: 'var(--spacing-2xl)',
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <h3 style={{ marginBottom: 'var(--spacing-lg)' }}>Connect Wallet</h3>
+                                                <WalletSelector />
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

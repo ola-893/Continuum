@@ -5,6 +5,9 @@
 module continuum::rwa_hub {
     use std::signer;
     use std::error;
+    use aptos_framework::object;
+    use aptos_framework::timestamp;
+    use aptos_token_objects::token::Token;
     use continuum::streaming_protocol;
     use continuum::asset_yield_protocol;
     use continuum::compliance_guard;
@@ -24,7 +27,7 @@ module continuum::rwa_hub {
 
     /// Create a compliant RWA yield stream with full verification and auto-registration
     /// This is the main entry point for creating asset-backed yield streams
-    /// NOTE: stream_id must be provided by caller (get it from stream creation event or counter)
+    /// 🔧 CRITICAL FIX: No more expected_stream_id - we capture the real ID!
     public entry fun create_compliant_rwa_stream<CoinType>(
         issuer: &signer,
         stream_registry_addr: address,
@@ -35,7 +38,7 @@ module continuum::rwa_hub {
         duration: u64,
         asset_type: u8, // 1=Real Estate, 2=Securities, 3=Commodities, 4=Art
         metadata_uri: vector<u8>, // NFT metadata URI for registry
-        expected_stream_id: u64, // Caller must predict/track stream_id
+        // 🔧 REMOVED: expected_stream_id parameter - no longer needed!
     ) {
         let issuer_addr = signer::address_of(issuer);
         
@@ -48,8 +51,8 @@ module continuum::rwa_hub {
         
         assert!(is_authorized, error::permission_denied(E_NOT_AUTHORIZED));
 
-        // Create the asset yield stream with REAL COIN LOCKING
-        asset_yield_protocol::create_asset_yield_stream<CoinType>(
+        // 🔧 CRITICAL FIX: Capture the actual stream_id returned from creation
+        let actual_stream_id = asset_yield_protocol::create_asset_yield_stream<CoinType>(
             issuer,
             stream_registry_addr,
             yield_registry_addr,
@@ -69,11 +72,11 @@ module continuum::rwa_hub {
             0u8 // Default to Real Estate for Art/others
         };
 
-        // Automatically register the token in the registry
+        // 🔧 CRITICAL FIX: Register using the ACTUAL stream_id
         token_registry::register_token(
             token_obj_addr,
             registry_asset_type,
-            expected_stream_id,
+            actual_stream_id,
             metadata_uri,
         );
     }
@@ -88,7 +91,7 @@ module continuum::rwa_hub {
         total_yield: u64,
         duration: u64,
         metadata_uri: vector<u8>,
-        expected_stream_id: u64,
+        // 🔧 REMOVED: expected_stream_id
     ) {
         create_compliant_rwa_stream<CoinType>(
             issuer,
@@ -100,7 +103,6 @@ module continuum::rwa_hub {
             duration,
             1, // ASSET_TYPE_REAL_ESTATE
             metadata_uri,
-            expected_stream_id,
         );
     }
 
@@ -114,7 +116,7 @@ module continuum::rwa_hub {
         total_yield: u64,
         duration: u64,
         metadata_uri: vector<u8>,
-        expected_stream_id: u64,
+        // 🔧 REMOVED: expected_stream_id
     ) {
         create_compliant_rwa_stream<CoinType>(
             issuer,
@@ -126,7 +128,6 @@ module continuum::rwa_hub {
             duration,
             2, // ASSET_TYPE_SECURITIES
             metadata_uri,
-            expected_stream_id,
         );
     }
 
@@ -140,7 +141,7 @@ module continuum::rwa_hub {
         total_yield: u64,
         duration: u64,
         metadata_uri: vector<u8>,
-        expected_stream_id: u64,
+        // 🔧 REMOVED: expected_stream_id
     ) {
         create_compliant_rwa_stream<CoinType>(
             issuer,
@@ -152,31 +153,39 @@ module continuum::rwa_hub {
             duration,
             3, // ASSET_TYPE_COMMODITIES
             metadata_uri,
-            expected_stream_id,
         );
     }
 
-    /// Claim yield with compliance check
+    // ===================================================================
+    // 🔧 BUG FIX: Auto-Lookup Compliance Check Functions
+    // ===================================================================
+
+    /// Claim yield with AUTO-LOOKUP compliance check (Fixes the bug)
+    /// No more asset_type parameter - we look it up from the registry!
     public entry fun compliant_claim_yield<CoinType>(
         claimer: &signer,
         stream_registry_addr: address,
         yield_registry_addr: address,
         compliance_addr: address,
         token_obj_addr: address,
-        asset_type: u8,
     ) {
         let claimer_addr = signer::address_of(claimer);
         
-        // Verify claimer is still authorized
+        // 1. Lookup the asset type from the registry to prevent user error
+        let registry_type = token_registry::get_asset_type_by_token(token_obj_addr);
+        
+        // 2. Convert Registry Type (0-based) back to Compliance Type (1-based)
+        let compliance_type = registry_type + 1; 
+
+        // 3. Verify claimer is authorized for this specific asset type
         let is_authorized = compliance_guard::is_authorized_recipient(
             compliance_addr,
             claimer_addr,
-            asset_type,
+            compliance_type,
         );
-        
         assert!(is_authorized, error::permission_denied(E_COMPLIANCE_CHECK_FAILED));
 
-        // Proceed with claim
+        // 4. Proceed with claim
         asset_yield_protocol::claim_yield_for_asset<CoinType>(
             claimer,
             stream_registry_addr,
@@ -185,7 +194,8 @@ module continuum::rwa_hub {
         );
     }
 
-    /// Flash advance with compliance check
+    /// Flash advance with AUTO-LOOKUP compliance check
+    /// No more asset_type parameter - eliminates the mismatch bug!
     public entry fun compliant_flash_advance<CoinType>(
         owner: &signer,
         stream_registry_addr: address,
@@ -193,20 +203,22 @@ module continuum::rwa_hub {
         compliance_addr: address,
         token_obj_addr: address,
         amount_requested: u64,
-        asset_type: u8,
     ) {
         let owner_addr = signer::address_of(owner);
         
-        // Verify owner is still authorized
+        // 1. Lookup Asset Type from registry
+        let registry_type = token_registry::get_asset_type_by_token(token_obj_addr);
+        let compliance_type = registry_type + 1; 
+
+        // 2. Verify owner is authorized
         let is_authorized = compliance_guard::is_authorized_recipient(
             compliance_addr,
             owner_addr,
-            asset_type,
+            compliance_type,
         );
-        
         assert!(is_authorized, error::permission_denied(E_COMPLIANCE_CHECK_FAILED));
 
-        // Proceed with flash advance
+        // 3. Proceed with flash advance
         asset_yield_protocol::flash_advance_rwa_yield<CoinType>(
             owner,
             stream_registry_addr,
@@ -306,6 +318,85 @@ module continuum::rwa_hub {
             admin_addr,
             vector[1, 2, 3, 4], // All asset types
         );
+    }
+
+    // ===================================================================
+    // 🚗🏠 RENTAL & IoT INTEGRATION (Pay-as-you-go Access)
+    // ===================================================================
+
+    /// 🚗 RENTAL INNOVATION: Pay-as-you-go Access
+    /// Tenant streams money to the Asset Owner to gain physical access.
+    /// No whitelisting required for the Tenant (Open Access).
+    /// 
+    /// Use Cases:
+    /// - Car rentals: Stream $50/hour to unlock Tesla
+    /// - Apartment rentals: Stream $3000/month to smart lock
+    /// - Equipment rentals: Stream $10/day to unlock machinery
+    public entry fun stream_rent_to_asset<CoinType>(
+        tenant: &signer,
+        stream_registry_addr: address,
+        token_obj_addr: address, // The Asset (Car/House)
+        payment_amount: u64,     // Total budget for this session
+        duration: u64,           // How long this budget should last (in seconds)
+    ) {
+        // 1. Find out who owns the Asset right now (The Landlord/Car Rental Co.)
+        let token_obj = object::address_to_object<Token>(token_obj_addr);
+        let current_owner = object::owner(token_obj);
+
+        // 2. Calculate flow rate (amount per second)
+        let flow_rate = payment_amount / duration;
+        let start_time = timestamp::now_seconds();
+
+        // 3. Create the stream FROM Tenant TO Landlord
+        // Tenant's coins are locked, Landlord receives them over time
+        streaming_protocol::create_stream_with_addr<CoinType>(
+            stream_registry_addr,
+            tenant,               // Sender (Tenant locks money)
+            current_owner,        // Recipient (Landlord gets paid)
+            flow_rate,
+            start_time,
+            duration,
+            payment_amount
+        );
+    }
+
+    #[view]
+    /// 🤖 IoT Check: Should the device operate?
+    /// Returns TRUE if the tenant has an active stream paying the landlord.
+    /// 
+    /// Called by: Tesla Head Unit / Smart Lock / IoT Gateway / Industrial Equipment
+    /// 
+    /// Security Logic:
+    /// 1. Stream must be ACTIVE (status = 0)
+    /// 2. Stream recipient must match current asset owner
+    /// 3. If asset was transferred, old streams become invalid
+    public fun check_access_status<CoinType>(
+        stream_registry_addr: address,
+        stream_id: u64,
+        token_obj_addr: address, // The Asset (Car/House/Equipment)
+    ): bool {
+        // 1. Get Stream Info
+        let (_, recipient, _, _, _, _, _, status) = 
+            streaming_protocol::get_stream_info<CoinType>(stream_registry_addr, stream_id);
+
+        // 2. Get Current Asset Owner
+        let token_obj = object::address_to_object<Token>(token_obj_addr);
+        let current_owner = object::owner(token_obj);
+
+        // 3. The Logic Rule:
+        // - Stream must be ACTIVE (status = 0 means active)
+        // - Stream recipient must match current asset owner (Security check)
+        // - If owner changes, rental is invalidated
+        
+        if (status != 0) { 
+            return false 
+        }; 
+        
+        if (recipient != current_owner) { 
+            return false 
+        }; 
+        
+        true
     }
 
     // ===================================================================
