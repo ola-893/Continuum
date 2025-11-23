@@ -209,10 +209,9 @@ All interactions check KYC status:
 ---
 
 ## 📞 Support
-
-- **website**: [Coming Soon]
-- **contact**: [https://www.linkedin.com/in/olaoluwa-marvellous/](https://www.linkedin.com/in/olaoluwa-marvellous/)
-
+- **Website**: https://aptoscontinuum.vercel.app/
+- **CodeBase**: https://github.com/ola-893/Continuum
+- **Socials**: https://www.linkedin.com/in/olaoluwa-marvellous/
 ---
 
 **Built with ❤️ on Aptos**
