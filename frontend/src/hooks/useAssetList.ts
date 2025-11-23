@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ContinuumService } from '../services/continuumService';
+import { generateMockAssetData, getMockImage } from '../utils/mockDataGenerator';
 import type { StreamInfo } from '../hooks/useStreamBalance';
 
 /**
@@ -63,23 +64,49 @@ export function useAssetList(tokenAddresses: string[]) {
                             // Get stream info
                             const streamInfo = await ContinuumService.getStreamInfo(streamId);
 
-                            // Get token details from registry to fetch asset type
-                            let assetType = 'Real Estate'; // fallback
+                            // Fetch asset details from the token registry to get asset type
+                            let assetType: string = 'Unknown Asset';
+                            let assetTypeNumber: number | undefined = undefined;
+                            let title = '';
+                            let imageUrl = '';
+
                             try {
-                                const tokenDetails = await ContinuumService.getTokenDetails(tokenAddress);
+                                const tokenDetails = await ContinuumService.getTokenDetailsFromRegistry(tokenAddress);
                                 if (tokenDetails && tokenDetails.asset_type !== undefined) {
-                                    assetType = getAssetTypeName(Number(tokenDetails.asset_type));
+                                    assetTypeNumber = Number(tokenDetails.asset_type);
+                                    assetType = getAssetTypeName(assetTypeNumber);
                                 }
                             } catch (error) {
-                                console.warn(`Could not fetch asset type for ${tokenAddress}, using default`);
+                                console.warn(`Could not fetch asset_type for ${tokenAddress}:`, error);
+                            }
+
+                            // Try to fetch NFT metadata for title
+                            try {
+                                const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
+                                if (nftMetadata?.name) {
+                                    title = nftMetadata.name;
+                                }
+                            } catch (error) {
+                                console.warn(`Could not fetch NFT metadata for ${tokenAddress}`);
+                            }
+
+                            // Use smart mock data if title is missing
+                            if (!title) {
+                                const mockData = generateMockAssetData(assetTypeNumber, tokenAddress, 'marketplace');
+                                title = mockData.name;
+                                imageUrl = mockData.image;
+                            } else {
+                                // Use mock image if we have real title but no image
+                                imageUrl = getMockImage(assetTypeNumber, tokenAddress);
                             }
 
                             if (streamInfo) {
                                 loadedAssets.push({
                                     tokenAddress,
                                     streamInfo: convertToStreamInfo(streamInfo),
-                                    assetType, // Now uses actual type from registry!
-                                    title: `Asset #${tokenAddress.slice(-4)}`,
+                                    assetType,
+                                    title,
+                                    imageUrl,
                                 });
                             }
                         }

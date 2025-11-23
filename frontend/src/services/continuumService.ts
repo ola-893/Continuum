@@ -450,7 +450,44 @@ export class ContinuumService {
     // ============================================
 
     /**
-     * Create a real estate yield stream
+     * Create an asset yield stream with specified asset type
+     * Supports: 0=Real Estate, 1=Vehicle, 2=Commodities
+     */
+    static createAssetStream(
+        tokenAddress: string,
+        totalYield: number,
+        durationInSeconds: number,
+        assetType: number, // 0=Real Estate, 1=Vehicle, 2=Commodities
+        metadataUri: string = ""
+    ): InputTransactionData {
+        // Map frontend asset types (0,1,2) to contract asset types (1,2,3)
+        // Frontend: 0=Real Estate, 1=Vehicle, 2=Commodities
+        // Contract: 1=Real Estate, 2=Securities(Vehicle), 3=Commodities, 4=Art
+        const contractAssetType = assetType + 1;
+
+        return {
+            data: {
+                function: buildFunctionId(
+                    CONTRACT_CONFIG.MODULES.RWA_HUB,
+                    "create_compliant_rwa_stream" // ✅ CORRECT function that accepts asset_type!
+                ),
+                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
+                functionArguments: [
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr
+                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
+                    tokenAddress,                    // token_obj_addr
+                    totalYield,                      // total_yield
+                    durationInSeconds,               // duration
+                    contractAssetType,               // asset_type (1-4)
+                    metadataUri,                     // metadata_uri
+                ],
+            },
+        };
+    }
+
+    /**
+     * Create a real estate yield stream (legacy - calls createAssetStream with type 0)
      * Note: expected_stream_id removed - the contract now auto-generates and captures the stream ID
      */
     static createRealEstateStream(
@@ -459,24 +496,13 @@ export class ContinuumService {
         durationInSeconds: number,
         metadataUri: string = ""
     ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "create_real_estate_stream"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                    tokenAddress,
-                    totalYield,
-                    durationInSeconds,
-                    metadataUri,           // metadata_uri
-                ],
-            },
-        };
+        return ContinuumService.createAssetStream(
+            tokenAddress,
+            totalYield,
+            durationInSeconds,
+            0, // Real Estate
+            metadataUri
+        );
     }
 
     /**

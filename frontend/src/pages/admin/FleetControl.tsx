@@ -27,7 +27,7 @@ export const FleetControl: React.FC = () => {
                     tokens.map(async (token: any, index: number) => {
                         const tokenAddress = token.token_address || token.tokenAddress;
                         const streamId = Number(token.stream_id || token.streamId);
-                        const assetType = Number(token.asset_type || token.assetType || 0);
+                        const assetType = token.asset_type !== undefined ? Number(token.asset_type) : (token.assetType !== undefined ? Number(token.assetType) : undefined);
 
                         let streamInfo = null;
                         let streamStatus = null;
@@ -46,9 +46,14 @@ export const FleetControl: React.FC = () => {
                             2: 'machinery',
                         };
 
+                        const getAssetTypeOrDefault = (type: number | undefined): 'real_estate' | 'car' | 'machinery' => {
+                            if (type === undefined) return 'machinery'; // Unknown assets default to machinery
+                            return typeMap[type] || 'machinery';
+                        };
+
                         return {
                             id: `TOKEN-${index + 1}`,
-                            type: typeMap[assetType] || 'real_estate',
+                            type: getAssetTypeOrDefault(assetType),
                             name: `Asset #${index + 1}`,
                             tokenAddress,
                             status: streamStatus?.isFrozen ? 'frozen' : streamInfo ? 'active' : 'idle',

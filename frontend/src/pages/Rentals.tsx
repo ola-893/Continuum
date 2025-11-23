@@ -4,10 +4,11 @@ import { Car, Home, Wrench, Clock, DollarSign, Zap, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ContinuumService } from '../services/continuumService';
 import { CONTRACT_CONFIG } from '../config/contracts';
+import { generateMockAssetData, getMockImage } from '../utils/mockDataGenerator';
 
 interface RentalAsset {
     tokenAddress: string;
-    assetType: number;
+    assetType: number | undefined;
     metadata_uri: string;
     streamId: number;
     title: string;
@@ -43,22 +44,33 @@ export const Rentals: React.FC = () => {
             const rentalAssets: RentalAsset[] = await Promise.all(
                 allTokens.map(async (token: any) => {
                     const tokenAddress = token.token_address || token.tokenAddress;
-                    const assetType = Number(token.asset_type || token.assetType || 0);
+                    const assetType = token.asset_type !== undefined ? Number(token.asset_type) : (token.assetType !== undefined ? Number(token.assetType) : undefined);
                     const streamId = Number(token.stream_id || token.streamId || 0);
                     const metadataUri = token.metadata_uri || '';
 
                     // Fetch NFT metadata (name and description) directly from blockchain
-                    let assetName = `Asset #${tokenAddress.slice(-4)}`;
-                    let assetDescription = ''; // Empty by default - only show if NFT has description
+                    let assetName = '';
+                    let assetDescription = '';
+                    let assetImage = '';
 
                     try {
                         const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
-                        assetName = nftMetadata.name || assetName;
-                        assetDescription = nftMetadata.description || ''; // Show nothing if no description
+                        assetName = nftMetadata.name || '';
+                        assetDescription = nftMetadata.description || '';
                         console.log(`Fetched NFT metadata from blockchain for ${tokenAddress}:`, nftMetadata);
                     } catch (error) {
-                        console.warn(`Could not fetch NFT metadata from blockchain for ${tokenAddress}, using fallback`);
-                        assetName = getAssetTitle(assetType, tokenAddress);
+                        console.warn(`Could not fetch NFT metadata from blockchain for ${tokenAddress}, using smart mock data`);
+                    }
+
+                    // Use smart mock data if real data is missing
+                    if (!assetName || !assetDescription) {
+                        const mockData = generateMockAssetData(assetType, tokenAddress, 'rental');
+                        assetName = assetName || mockData.name;
+                        assetDescription = assetDescription || mockData.description;
+                        assetImage = mockData.image;
+                    } else {
+                        // Use real image or fallback to mock
+                        assetImage = getMockImage(assetType, tokenAddress);
                     }
 
                     // Fetch stream info to get yield data
@@ -83,7 +95,7 @@ export const Rentals: React.FC = () => {
                         streamId,
                         title: assetName,
                         description: assetDescription,
-                        imageUrl: getAssetImage(assetType),
+                        imageUrl: assetImage,
                         pricePerHour: Math.max(pricePerHour, 0.01), // Minimum price
                     };
                 })
@@ -99,26 +111,8 @@ export const Rentals: React.FC = () => {
         }
     };
 
-    const getAssetTitle = (assetType: number, address: string): string => {
-        const suffix = address.slice(-4);
-        switch (assetType) {
-            case 1: return `Vehicle #${suffix}`;
-            case 0: return `Real Estate #${suffix}`;
-            case 2: return `Equipment #${suffix}`;
-            default: return `Asset #${suffix}`;
-        }
-    };
-
-    const getAssetImage = (assetType: number): string => {
-        switch (assetType) {
-            case 1: return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'; // Modern car
-            case 0: return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800'; // Modern building/property
-            case 2: return 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800'; // Industrial equipment
-            default: return 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800'; // Generic business/asset
-        }
-    };
-
-    const getDefaultPricePerHour = (assetType: number): number => {
+    const getDefaultPricePerHour = (assetType: number | undefined): number => {
+        if (assetType === undefined) return 10; // Default
         switch (assetType) {
             case 1: return 25; // $25/hour for cars
             case 0: return 5; // $5/hour for apartments (~$3600/month)
@@ -127,7 +121,8 @@ export const Rentals: React.FC = () => {
         }
     };
 
-    const getAssetIcon = (assetType: number) => {
+    const getAssetIcon = (assetType: number | undefined) => {
+        if (assetType === undefined) return Zap;
         switch (assetType) {
             case 1: return Car;
             case 0: return Home;

@@ -3,6 +3,7 @@ import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Car, Home, Wrench, Clock, XCircle, Zap, AlertTriangle, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ContinuumService } from '../services/continuumService';
+import { generateMockAssetData } from '../utils/mockDataGenerator';
 import { ActiveRental } from '../types/continuum';
 
 export const MyRentals: React.FC = () => {
@@ -40,7 +41,7 @@ export const MyRentals: React.FC = () => {
 
             for (const token of allTokens) {
                 const tokenAddress = token.token_address || token.tokenAddress;
-                const assetType = Number(token.asset_type || token.assetType || 0);
+                const assetType = token.asset_type !== undefined ? Number(token.asset_type) : (token.assetType !== undefined ? Number(token.assetType) : undefined);
 
                 try {
                     // Check if this asset has an active rental using the new view function
@@ -53,12 +54,18 @@ export const MyRentals: React.FC = () => {
                         // Check if the current user is the tenant (renter)
                         if (rentalDetails && rentalDetails.tenant === account.address && rentalDetails.isActive) {
                             // Fetch NFT name
-                            let assetName = `Asset #${tokenAddress.slice(-4)}`;
+                            let assetName = '';
                             try {
                                 const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
-                                assetName = nftMetadata.name || assetName;
+                                assetName = nftMetadata.name || '';
                             } catch (error) {
-                                console.warn(`Could not fetch NFT name for ${tokenAddress}`);
+                                console.warn(`Could not fetch NFT metadata for ${tokenAddress}`);
+                            }
+
+                            // Use smart mock data if no real name
+                            if (!assetName) {
+                                const mockData = generateMockAssetData(assetType, tokenAddress, 'rental');
+                                assetName = mockData.name;
                             }
 
                             // Get full stream info for additional details
@@ -117,12 +124,13 @@ export const MyRentals: React.FC = () => {
         }
     };
 
-    const getAssetTypeName = (assetType: number): string => {
+    const getAssetTypeName = (assetType: number | undefined): string => {
+        if (assetType === undefined) return 'Unknown Asset';
         switch (assetType) {
             case 0: return 'Real Estate';
             case 1: return 'Vehicle';
-            case 2: return 'Equipment';
-            default: return 'Asset';
+            case 2: return 'Commodities';
+            default: return 'Unknown Asset'; // Debugging: shows we couldn't determine type
         }
     };
 
@@ -176,6 +184,16 @@ export const MyRentals: React.FC = () => {
         return rental.totalBudget - calculateCurrentCost(rental);
     };
 
+    const isRentalCompleted = (rental: ActiveRental): boolean => {
+        const currentCost = calculateCurrentCost(rental);
+        return currentCost >= rental.totalBudget;
+    };
+
+    const getBudgetPercentage = (rental: ActiveRental): number => {
+        const currentCost = calculateCurrentCost(rental);
+        return Math.min((currentCost / rental.totalBudget) * 100, 100);
+    };
+
     return (
         <div style={{ padding: 'var(--spacing-2xl)', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: 'var(--spacing-2xl)' }}>
@@ -213,6 +231,8 @@ export const MyRentals: React.FC = () => {
                         const currentCost = calculateCurrentCost(rental);
                         const refund = calculateRefund(rental);
                         const timeElapsed = calculateTimeElapsed(rental.startTime);
+                        const isCompleted = isRentalCompleted(rental);
+                        const budgetPercentage = getBudgetPercentage(rental);
 
                         return (
                             <div key={rental.streamId} className="card" style={{ padding: 'var(--spacing-xl)' }}>
@@ -226,13 +246,17 @@ export const MyRentals: React.FC = () => {
                                                 style={{
                                                     fontSize: 'var(--font-size-xs)',
                                                     padding: '4px 8px',
-                                                    background: 'rgba(16, 185, 129, 0.2)',
-                                                    color: 'var(--color-success)',
+                                                    background: isCompleted
+                                                        ? 'rgba(156, 163, 175, 0.2)'
+                                                        : 'rgba(16, 185, 129, 0.2)',
+                                                    color: isCompleted
+                                                        ? 'var(--color-text-secondary)'
+                                                        : 'var(--color-success)',
                                                     borderRadius: 'var(--border-radius-sm)',
                                                     fontWeight: 600,
                                                 }}
                                             >
-                                                ACTIVE
+                                                {isCompleted ? 'COMPLETED' : 'ACTIVE'}
                                             </span>
                                         </div>
                                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
@@ -240,16 +264,31 @@ export const MyRentals: React.FC = () => {
                                         </p>
                                     </div>
 
-                                    {/* Right: Cancel Button */}
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => handleCancelRental(rental.tokenAddress, rental.streamId, rental.title)}
-                                        disabled={cancellingId === rental.streamId}
-                                        isLoading={cancellingId === rental.streamId}
-                                        leftIcon={<XCircle size={16} />}
-                                    >
-                                        {cancellingId === rental.streamId ? 'Cancelling...' : 'End Rental'}
-                                    </Button>
+                                    {/* Right: Action Button */}
+                                    {!isCompleted ? (
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => handleCancelRental(rental.tokenAddress, rental.streamId, rental.title)}
+                                            disabled={cancellingId === rental.streamId}
+                                            isLoading={cancellingId === rental.streamId}
+                                            leftIcon={<XCircle size={16} />}
+                                        >
+                                            {cancellingId === rental.streamId ? 'Cancelling...' : 'End Rental'}
+                                        </Button>
+                                    ) : (
+                                        <div
+                                            style={{
+                                                padding: 'var(--spacing-sm) var(--spacing-md)',
+                                                background: 'rgba(156, 163, 175, 0.1)',
+                                                border: '1px solid rgba(156, 163, 175, 0.3)',
+                                                borderRadius: 'var(--border-radius-md)',
+                                                fontSize: 'var(--font-size-sm)',
+                                                color: 'var(--color-text-secondary)',
+                                            }}
+                                        >
+                                            Rental Complete
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Stats */}
@@ -311,8 +350,10 @@ export const MyRentals: React.FC = () => {
                                     }}>
                                         <div style={{
                                             height: '100%',
-                                            width: `${(currentCost / rental.totalBudget) * 100}%`,
-                                            background: 'linear-gradient(90deg, var(--color-success), var(--color-warning))',
+                                            width: `${budgetPercentage}%`,
+                                            background: isCompleted
+                                                ? 'rgba(156, 163, 175, 0.5)'
+                                                : 'linear-gradient(90deg, var(--color-success), var(--color-warning))',
                                             transition: 'width 1s ease',
                                         }} />
                                     </div>
@@ -321,12 +362,27 @@ export const MyRentals: React.FC = () => {
                                         color: 'var(--color-text-secondary)',
                                         marginTop: 'var(--spacing-xs)',
                                     }}>
-                                        {((currentCost / rental.totalBudget) * 100).toFixed(1)}% of budget used
+                                        {budgetPercentage.toFixed(1)}% of budget used
                                     </p>
                                 </div>
 
-                                {/* Warning if close to budget */}
-                                {refund < rental.pricePerHour && (
+                                {/* Warning/Completion messages */}
+                                {isCompleted ? (
+                                    <div
+                                        className="card"
+                                        style={{
+                                            marginTop: 'var(--spacing-md)',
+                                            padding: 'var(--spacing-md)',
+                                            background: 'rgba(156, 163, 175, 0.1)',
+                                            border: '1px solid rgba(156, 163, 175, 0.3)',
+                                        }}
+                                    >
+                                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                                            <AlertTriangle size={16} />
+                                            Budget fully used. Your access to this asset has ended. To continue using, rent it again from the Rentals page.
+                                        </p>
+                                    </div>
+                                ) : refund < rental.pricePerHour && (
                                     <div
                                         className="card"
                                         style={{

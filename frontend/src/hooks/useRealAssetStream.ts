@@ -10,6 +10,7 @@ export interface RealStreamInfo {
     stopTime: number;
     amountWithdrawn: number;
     status: number;
+    assetType?: number; // Asset type from registry (0=Real Estate, 1=Vehicle, 2=Commodities)
 }
 
 /**
@@ -52,8 +53,20 @@ export function useAssetStream(tokenAddress: string | null) {
                 if (id !== null) {
                     // Get detailed stream info
                     const info = await ContinuumService.getStreamInfo(id);
+
+                    // Get asset type from token registry
+                    let assetType: number | undefined;
+                    try {
+                        const tokenDetails = await ContinuumService.getTokenDetailsFromRegistry(tokenAddress);
+                        if (tokenDetails && tokenDetails.asset_type !== undefined) {
+                            assetType = Number(tokenDetails.asset_type);
+                        }
+                    } catch (assetTypeError) {
+                        console.warn("Could not fetch asset type:", assetTypeError);
+                    }
+
                     if (info) {
-                        setStreamInfo(info);
+                        setStreamInfo({ ...info, assetType });
                     }
 
                     // Get current claimable balance

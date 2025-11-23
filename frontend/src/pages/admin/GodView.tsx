@@ -31,7 +31,7 @@ export const GodView: React.FC = () => {
                     tokens.map(async (token: TokenIndexEntry, index: number) => {
                         const tokenAddress = token.token_address;
                         const streamId = Number(token.stream_id);
-                        const assetType = Number(token.asset_type || 0);
+                        const assetType = token.asset_type !== undefined ? Number(token.asset_type) : undefined;
 
                         // Fetch stream info if stream ID exists
                         let streamInfo = null;
@@ -52,9 +52,14 @@ export const GodView: React.FC = () => {
                             2: 'machinery',
                         };
 
+                        const getAssetTypeOrDefault = (type: number | undefined): 'real_estate' | 'car' | 'machinery' => {
+                            if (type === undefined) return 'machinery'; // Unknown assets default to machinery
+                            return typeMap[type] || 'machinery';
+                        };
+
                         return {
                             id: `TOKEN-${index + 1}`,
-                            type: typeMap[assetType] || 'real_estate',
+                            type: getAssetTypeOrDefault(assetType),
                             name: `Asset #${index + 1}`,
                             tokenAddress,
                             status: streamStatus?.isFrozen ? 'frozen' : streamInfo ? 'active' : 'idle',

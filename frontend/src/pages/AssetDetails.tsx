@@ -48,9 +48,18 @@ export const AssetDetails: React.FC = () => {
     }
 
     // Transform blockchain data to asset object format
+    const getAssetTypeName = (assetType: number | undefined): string => {
+        switch (assetType) {
+            case 0: return 'Real Estate';
+            case 1: return 'Vehicle';
+            case 2: return 'Commodities';
+            default: return 'Unknown Asset';
+        }
+    };
+
     const asset = {
         tokenAddress: tokenId || '',
-        assetType: 'Real Estate',
+        assetType: getAssetTypeName(streamInfo.assetType),
         title: `Asset ${tokenId?.slice(0, 6)}...${tokenId?.slice(-4)}`,
         imageUrl: undefined,
         streamId: streamId || undefined, // Add streamId for flash advance balance checking

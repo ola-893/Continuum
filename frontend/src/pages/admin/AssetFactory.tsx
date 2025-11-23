@@ -144,7 +144,12 @@ export const AssetFactory: React.FC = () => {
             const yieldInOctas = Math.floor(parseFloat(streamData.totalYield) * 100_000_000);
             const durationInSeconds = parseInt(streamData.duration) * 86400;
 
-            await createYieldStream(tokenAddress, yieldInOctas, durationInSeconds);
+            await createYieldStream(
+                tokenAddress,
+                yieldInOctas,
+                durationInSeconds,
+                assetType // Pass the selected asset type!
+            );
 
             setCurrentStep(0);
             setTxStatus('Success: Success! NFT minted, stream created, and auto-registered in global registry!');

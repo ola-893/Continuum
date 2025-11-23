@@ -12,7 +12,7 @@ In the current Real World Asset (RWA) market, asset ownership is static while fi
 
 ## The Solution: Continuum - The Solvency-Aware RWA Protocol
 
-YieldStream is a compliant, object-oriented streaming protocol on Aptos that turns static assets into liquid, programmable cash flow.
+Continuum is a compliant, object-oriented streaming protocol on Aptos that turns static assets into liquid, programmable cash flow.
 
 ### 1. Instant Liquidity via "Flash Advance" (The Innovation)
 

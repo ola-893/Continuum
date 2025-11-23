@@ -30,7 +30,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) =
 
     const {
         tokenAddress,
-        assetType = 'Real Estate',
+        assetType = 'Unknown Asset', // Debugging: shows we couldn't determine type
         title = `Asset ${tokenAddress?.slice(0, 6) || 'Unknown'}`,
         imageUrl,
         streamInfo,

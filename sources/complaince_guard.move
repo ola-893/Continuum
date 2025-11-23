@@ -22,6 +22,7 @@ module continuum::compliance_guard {
     const ASSET_TYPE_SECURITIES: u8 = 2;
     const ASSET_TYPE_COMMODITIES: u8 = 3;
     const ASSET_TYPE_ART: u8 = 4;
+    const ASSET_TYPE_ALL: u8 = 255; // Special value for "all types" or "non-specific"
 
     /// Compliance registry
     struct ComplianceRegistry has key {
@@ -99,12 +100,21 @@ module continuum::compliance_guard {
         };
         table::add(&mut registry.whitelist, user, asset_types);
 
-        event::emit_event(&mut registry.compliance_events, ComplianceEvent {
-            user,
-            asset_type: 0,
-            action: b"whitelisted",
-            timestamp: aptos_framework::timestamp::now_seconds(),
-        });
+        // 🔧 FIX: Emit one event per asset type for accurate tracking
+        let timestamp = aptos_framework::timestamp::now_seconds();
+        let i = 0;
+        let len = vector::length(&asset_types);
+        
+        while (i < len) {
+            let asset_type = *vector::borrow(&asset_types, i);
+            event::emit_event(&mut registry.compliance_events, ComplianceEvent {
+                user,
+                asset_type,  //Now uses actual asset type!
+                action: b"whitelisted",
+                timestamp,
+            });
+            i = i + 1;
+        };
     }
 
     /// Remove address from whitelist
@@ -125,9 +135,10 @@ module continuum::compliance_guard {
             table::remove(&mut registry.whitelist, user);
         };
 
+        //Use ASSET_TYPE_ALL (255) to indicate "all asset types removed"
         event::emit_event(&mut registry.compliance_events, ComplianceEvent {
             user,
-            asset_type: 0,
+            asset_type: ASSET_TYPE_ALL,  //255 = all types removed
             action: b"removed_from_whitelist",
             timestamp: aptos_framework::timestamp::now_seconds(),
         });
@@ -163,9 +174,10 @@ module continuum::compliance_guard {
         };
         table::add(&mut registry.did_registry, user, identity);
 
+        //Use ASSET_TYPE_ALL (255) for KYC registration (not asset-specific)
         event::emit_event(&mut registry.compliance_events, ComplianceEvent {
             user,
-            asset_type: 0,
+            asset_type: ASSET_TYPE_ALL,  //255 = KYC is general, not asset-specific
             action: b"kyc_registered",
             timestamp: aptos_framework::timestamp::now_seconds(),
         });

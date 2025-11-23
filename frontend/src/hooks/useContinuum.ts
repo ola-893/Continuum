@@ -33,16 +33,18 @@ export function useContinuum() {
     const createYieldStream = async (
         tokenAddress: string,
         totalYield: number,
-        durationInSeconds: number
+        durationInSeconds: number,
+        assetType: number = 0 // 0=Real Estate, 1=Vehicle, 2=Commodities (default to Real Estate)
     ) => {
         if (!account) throw new Error("Wallet not connected");
 
         setLoading(true);
         try {
-            const transaction = ContinuumService.createRealEstateStream(
+            const transaction = ContinuumService.createAssetStream(
                 tokenAddress,
                 totalYield,
-                durationInSeconds
+                durationInSeconds,
+                assetType // Pass the asset type!
             );
 
             const response = await signAndSubmitTransaction(transaction);
