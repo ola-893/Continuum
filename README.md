@@ -1,219 +1,57 @@
-# 🌐 Continuum Protocol
+# Sample Hardhat 3 Beta Project (`node:test` and `viem`)
 
-> **Tokenized Real-World Assets with Live Yield Streaming on Aptos**
+This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
 
-📊 **[View Pitch Deck](https://www.canva.com/design/DAG5h9VH2_0/G-h4K2yC4yjSU-DoLZES-w/view?utm_content=DAG5h9VH2_0&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0aae785077)**
+To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
 
-## The Problem: The "Rich Asset, Poor Liquidity" Paradox
+## Project Overview
 
-In the current Real World Asset (RWA) market, asset ownership is static while financial needs are dynamic.
+This example project includes:
 
-- **The Liquidity Trap**: An asset owner (e.g., a landlord) might own a property worth $1M generating $5,000/month, but they cannot access that future income today to pay for immediate expenses (like a roof repair) without taking out a high-interest bank loan with weeks of paperwork.
-- **The "Decoupling" Risk**: When a tokenized asset is sold on a secondary market (like an NFT marketplace), the income stream often fails to move with it automatically. This creates a chaotic scenario where the old owner keeps receiving rent that belongs to the new owner, requiring manual reconciliation.
-- **Compliance Friction**: RWA protocols struggle to enforce real-time regulatory checks (KYC/AML) at the exact moment of income withdrawal, exposing issuers to regulatory fines if funds stream to a sanctioned wallet.
+- A simple Hardhat configuration file.
+- Foundry-compatible Solidity unit tests.
+- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
+- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
 
-## The Solution: Continuum - The Solvency-Aware RWA Protocol
+## Usage
 
-Continuum is a compliant, object-oriented streaming protocol on Aptos that turns static assets into liquid, programmable cash flow.
+### Running Tests
 
-### 1. Instant Liquidity via "Flash Advance" (The Innovation)
+To run all the tests in the project, execute the following command:
 
-**How it works**: We utilise the deterministic nature of money streaming to allow asset owners to "borrow" from their own future.
-
-**The Fix**: Instead of waiting 30 days for rent, a landlord can trigger a Flash Advance to withdraw 3 months of future income instantly. The smart contract mathematically guarantees solvency by "pausing" their future withdrawals until time catches up to the debt. No banks, no interest, just time-travelling liquidity.
-
-### 2. True Asset-Yield Coupling (The Architecture)
-
-**How it works**: By leveraging Aptos Objects, we bind the income stream directly to the NFT, not a user address.
-
-**The Fix**: If Alice sells her Real Estate NFT to Bob on a marketplace, the stream instantly redirects the very next second of yield to Bob. There is no manual transfer required; the yield follows the asset, ensuring 100% fair distribution during secondary sales.
-
-### 3. The "Compliance Guard" Layer (The Safety)
-
-**How it works**: A modular governance wrapper that intercepts every withdrawal request.
-
-**The Fix**: Before a single USDC leaves the contract, the system verifies the recipient’s on-chain Identity (DID). If a user's KYC has expired or they are sanctioned, the stream automatically freezes, protecting the issuer from regulatory liability.
-
-Continuum is a next-generation RWA (Real World Asset) protocol built on Aptos that enables tokenisation of real-world assets with continuous yield distribution through on-chain streaming.
-
----
-
-## 🎯 What is Continuum?
-
-Continuum allows you to:
-- **Tokenize Real Assets** - Turn real estate, vehicles, and commodities into NFTs
-- **Stream Yields** - Distribute returns continuously, not just at intervals  
-- **Maintain Compliance** - KYC/AML checks built into the protocol
-- **Admin Control** - Emergency freeze and compliance management tools
-
----
-
-## 🏗️ Architecture
-
-### Smart Contracts (`sources/`)
-
-| Contract | Purpose |
-|----------|---------|
-| **`rwa_hub.move`** | Main orchestrator - manages RWA registration and stream creation |
-| **`asset_yield_protocol.move`** | Links NFTs to yield streams and track ownership |
-| **`streaming_protocol.move`** | Core streaming logic - handles time-based yield distribution |
-| **`compliance_guard.move`** | KYC/AML enforcement and user whitelisting |
-| **`token_registry.move`** | Global registry of all minted assets for discovery |
-
-### Frontend (`frontend/`)
-
-A premium React + Vite app with:
-- **User Dashboard** - Track assets and claim yields
-- **Admin Command Center** - Mint assets, manage KYC, emergency controls
-- **Live Balance Updates** - Real-time ticking yield display
-- **Public Streams Gallery** - Explore all minted RWAs
-
----
-
-## 🌐 Deployed Contracts (Aptos Testnet)
-
-**Network**: Aptos Testnet  
-**Module Address**: `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b`
-
-### Live Contracts
-
-| Module | Address | Explorer |
-|--------|---------|----------|
-| **RWA Hub** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::rwa_hub` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/rwa_hub?network=testnet) |
-| **Asset Yield Protocol** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::asset_yield_protocol` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/asset_yield_protocol?network=testnet) |
-| **Streaming Protocol** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::streaming_protocol` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/streaming_protocol?network=testnet) |
-| **Compliance Guard** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::compliance_guard` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/compliance_guard?network=testnet) |
-| **Token Registry** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::token_registry` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/token_registry?network=testnet) |
-
-### Test with Faucet
-
-Get testnet APT tokens: [Aptos Faucet](https://aptoslabs.com/testnet-faucet)
-
----
-
-## 💡 Usage
-
-### For Users
-
-1. **Connect Wallet** - Use Petra, Martian, or Pontem
-2. **Get Whitelisted** - Admin must approve your KYC
-3. **Add Assets** - Paste token addresses to track your RWAs
-4. **Claim Yields** - Collect streaming returns anytime
-5. **Flash Advance** - Borrow against future yields
-
-### For Admins
-
-Access the admin dashboard at `/admin`:
-
-- **🗺️ God View** - Live map of all assets and system metrics
-- **🏭 Asset Factory** - Mint NFTs and create yield streams
-- **✅ Compliance Desk** - Approve/reject KYC requests
-- **🚨 Fleet Control** - Emergency freeze and asset management
-
----
-
-## 📊 Asset Types
-
-| Type | ID | Examples |
-|------|-----|----------|
-| Real Estate | `0` | Properties, land, buildings |
-| Vehicles | `1` | Cars, trucks, fleets |
-| Commodities | `2` | Heavy machinery, equipment |
-
----
-
-## 🔧 Configuration
-
-Update contract address in `frontend/src/config/contracts.ts`:
-
-```typescript
-export const CONTRACT_CONFIG = {
-  MODULE_ADDRESS: "0x7c68c08ed30efcb9159b90c398247bf6504ab11678b39e58db12cae2360c9dc3",
-  MODULES: {
-    RWA_HUB: "rwa_hub",
-    ASSET_YIELD: "asset_yield_protocol",
-    STREAMING: "streaming_protocol",
-    COMPLIANCE: "compliance_guard",
-  },
-  // ...
-};
+```shell
+npx hardhat test
 ```
 
----
+You can also selectively run the Solidity or `node:test` tests:
 
-## 🛠️ Development
-
-### Project Structure
-
-```
-continuum/
-├── sources/              # Move smart contracts
-│   ├── rwa_hub.move
-│   ├── asset_yield_protocol.move
-│   ├── streaming_protocol.move
-│   ├── compliance_guard.move
-│   └── token_registry.move
-├── frontend/             # React app
-│   ├── src/
-│   │   ├── services/     # Blockchain integration
-│   │   ├── hooks/        # React hooks for real-time data
-│   │   ├── pages/        # Dashboard and Admin pages
-│   │   └── components/   # UI components
-│   └── package.json
-├── Move.toml             # Move package config
-└── deploy.sh             # Deployment script
+```shell
+npx hardhat test solidity
+npx hardhat test nodejs
 ```
 
-### Key Frontend Services
+### Make a deployment to Sepolia
 
-- **`continuumService.ts`** - All smart contract interactions
-- **`useAssetStream.ts`** - Real-time yield tracking
-- **`useAssetList.ts`** - Multi-asset portfolio management
-- **`nftMintingService.ts`** - NFT creation helpers
+This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
 
----
+To run the deployment to a local chain:
 
-## 📖 Key Concepts
-
-### Yield Streaming
-
-Instead of monthly/quarterly distributions, yields flow continuously:
-
-```
-Claimable = (flow_rate * seconds_elapsed) - amount_withdrawn
+```shell
+npx hardhat ignition deploy ignition/modules/Counter.ts
 ```
 
-Users can claim anytime, seeing their balance tick up in real-time.
+To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
 
-### Flash Advance
+You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
 
-Borrow against future yields:
-- Request advance amount
-- Stream pauses for calculated duration
-- Resume after pause expires
+To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
 
-### Compliance Layer
+```shell
+npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+```
 
-All interactions check KYC status:
-- Users must be whitelisted
-- Jurisdiction restrictions enforced  
-- Admin can freeze assets instantly
+After setting the variable, you can run the deployment with the Sepolia network:
 
----
-
-## 🔐 Security
-
-- **Emergency Freeze** - Admins can halt specific assets
-- **Compliance Checks** - Every transfer validates KYC status
-- **Ownership Verification** - NFT ownership checked on-chain
-- **Time-Lock Mechanisms** - Flash advances pause streams
-
----
-
-## 📞 Support
-- **Website**: https://aptoscontinuum.vercel.app/
-- **CodeBase**: https://github.com/ola-893/Continuum
-- **Socials**: https://www.linkedin.com/in/olaoluwa-marvellous/
----
-
-**Built with ❤️ on Aptos**
+```shell
+npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
+```
