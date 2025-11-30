@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { AssetLocation } from '../../data/mockAdminData';
+import type { AssetLocation } from '@/types/continuum'; // Corrected import path
 import { Car, Home, Wrench, MapPin, Map } from 'lucide-react';
 
 interface AssetMapProps {
@@ -10,9 +10,7 @@ interface AssetMapProps {
 export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
     const [hoveredAsset, setHoveredAsset] = useState<string | null>(null);
 
-    // Convert lat/lng to map position (simplified)
     const latLngToPosition = (lat: number, lng: number) => {
-        // SF Bay Area bounds: lat 37.3-38.0, lng -122.6 to -121.7
         const latMin = 37.2;
         const latMax = 38.1;
         const lngMin = -122.7;
@@ -37,15 +35,15 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
         }
     };
 
-    const getAssetMarker = (type: string) => {
+    const getAssetMarker = (assetType: string) => {
         const iconSize = 20;
         const iconColor = 'white';
-        switch (type) {
-            case 'car':
+        switch (assetType) {
+            case 'Vehicle': // Updated to match GodView.tsx
                 return <Car size={iconSize} color={iconColor} />;
-            case 'real_estate':
+            case 'Real Estate': // Updated to match GodView.tsx
                 return <Home size={iconSize} color={iconColor} />;
-            case 'machinery':
+            case 'Heavy Machinery': // Updated to match GodView.tsx
                 return <Wrench size={iconSize} color={iconColor} />;
             default:
                 return <MapPin size={iconSize} color={iconColor} />;
@@ -65,7 +63,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                 boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)',
             }}
         >
-            {/* Map Background Image (Abstract) */}
             <div
                 style={{
                     position: 'absolute',
@@ -75,7 +72,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                 }}
             />
 
-            {/* Grid overlay */}
             <div
                 style={{
                     position: 'absolute',
@@ -89,7 +85,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                 }}
             />
 
-            {/* Radar Scan Effect */}
             <div
                 style={{
                     position: 'absolute',
@@ -106,7 +101,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                 }}
             />
 
-            {/* Region label */}
             <div
                 style={{
                     position: 'absolute',
@@ -130,7 +124,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                 </div>
             </div>
 
-            {/* Asset dots */}
             {assets.map((asset) => {
                 const pos = latLngToPosition(asset.location.lat, asset.location.lng);
                 const isHovered = hoveredAsset === asset.id;
@@ -151,7 +144,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                         onMouseLeave={() => setHoveredAsset(null)}
                         onClick={() => onAssetClick?.(asset)}
                     >
-                        {/* Marker Pin */}
                         <div
                             style={{
                                 display: 'flex',
@@ -176,10 +168,9 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                                 }}
                             >
                                 <div style={{ transform: 'rotate(45deg)' }}>
-                                    {getAssetMarker(asset.type)}
+                                    {getAssetMarker(asset.assetType)}
                                 </div>
                             </div>
-                            {/* Pulse Effect for Active Assets */}
                             {asset.status === 'active' && (
                                 <div
                                     style={{
@@ -196,7 +187,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                             )}
                         </div>
 
-                        {/* Tooltip */}
                         {isHovered && (
                             <div
                                 className="glass"
@@ -224,10 +214,10 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                                         background: `${getStatusColor(asset.status)}22`,
                                         color: getStatusColor(asset.status)
                                     }}>
-                                        {getAssetMarker(asset.type)}
+                                        {getAssetMarker(asset.assetType)}
                                     </div>
                                     <div>
-                                        <div style={{ fontWeight: 700, fontSize: '14px' }}>{asset.name}</div>
+                                        <div style={{ fontWeight: 700, fontSize: '14px' }}>{asset.title}</div>
                                         <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>ID: {asset.id}</div>
                                     </div>
                                 </div>
@@ -260,7 +250,6 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
                 );
             })}
 
-            {/* Legend */}
             <div
                 style={{
                     position: 'absolute',

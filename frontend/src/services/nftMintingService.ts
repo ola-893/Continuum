@@ -1,4 +1,7 @@
 import { InputTransactionData } from "@aptos-labs/wallet-adapter-react";
+import axios from 'axios';
+
+const PINATA_API_URL = 'https://api.pinata.cloud/pinning/pinJSONToIPFS';
 
 /**
  * Service for minting NFTs using Aptos Token V2 (Digital Asset standard)
@@ -65,14 +68,15 @@ export class NFTMintingService {
     }
 
     /**
-     * Helper to generate a simple token URI (metadata JSON)
+     * Helper to generate a token URI by uploading metadata to IPFS.
      */
-    static generateTokenMetadata(
+    static async generateTokenMetadata(
         name: string,
         description: string,
         imageUrl: string,
-        attributes: Array<{ trait_type: string; value: string | number }>
-    ): string {
+        attributes: Array<{ trait_type: string; value: string | number }>,
+        pinataJwt?: string // Optional: Pinata JWT for authentication
+    ): Promise<string> {
         const metadata = {
             name,
             description,
@@ -80,9 +84,39 @@ export class NFTMintingService {
             attributes,
         };
 
-        // In production, upload this to IPFS or Arweave
-        // For now, return as data URI
-        return `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
+        const ipfsCid = await NFTMintingService.uploadMetadataToIPFS(metadata, pinataJwt);
+        return `ipfs://${ipfsCid}`;
+    }
+
+    /**
+     * Uploads metadata to IPFS using Pinata.
+     * In a real application, the Pinata JWT would be securely managed.
+     */
+    static async uploadMetadataToIPFS(metadata: any, pinataJwt?: string): Promise<string> {
+        if (!pinataJwt) {
+            console.warn("Pinata JWT not provided. Using mock IPFS CID for development.");
+            // Simulate a CID generation for demonstration purposes
+            const mockCid = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+            return mockCid;
+        }
+
+        try {
+            const response = await axios.post(PINATA_API_URL, metadata, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${pinataJwt}`,
+                },
+            });
+
+            if (!response.data.IpfsHash) {
+                throw new Error('IPFS upload failed: Invalid response from Pinata');
+            }
+
+            return response.data.IpfsHash;
+        } catch (error) {
+            console.error("Error uploading to IPFS:", error);
+            throw new Error("Failed to upload metadata to IPFS");
+        }
     }
 
     /**

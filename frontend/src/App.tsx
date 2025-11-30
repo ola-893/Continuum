@@ -1,64 +1,81 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
-import { PetraWallet } from 'petra-plugin-wallet-adapter';
+import { useAccount, useConnect, useDisconnect, usePublicClient, useWalletClient } from 'wagmi';
+import { injected } from 'wagmi/connectors';
 import { Navbar } from './components/ui/Navbar';
-import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
 import { AssetDetails } from './pages/AssetDetails';
-import { Rentals } from './pages/Rentals';
 import { Admin } from './pages/Admin';
+import { Button } from './components/ui/Button';
+import { ContinuumService } from './services/continuumService';
 import './index.css';
 
-const wallets = [new PetraWallet()];
-
 const App: React.FC = () => {
-    return (
-        <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
-            <BrowserRouter>
-                <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                    <Routes>
-                        {/* Landing Page - No Navbar */}
-                        <Route path="/" element={<LandingPage />} />
+    const { address, isConnected } = useAccount();
+    const { connect } = useConnect();
+    const { disconnect } = useDisconnect();
+    const publicClient = usePublicClient();
+    const { data: walletClient } = useWalletClient();
 
-                        {/* App Routes - With Navbar */}
-                        <Route
-                            path="/dashboard"
-                            element={
-                                <>
-                                    <Navbar />
-                                    <Dashboard />
-                                </>
-                            }
-                        />
-                        <Route
-                            path="/rentals"
-                            element={
-                                <>
-                                    <Navbar />
-                                    <Rentals />
-                                </>
-                            }
-                        />
-                        <Route
-                            path="/asset/:tokenId"
-                            element={
-                                <>
-                                    <Navbar />
-                                    <AssetDetails />
-                                </>
-                            }
-                        />
+    useEffect(() => {
+        if (publicClient) {
+            ContinuumService.setClients(publicClient, walletClient || undefined);
+        }
+    }, [publicClient, walletClient]);
 
-                        {/* Admin Route - No Navbar (has its own header) */}
-                        <Route path="/admin" element={<Admin />} />
-
-                        {/* Redirect unknown routes to landing */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+    const WalletConnectButton = () => {
+        if (isConnected) {
+            return (
+                <div className="flex items-center gap-md">
+                    <span className="text-sm font-mono">{`${address?.slice(0, 6)}...${address?.slice(-4)}`}</span>
+                    <Button onClick={() => disconnect()} variant="secondary">Disconnect</Button>
                 </div>
-            </BrowserRouter>
-        </AptosWalletAdapterProvider>
+            );
+        }
+        return <Button onClick={() => connect({ connector: injected() })}>Connect Wallet</Button>;
+    };
+
+    return (
+        <BrowserRouter>
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                <Routes>
+                    <Route
+                        path="/"
+                        element={<Navigate to="/dashboard" replace />}
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <>
+                                <Navbar walletButton={<WalletConnectButton />} />
+                                <Dashboard />
+                            </>
+                        }
+                    />
+                    <Route
+                        path="/asset/:tokenId"
+                        element={
+                            <>
+                                <Navbar walletButton={<WalletConnectButton />} />
+                                <AssetDetails />
+                            </>
+                        }
+                    />
+
+                    <Route 
+                        path="/admin/*" 
+                        element={
+                            <>
+                                <Navbar walletButton={<WalletConnectButton />} />
+                                <Admin />
+                            </>
+                        } 
+                    />
+
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+            </div>
+        </BrowserRouter>
     );
 };
 

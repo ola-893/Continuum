@@ -1,127 +1,114 @@
 import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { ethers } from 'ethers';
 import { ContinuumService } from '../services/continuumService';
-import { generateMockAssetData, getMockImage } from '../utils/mockDataGenerator';
-import type { StreamInfo } from '../hooks/useStreamBalance';
+import { fetchIpfsMetadata, IPFS_GATEWAY } from '../utils/ipfs';
+import type { StreamInfo } from '../types/continuum'; 
+import { CONTRACT_CONFIG } from '../config/contracts'; 
 
-/**
- * Convert blockchain stream info to UI StreamInfo format
- */
-function convertToStreamInfo(blockchainInfo: any): StreamInfo {
-    return {
-        startTime: blockchainInfo.startTime,
-        flowRate: blockchainInfo.flowRate / 100_000_000, // Convert to APT/sec for display
-        amountWithdrawn: blockchainInfo.amountWithdrawn,
-        totalAmount: blockchainInfo.totalAmount,
-        stopTime: blockchainInfo.stopTime,
-        isActive: blockchainInfo.status === 0, // 0 = Active
-    };
+export interface AssetData {
+    tokenId: number;
+    tokenAddress: string;
+    assetType: string;
+    title: string;
+    description: string;
+    imageUrl?: string;
+    streamId?: number;
+    streamInfo?: StreamInfo;
+    metadataUri?: string;
+    attributes?: Array<{ trait_type: string; value: string | number }>;
+    location?: { lat: number; lng: number; city: string; }; // Added location
 }
 
-/**
- * Convert numeric asset type to display string
- * Registry uses: 0=Real Estate, 1=Car/Vehicle, 2=Commodities
- */
 function getAssetTypeName(assetType: number): string {
     switch (assetType) {
-        case 0:
-            return 'Real Estate';
-        case 1:
-            return 'Vehicle';
-        case 2:
-            return 'Commodities';
-        default:
-            return 'Real Estate';
+        case 0: return 'Real Estate';
+        case 1: return 'Vehicle';
+        case 2: return 'Commodities';
+        default: return 'Unknown Asset';
     }
 }
 
-/**
- * Hook to load real stream data from blockchain for multiple assets (Dashboard grid)
- */
-export function useAssetList(tokenAddresses: string[]) {
-    const [assets, setAssets] = useState<any[]>([]);
+export function useAssetList(ownerAddress?: string) {
+    const [assets, setAssets] = useState<AssetData[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const { address } = useAccount();
 
     useEffect(() => {
-        if (tokenAddresses.length === 0) {
-            setAssets([]);
-            return;
-        }
-
         const loadAssets = async () => {
             setLoading(true);
-            const loadedAssets = [];
+            setError(null);
+            const fetchedAssets: AssetData[] = [];
 
-            for (const tokenAddress of tokenAddresses) {
-                try {
-                    // Check if registered
-                    const isRegistered = await ContinuumService.isAssetRegistered(tokenAddress);
+            try {
+                const allTokenIds = await ContinuumService.getAllTokenIds();
 
-                    if (isRegistered) {
-                        // Get stream ID
-                        const streamId = await ContinuumService.getAssetStreamId(tokenAddress);
-
-                        if (streamId !== null) {
-                            // Get stream info
-                            const streamInfo = await ContinuumService.getStreamInfo(streamId);
-
-                            // Fetch asset details from the token registry to get asset type
-                            let assetType: string = 'Unknown Asset';
-                            let assetTypeNumber: number | undefined = undefined;
-                            let title = '';
-                            let imageUrl = '';
-
-                            try {
-                                const tokenDetails = await ContinuumService.getTokenDetailsFromRegistry(tokenAddress);
-                                if (tokenDetails && tokenDetails.asset_type !== undefined) {
-                                    assetTypeNumber = Number(tokenDetails.asset_type);
-                                    assetType = getAssetTypeName(assetTypeNumber);
-                                }
-                            } catch (error) {
-                                console.warn(`Could not fetch asset_type for ${tokenAddress}:`, error);
-                            }
-
-                            // Try to fetch NFT metadata for title
-                            try {
-                                const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
-                                if (nftMetadata?.name) {
-                                    title = nftMetadata.name;
-                                }
-                            } catch (error) {
-                                console.warn(`Could not fetch NFT metadata for ${tokenAddress}`);
-                            }
-
-                            // Use smart mock data if title is missing
-                            if (!title) {
-                                const mockData = generateMockAssetData(assetTypeNumber, tokenAddress, 'marketplace');
-                                title = mockData.name;
-                                imageUrl = mockData.image;
-                            } else {
-                                // Use mock image if we have real title but no image
-                                imageUrl = getMockImage(assetTypeNumber, tokenAddress);
-                            }
-
-                            if (streamInfo) {
-                                loadedAssets.push({
-                                    tokenAddress,
-                                    streamInfo: convertToStreamInfo(streamInfo),
-                                    assetType,
-                                    title,
-                                    imageUrl,
-                                });
+                for (const tokenId of allTokenIds) {
+                    try {
+                        const tokenDetails = await ContinuumService.getTokenDetails(tokenId);
+                        const metadataUri = tokenDetails.metadata_uri;
+                        
+                        let assetMetadata: any = {};
+                        if (metadataUri) {
+                            assetMetadata = await fetchIpfsMetadata(metadataUri);
+                            if (assetMetadata.image && assetMetadata.image.startsWith('ipfs://')) {
+                                assetMetadata.image = `${IPFS_GATEWAY}${assetMetadata.image.replace('ipfs://', '')}`;
                             }
                         }
-                    }
-                } catch (error) {
-                    console.error(`Error loading asset ${tokenAddress}:`, error);
-                }
-            }
 
-            setAssets(loadedAssets);
-            setLoading(false);
+                        let streamInfo: StreamInfo | undefined;
+                        if (tokenDetails.stream_id && Number(tokenDetails.stream_id) > 0) {
+                            const rawStreamInfo = await ContinuumService.getStreamInfo(Number(tokenDetails.stream_id));
+                            streamInfo = {
+                                sender: rawStreamInfo.sender,
+                                recipient: rawStreamInfo.recipient,
+                                startTime: Number(rawStreamInfo.startTime),
+                                flowRate: Number(ethers.formatUnits(rawStreamInfo.flowRate, 18)), 
+                                amountWithdrawn: Number(ethers.formatUnits(rawStreamInfo.amountWithdrawn, 18)),
+                                totalAmount: Number(ethers.formatUnits(rawStreamInfo.totalAmount, 18)),
+                                stopTime: Number(rawStreamInfo.stopTime),
+                                isActive: rawStreamInfo.isActive,
+                            };
+                        }
+
+                        const tokenOwner = await ContinuumService.getTokenOwner(tokenId);
+                        const isOwnedByUser = !ownerAddress || tokenOwner.toLowerCase() === (ownerAddress || '').toLowerCase();
+
+                        if (isOwnedByUser) {
+                            fetchedAssets.push({
+                                tokenId,
+                                tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+                                assetType: getAssetTypeName(tokenDetails.asset_type),
+                                title: assetMetadata.name || `Asset #${tokenId}`,
+                                description: assetMetadata.description || 'No description available.',
+                                imageUrl: assetMetadata.image || undefined,
+                                streamId: Number(tokenDetails.stream_id),
+                                streamInfo,
+                                metadataUri,
+                                attributes: assetMetadata.attributes || [],
+                                location: {
+                                    lat: 37.7749 + (Math.random() - 0.5) * 0.5,
+                                    lng: -122.4194 + (Math.random() - 0.5) * 0.5,
+                                    city: 'San Francisco Bay Area',
+                                },
+                            });
+                        }
+                    } catch (innerError) {
+                        console.warn(`Error fetching details for token ${tokenId}:`, innerError);
+                    }
+                }
+                setAssets(fetchedAssets);
+            } catch (outerError: any) {
+                console.error("Error loading assets:", outerError);
+                setError(outerError.message || "Failed to load assets.");
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadAssets();
-    }, [tokenAddresses.join(',')]);
+    }, [address, ownerAddress]); 
 
-    return { assets, loading };
+    return { assets, loading, error };
 }

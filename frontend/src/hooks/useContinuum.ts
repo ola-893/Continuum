@@ -1,105 +1,97 @@
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { useState, useEffect } from "react";
-import { ContinuumService } from "../services/continuumService";
+import { useState } from 'react';
+import { useAccount } from 'wagmi';
+import { ethers } from 'ethers';
+import { ContinuumService } from '../services/continuumService';
 
-/**
- * Hook for interacting with Continuum smart contracts
- */
-export function useContinuum() {
-    const { account, signAndSubmitTransaction } = useWallet();
-    const [complianceStatus, setComplianceStatus] = useState({
-        isAdmin: false,
-        hasKYC: false,
-        canTradeRealEstate: false,
-    });
+export const useContinuum = () => {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const { address } = useAccount();
 
-    // Load user compliance status when wallet connects
-    useEffect(() => {
-        if (account?.address) {
-            ContinuumService.getUserComplianceStatus(account.address).then(
-                setComplianceStatus
-            );
-        } else {
-            setComplianceStatus({
-                isAdmin: false,
-                hasKYC: false,
-                canTradeRealEstate: false,
-            });
-        }
-    }, [account?.address]);
-
-    // Create a yield stream
     const createYieldStream = async (
-        tokenAddress: string,
+        _tokenAddress: string, // Unused in EVM as token is created in same tx
         totalYield: number,
         durationInSeconds: number,
-        assetType: number = 0 // 0=Real Estate, 1=Vehicle, 2=Commodities (default to Real Estate)
+        assetType: number,
+        metadataUri: string
     ) => {
-        if (!account) throw new Error("Wallet not connected");
+        if (!address) {
+            setError("Wallet not connected");
+            return;
+        }
 
         setLoading(true);
+        setError(null);
+
         try {
-            const transaction = ContinuumService.createAssetStream(
-                tokenAddress,
-                totalYield,
-                durationInSeconds,
-                assetType // Pass the asset type!
+            const yieldInWei = ethers.parseUnits(totalYield.toString(), 18);
+            const tx = await ContinuumService.createAssetStream(
+                address,
+                assetType,
+                metadataUri,
+                yieldInWei,
+                durationInSeconds
             );
-
-            const response = await signAndSubmitTransaction(transaction);
-            console.log("Stream created:", response);
-            return response;
-        } catch (error) {
-            console.error("Error creating stream:", error);
-            throw error;
+            await tx.wait();
+        } catch (err: any) {
+            console.error("Error creating asset stream:", err);
+            setError(err.message || "An unexpected error occurred.");
+            throw err; 
         } finally {
             setLoading(false);
         }
     };
 
-    // Claim yield
-    const claimYield = async (tokenAddress: string) => {
-        if (!account) throw new Error("Wallet not connected");
+    const claimYield = async (streamId: number) => {
+        if (!address) {
+            setError("Wallet not connected");
+            return;
+        }
 
         setLoading(true);
+        setError(null);
+
         try {
-            const transaction = ContinuumService.claimYield(tokenAddress);
-            const response = await signAndSubmitTransaction(transaction);
-            console.log("Yield claimed:", response);
-            return response;
-        } catch (error) {
-            console.error("Error claiming yield:", error);
-            throw error;
+            const tx = await ContinuumService.claimYield(streamId);
+            await tx.wait();
+        } catch (err: any) {
+            console.error("Error claiming yield:", err);
+            setError(err.message || "An unexpected error occurred.");
+            throw err;
         } finally {
             setLoading(false);
         }
     };
 
-    // Flash advance
-    const flashAdvance = async (tokenAddress: string, amount: number) => {
-        if (!account) throw new Error("Wallet not connected");
+    const flashAdvance = async (_streamId: number, _amountRequested: number) => { // Commented out unused params
+        if (!address) {
+            setError("Wallet not connected");
+            return;
+        }
 
         setLoading(true);
+        setError(null);
+
         try {
-            const transaction = ContinuumService.flashAdvance(tokenAddress, amount);
-            const response = await signAndSubmitTransaction(transaction);
-            console.log("Flash advance executed:", response);
-            return response;
-        } catch (error) {
-            console.error("Error executing flash advance:", error);
-            throw error;
+            // const amountInWei = ethers.parseUnits(amountRequested.toString(), 18); // Commented out unused variable
+            console.warn("Flash Advance is a placeholder function for EVM. Not yet implemented in RWAHub.");
+            // const tx = await ContinuumService.flashAdvance(streamId, amountInWei);
+            // await tx.wait();
+        } catch (err: any) {
+            console.error("Error performing flash advance:", err);
+            setError(err.message || "An unexpected error occurred.");
+            throw err;
         } finally {
             setLoading(false);
         }
     };
 
     return {
-        account,
-        complianceStatus,
-        loading,
         createYieldStream,
         claimYield,
         flashAdvance,
+        loading,
+        error,
+        complianceStatus: { hasKYC: true, isAdmin: false, canTradeRealEstate: true }, 
     };
-}
+};

@@ -1,194 +1,66 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Infinity, Wallet, Zap } from 'lucide-react';
-import { truncateAddress } from '../../utils/formatting';
-import { useContinuum } from '../../hooks/useContinuum';
-import { ProfileModal } from './ProfileModal';
+import { Infinity } from 'lucide-react';
 
-export const Navbar: React.FC = () => {
-    const { account, connected, connect, wallets } = useWallet();
-    const { complianceStatus } = useContinuum();
-    const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+interface NavbarProps {
+    walletButton?: React.ReactNode;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ walletButton }) => {
     const location = useLocation();
 
-    const handleConnectWallet = async () => {
-        try {
-            // Find Petra wallet
-            const petraWallet = wallets?.find(
-                (wallet) => wallet.name === 'Petra'
-            );
-
-            if (petraWallet) {
-                await connect(petraWallet.name);
-            } else {
-                // Fallback: open Petra installation page
-                window.open('https://petra.app/', '_blank');
-            }
-        } catch (error) {
-            console.error('Failed to connect wallet:', error);
-        }
-    };
-
     return (
-        <>
-            <nav className="glass" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
-                <div className="container">
-                    <div className="flex justify-between items-center" style={{ height: '70px' }}>
-                        {/* Logo */}
-                        <Link to="/" className="flex items-center gap-md">
-                            <Infinity
-                                size={32}
-                                style={{ color: 'var(--color-primary)' }}
-                            />
-                            <span className="text-2xl font-bold gradient-text">Continuum</span>
+        <nav className="glass" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+            <div className="container">
+                <div className="flex justify-between items-center" style={{ height: '70px' }}>
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center gap-md">
+                        <Infinity size={32} style={{ color: 'var(--color-primary)' }} />
+                        <span className="text-2xl font-bold gradient-text">YieldStream</span>
+                    </Link>
+
+                    {/* Navigation Links */}
+                    <div style={{ display: 'flex', gap: 'var(--spacing-lg)' }}>
+                        <Link
+                            to="/dashboard"
+                            className={`nav-link ${location.pathname.startsWith('/dashboard') ? 'active' : ''}`}
+                        >
+                            Dashboard
                         </Link>
+                        <Link
+                            to="/admin"
+                            className={`nav-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
+                        >
+                            Admin
+                        </Link>
+                    </div>
 
-                        {/* Navigation Links */}
-                        {connected && (
-                            <div style={{ display: 'flex', gap: 'var(--spacing-lg)' }}>
-                                <Link
-                                    to="/dashboard"
-                                    style={{
-                                        padding: 'var(--spacing-sm) var(--spacing-md)',
-                                        borderRadius: 'var(--border-radius-md)',
-                                        background: location.pathname === '/dashboard' ? 'rgba(0, 217, 255, 0.1)' : 'transparent',
-                                        border: location.pathname === '/dashboard' ? '1px solid var(--color-primary)' : '1px solid transparent',
-                                        transition: 'all 0.2s ease',
-                                        textDecoration: 'none',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Dashboard
-                                </Link>
-                                <Link
-                                    to="/rentals"
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--spacing-xs)',
-                                        padding: 'var(--spacing-sm) var(--spacing-md)',
-                                        borderRadius: 'var(--border-radius-md)',
-                                        background: location.pathname === '/rentals' ? 'rgba(0, 217, 255, 0.1)' : 'transparent',
-                                        border: location.pathname === '/rentals' ? '1px solid var(--color-primary)' : '1px solid transparent',
-                                        transition: 'all 0.2s ease',
-                                        textDecoration: 'none',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    <Zap size={16} />
-                                    Rent Assets
-                                </Link>
-                            </div>
-                        )}
-
-                        {/* Wallet Connection */}
-                        <div className="flex items-center gap-md">
-                            {connected && account ? (
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--spacing-md)',
-                                        cursor: 'pointer',
-                                        transition: 'opacity 0.2s ease',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        padding: 0,
-                                    }}
-                                    onClick={() => setIsProfileOpen(true)}
-                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                >
-                                    {/* Avatar */}
-                                    <div
-                                        className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-base font-bold"
-                                        style={{ flexShrink: 0 }}
-                                    >
-                                        {account.address.slice(2, 4).toUpperCase()}
-                                    </div>
-
-                                    {/* Wallet Info */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                            <span className="text-sm font-medium">
-                                                {truncateAddress(account.address)}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    fontSize: '10px',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    background: 'rgba(59, 130, 246, 0.2)',
-                                                    color: '#60a5fa',
-                                                    fontWeight: 500,
-                                                }}
-                                            >
-                                                Testnet
-                                            </span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                            {complianceStatus.hasKYC ? (
-                                                <span style={{ fontSize: '11px', color: 'var(--color-success)' }}>
-                                                    KYC Verified
-                                                </span>
-                                            ) : (
-                                                <span style={{ fontSize: '11px', color: 'var(--color-warning)' }}>
-                                                    No KYC
-                                                </span>
-                                            )}
-                                            {complianceStatus.isAdmin && (
-                                                <span style={{ fontSize: '11px', color: 'var(--color-primary)' }}>
-                                                    • Admin
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={handleConnectWallet}
-                                    className="btn-primary"
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--spacing-sm)',
-                                        padding: 'var(--spacing-md) var(--spacing-xl)',
-                                        fontSize: 'var(--font-size-base)',
-                                        fontWeight: 600,
-                                        background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-                                        border: 'none',
-                                        borderRadius: 'var(--border-radius-md)',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.3s ease',
-                                        boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)',
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                        e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 217, 255, 0.5)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 217, 255, 0.3)';
-                                    }}
-                                >
-                                    <Wallet size={18} />
-                                    <span>Connect Wallet</span>
-                                </button>
-                            )}
-                        </div>
+                    {/* Wallet Connection */}
+                    <div className="flex items-center gap-md">
+                        {walletButton}
                     </div>
                 </div>
-            </nav>
-
-            {/* Profile Modal */}
-            <ProfileModal
-                isOpen={isProfileOpen}
-                onClose={() => setIsProfileOpen(false)}
-            />
-        </>
+            </div>
+            <style>
+                {`
+                .nav-link {
+                    padding: var(--spacing-sm) var(--spacing-md);
+                    border-radius: var(--border-radius-md);
+                    background: transparent;
+                    border: 1px solid transparent;
+                    transition: all 0.2s ease;
+                    text-decoration: none;
+                    font-weight: 500;
+                }
+                .nav-link:hover {
+                    color: var(--color-text-primary);
+                }
+                .nav-link.active {
+                    background: rgba(0, 217, 255, 0.1);
+                    border-color: var(--color-primary);
+                }
+            `}
+            </style>
+        </nav>
     );
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, DollarSign } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react'; // Corrected to use named export QRCodeSVG
+import { ArrowLeft, Zap, ExternalLink } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { LiveBalance } from '../components/ui/LiveBalance';
@@ -10,68 +11,129 @@ import { FlashAdvanceModal } from '../components/ui/FlashAdvanceModal';
 import { formatCurrency } from '../utils/formatting';
 import { useContinuum } from '../hooks/useContinuum';
 import { useAssetStream } from '../hooks/useRealAssetStream';
-import { calculateTotalStreamed } from '../utils/streamCalculations';
-import { ContinuumService } from '../services/continuumService';
+import { fetchIpfsMetadata, IPFS_GATEWAY } from '../utils/ipfs';
+import { CONTRACT_CONFIG } from '../config/contracts';
+import { StreamInfo as EVMStreamInfo } from '../types/continuum'; 
+import { ethers } from 'ethers';
+import { ContinuumService } from '../services/continuumService'; 
+
+interface AssetMetadata {
+    name: string;
+    description: string;
+    image: string;
+    attributes: Array<{ trait_type: string; value: string | number }>;
+}
+
+interface FlashAdvanceAsset {
+    tokenAddress: string;
+    tokenId: number;
+    title: string;
+    streamId?: number;
+    streamInfo?: { 
+        flowRate: number;
+        totalAmount: number;
+        amountWithdrawn: number;
+        isActive: boolean;
+    };
+}
 
 export const AssetDetails: React.FC = () => {
-    const { tokenId } = useParams<{ tokenId: string }>();
+    const { tokenId: tokenIdParam } = useParams<{ tokenId: string }>();
     const navigate = useNavigate();
-    const { claimYield, flashAdvance, loading } = useContinuum();
+    const { claimYield, flashAdvance, loading: continuumLoading } = useContinuum();
     const [showFlashModal, setShowFlashModal] = useState(false);
-    const [isRepaying, setIsRepaying] = useState(false);
     const [txStatus, setTxStatus] = useState('');
-    const [isClaiming, setIsClaiming] = useState(false);
-    const [isFlashing, setIsFlashing] = useState(false);
-    const [streamStatus, setStreamStatus] = useState<{ claimable: number, escrowBalance: number, remaining: number, isFrozen: boolean } | null>(null);
+    const [assetMetadata, setAssetMetadata] = useState<AssetMetadata | null>(null);
+    const [currentStreamStatus, setCurrentStreamStatus] = useState<{ claimable: number, escrowBalance: number, remaining: number, isFrozen: boolean } | null>(null); 
 
-    // Fetch real asset data from blockchain
-    const { streamId, streamInfo, loading: loadingAsset, error } = useAssetStream(tokenId || '');
+    const numericTokenId = Number(tokenIdParam);
+    const { streamId, streamInfo, loading: loadingAsset, error } = useAssetStream(tokenIdParam || null);
 
-    // Fetch stream status from blockchain (must be before early returns!)
     useEffect(() => {
-        const fetchStreamStatus = async () => {
+        const fetchLiveStreamStatus = async () => {
             if (streamId) {
                 try {
                     const status = await ContinuumService.getStreamStatus(streamId);
-                    setStreamStatus(status);
-                } catch (error) {
-                    console.error('Error fetching stream status:', error);
+                    setCurrentStreamStatus({
+                        claimable: Number(ethers.formatUnits(status.claimable, 18)),
+                        escrowBalance: Number(ethers.formatUnits(status.escrowBalance, 18)),
+                        remaining: Number(ethers.formatUnits(status.remaining, 18)),
+                        isFrozen: status.isFrozen,
+                    });
+                } catch (err) {
+                    console.error('Error fetching live stream status:', err);
+                    setCurrentStreamStatus(null);
                 }
             }
         };
-        fetchStreamStatus();
-
-        // Refresh every 10 seconds for real-time updates
-        const interval = setInterval(fetchStreamStatus, 10000);
+        fetchLiveStreamStatus();
+        const interval = setInterval(fetchLiveStreamStatus, 5000); 
         return () => clearInterval(interval);
     }, [streamId]);
 
-    if (loadingAsset) {
-        return (
-            <div className="container" style={{ paddingTop: 'var(--spacing-2xl)' }}>
-                <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-2xl)' }}>
-                    <p>Loading asset data from blockchain...</p>
-                </div>
-            </div>
-        );
-    }
+    const liveBalanceStreamInfo: EVMStreamInfo | null = streamInfo ? {
+        sender: streamInfo.sender,
+        recipient: streamInfo.recipient,
+        totalAmount: streamInfo.totalAmount,
+        flowRate: streamInfo.flowRate,
+        startTime: streamInfo.startTime,
+        stopTime: streamInfo.stopTime,
+        amountWithdrawn: streamInfo.amountWithdrawn,
+        isActive: streamInfo.isActive,
+    } : null;
 
-    if (!streamInfo || error) {
-        return (
-            <div className="container" style={{ paddingTop: 'var(--spacing-2xl)' }}>
-                <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-2xl)' }}>
-                    <p>{error || 'Asset not found or not registered on blockchain'}</p>
-                    <Button variant="ghost" onClick={() => navigate('/dashboard')} style={{ marginTop: 'var(--spacing-md)' }}>
-                        Back to Dashboard
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+    useEffect(() => {
+        const getIpfsData = async () => {
+            if (streamInfo?.metadataUri) {
+                const metadata = await fetchIpfsMetadata(streamInfo.metadataUri);
+                if (metadata) {
+                    if (metadata.image && metadata.image.startsWith('ipfs://')) {
+                        metadata.image = `${IPFS_GATEWAY}${metadata.image.replace('ipfs://', '')}`;
+                    }
+                    setAssetMetadata(metadata);
+                }
+            }
+        };
+        getIpfsData();
+    }, [streamInfo?.metadataUri]);
 
-    // Transform blockchain data to asset object format
-    const getAssetTypeName = (assetType: number | undefined): string => {
-        switch (assetType) {
+    const handleClaimYield = async () => {
+        if (!streamId) {
+            setTxStatus("Error: Stream ID not available for claiming.");
+            return;
+        }
+        setTxStatus('Preparing claim transaction...');
+        try {
+            await claimYield(streamId);
+            setTxStatus('Successfully claimed all available yield!');
+        } catch (err: any) {
+            console.error('Claim failed:', err);
+            setTxStatus(`Claim failed: ${err?.message || 'Please try again'}`);
+        }
+    };
+
+    const handleFlashAdvance = async (amount: number) => {
+        if (!streamId) {
+            setTxStatus("Error: Stream ID not available for flash advance.");
+            return;
+        }
+        setTxStatus('Preparing flash advance...');
+        try {
+            await flashAdvance(streamId, amount);
+            setTxStatus(`Flash advance of ${amount} BUSD/USDC successful! Remember to repay.`);
+            setShowFlashModal(false);
+        }
+        catch (err: any) {
+            console.error('Flash advance failed:', err);
+            setTxStatus(`Flash advance failed: ${err?.message || 'Please try again'}`);
+        }
+    };
+
+    if (loadingAsset) return <div className="container card text-center p-xl">Loading asset data...</div>;
+    if (!streamInfo || error) return <div className="container card text-center p-xl">{error || 'Asset not found'}</div>;
+
+    const getAssetTypeName = (type: number | undefined) => {
+        switch (type) {
             case 0: return 'Real Estate';
             case 1: return 'Vehicle';
             case 2: return 'Commodities';
@@ -79,231 +141,93 @@ export const AssetDetails: React.FC = () => {
         }
     };
 
-    const asset = {
-        tokenAddress: tokenId || '',
-        assetType: getAssetTypeName(streamInfo.assetType),
-        title: `Asset ${tokenId?.slice(0, 6)}...${tokenId?.slice(-4)}`,
-        imageUrl: undefined,
-        streamId: streamId || undefined, // Add streamId for flash advance balance checking
-        streamInfo: {
-            startTime: streamInfo.startTime,
-            flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
-            amountWithdrawn: streamInfo.amountWithdrawn / 100_000_000, // Convert to APT
-            totalAmount: streamInfo.totalAmount / 100_000_000, // Convert to APT
-            stopTime: streamInfo.stopTime,
-            isActive: streamInfo.status === 0,
-        },
-        metadata: {
-            'Stream ID': streamInfo.startTime.toString(),
-            'Start Time': new Date(streamInfo.startTime * 1000).toLocaleString(),
-            'Flow Rate': `${(streamInfo.flowRate / 100_000_000).toFixed(8)} APT/sec`,
-            'Total Amount': `${(streamInfo.totalAmount / 100_000_000).toFixed(2)} APT`,
-            'Status': streamInfo.status === 0 ? 'Active' : 'Inactive',
-        },
-    };
-
-    const currentStreamInfo = isRepaying
-        ? { ...asset.streamInfo, isActive: false }
-        : asset.streamInfo;
-
-    // Handle claim yield transaction
-    const handleClaimYield = async () => {
-        const tokenAddress = asset.tokenAddress;
-        if (!tokenAddress) return;
-
-        try {
-            setIsClaiming(true);
-            setTxStatus('Preparing claim transaction...');
-
-            setTxStatus('Please approve transaction in your wallet...');
-            await claimYield(tokenAddress);
-
-            setTxStatus('Successfully claimed all available yield!');
-            setTimeout(() => {
-                setTxStatus('');
-                setIsClaiming(false);
-            }, 3000);
-        } catch (error: any) {
-            console.error('Claim failed:', error);
-            setTxStatus(`Claim failed: ${error?.message || 'Please try again'}`);
-            setTimeout(() => {
-                setTxStatus('');
-                setIsClaiming(false);
-            }, 5000);
-        }
-    };
-
-    // Handle flash advance transaction
-    const handleFlashAdvance = async (amount: number) => {
-        const tokenAddress = asset.tokenAddress;
-        if (!tokenAddress) return;
-
-        try {
-            setIsFlashing(true);
-            setTxStatus('Preparing flash advance...');
-
-            const flashAmountOctas = Math.floor(amount * 100_000_000);
-
-            setTxStatus('Please approve flash advance in your wallet...');
-            await flashAdvance(tokenAddress, flashAmountOctas);
-
-            setTxStatus(`Flash advance of ${amount} APT successful! Remember to repay.`);
-            setTimeout(() => {
-                setTxStatus('');
-                setIsFlashing(false);
-            }, 3000);
-            setShowFlashModal(false);
-            setIsRepaying(true);
-        } catch (error: any) {
-            console.error('Flash advance failed:', error);
-            setTxStatus(`Flash advance failed: ${error?.message || 'Please try again'}`);
-            setTimeout(() => {
-                setTxStatus('');
-                setIsFlashing(false);
-            }, 5000);
-        }
+    const assetForModal: FlashAdvanceAsset = {
+        tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+        tokenId: numericTokenId,
+        title: assetMetadata?.name || `Asset #${tokenIdParam?.slice(0, 6)}...`,
+        streamId: streamId || undefined,
+        streamInfo: liveBalanceStreamInfo ? {
+            flowRate: liveBalanceStreamInfo.flowRate,
+            totalAmount: liveBalanceStreamInfo.totalAmount,
+            amountWithdrawn: liveBalanceStreamInfo.amountWithdrawn,
+            isActive: liveBalanceStreamInfo.isActive,
+        } : undefined,
     };
 
     return (
         <div className="container" style={{ paddingTop: 'var(--spacing-2xl)', paddingBottom: 'var(--spacing-2xl)' }}>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {/* Back Button */}
-                <Button
-                    variant="ghost"
-                    leftIcon={<ArrowLeft size={18} />}
-                    onClick={() => navigate('/dashboard')}
-                    style={{ marginBottom: 'var(--spacing-xl)' }}
-                >
-                    Back to Portfolio
+                <Button variant="ghost" leftIcon={<ArrowLeft size={18} />} onClick={() => navigate('/dashboard')} style={{ marginBottom: 'var(--spacing-xl)' }}>
+                    Back to Dashboard
                 </Button>
-
-                <div className="grid grid-cols-2 gap-xl">
-                    {/* Left Column - Asset Info */}
-                    <div>
-                        {/* Asset Image */}
-                        <div
-                            className="card"
-                            style={{
-                                height: '400px',
-                                background: asset.imageUrl
-                                    ? `url(${asset.imageUrl}) center/cover`
-                                    : 'var(--gradient-primary)',
-                                marginBottom: 'var(--spacing-lg)',
-                            }}
-                        />
-
-                        {/* NFT Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-xl">
+                    <div className="md:col-span-2 space-y-xl">
+                        <div className="card" style={{ height: '450px', background: assetMetadata?.image ? `url(${assetMetadata.image}) center/cover` : 'var(--gradient-primary)' }} />
                         <div className="card">
                             <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Asset Details</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-                                <div className="flex justify-between">
-                                    <span style={{ color: 'var(--color-text-secondary)' }}>Type</span>
-                                    <Badge variant="info">{asset.assetType}</Badge>
-                                </div>
-                                {Object.entries(asset.metadata).map(([key, value]) => (
-                                    <div key={key} className="flex justify-between">
-                                        <span style={{ color: 'var(--color-text-secondary)' }}>{key}</span>
-                                        <span>{value}</span>
-                                    </div>
+                            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)' }}>{assetMetadata?.description || 'No description available.'}</p>
+                            <div className="grid grid-cols-2 gap-lg">
+                                <div className="flex justify-between items-center"><span className="text-secondary">Asset Type</span><Badge variant="info">{getAssetTypeName(streamInfo.assetType)}</Badge></div>
+                                <div className="flex justify-between items-center"><span className="text-secondary">Owner</span><span>You</span></div>
+                                {(assetMetadata?.attributes || []).map(attr => (
+                                    <div key={attr.trait_type} className="flex justify-between items-center"><span className="text-secondary">{attr.trait_type}</span><span>{attr.value}</span></div>
                                 ))}
-                                <div className="flex justify-between">
-                                    <span style={{ color: 'var(--color-text-secondary)' }}>Owner</span>
-                                    <span>You</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span style={{ color: 'var(--color-text-secondary)' }}>Token Address</span>
-                                    <span style={{ fontSize: 'var(--font-size-xs)' }}>
-                                        {asset.tokenAddress.slice(0, 10)}...{asset.tokenAddress.slice(-8)}
-                                    </span>
-                                </div>
+                                <div className="flex justify-between items-center col-span-2"><span className="text-secondary">Token ID</span><a href={`https://testnet.bscscan.com/token/${CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS}?a=${numericTokenId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-xs text-primary">{tokenIdParam?.slice(0, 10)}...{tokenIdParam?.slice(-8)} <ExternalLink size={14} /></a></div>
+                                <div className="flex justify-between items-center col-span-2"><span className="text-secondary">Metadata URI</span><a href={streamInfo.metadataUri ? `${IPFS_GATEWAY}${streamInfo.metadataUri.replace('ipfs://', '')}` : '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-xs text-primary">{streamInfo.metadataUri} <ExternalLink size={14} /></a></div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Right Column - Stream Management */}
-                    <div>
-                        {/* Stream Header */}
-                        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-                            <div className="flex justify-between items-center" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                <h2>{asset.title}</h2>
-                                <Badge variant={currentStreamInfo.isActive ? 'success' : 'warning'}>
-                                    Stream #{asset.tokenAddress.slice(-4)} - {currentStreamInfo.isActive ? 'Active' : 'Repaying Advance'}
-                                </Badge>
+                    <div className="space-y-xl">
+                        <div className="card">
+                            <div className="flex justify-between items-center mb-md">
+                                <h2>{assetMetadata?.name || `Asset #${tokenIdParam?.slice(0, 6)}...`}</h2>
+                                <Badge variant={streamInfo.isActive ? 'success' : 'warning'}>Stream #{streamId}</Badge>
                             </div>
-
-                            {/* Live Balance */}
-                            <LiveBalance streamInfo={currentStreamInfo} showRate={true} decimals={4} />
+                            {liveBalanceStreamInfo && <LiveBalance streamInfo={liveBalanceStreamInfo} showRate decimals={4} />}
                         </div>
-
-                        {/* Stream Stats */}
-                        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-                            <h4 style={{ marginBottom: 'var(--spacing-md)' }}>Stream Overview</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                                <div>
-                                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xs)' }}>
-                                        Total Vesting
-                                    </p>
-                                    <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700 }}>
-                                        {formatCurrency(asset.streamInfo.totalAmount, 2)}
-                                    </p>
-                                </div>
-
-                                <StreamVisualization streamInfo={currentStreamInfo} />
-
-                                <div className="flex justify-between">
-                                    <span style={{ color: 'var(--color-text-secondary)' }}>Total Streamed</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>
-                                        {formatCurrency(calculateTotalStreamed(asset.streamInfo), 2)}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between">
-                                    <span style={{ color: 'var(--color-text-secondary)' }}>Amount Withdrawn</span>
-                                    <span>{formatCurrency(asset.streamInfo.amountWithdrawn, 2)}</span>
-                                </div>
-
-                                {streamStatus && (
-                                    <>
-                                        <div className="flex justify-between">
-                                            <span style={{ color: 'var(--color-text-secondary)' }}>Claimable (Live)</span>
-                                            <span style={{ fontWeight: 600, color: 'var(--color-success)' }}>
-                                                {formatCurrency(streamStatus.claimable / 100_000_000, 2)}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex justify-between">
-                                            <span style={{ color: 'var(--color-text-secondary)' }}>Remaining to Vest</span>
-                                            <span style={{ color: 'var(--color-text-secondary)' }}>
-                                                {formatCurrency(streamStatus.remaining / 100_000_000, 2)}
-                                            </span>
-                                        </div>
-                                    </>
-                                )}
+                        <div className="card">
+                            <h4>Stream Overview</h4>
+                            {streamInfo && <StreamVisualization streamInfo={liveBalanceStreamInfo || null} />}
+                            <div className="flex justify-between mt-md">
+                                <span className="text-secondary">Total Streamed</span>
+                                <span className="font-semibold text-primary">
+                                    {formatCurrency(streamInfo.amountWithdrawn, 2)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-secondary">Total Value Locked</span>
+                                <span>{formatCurrency(streamInfo.totalAmount, 2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-secondary">Claimable (Live)</span>
+                                <span className="font-semibold text-success">
+                                    {currentStreamStatus ? formatCurrency(currentStreamStatus.claimable, 2) : 'N/A'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-secondary">Remaining to Vest</span>
+                                <span className="text-secondary">
+                                    {currentStreamStatus ? formatCurrency(currentStreamStatus.remaining, 2) : 'N/A'}
+                                </span>
                             </div>
                         </div>
-
-                        {/* Transaction Status */}
+                        <div className="card">
+                            <h4>Scan for Details</h4>
+                            <div className="flex justify-center p-md">
+                                {streamInfo.metadataUri && <QRCodeSVG value={streamInfo.metadataUri} size={200} level="H" includeMargin />}
+                            </div>
+                        </div>
                         {txStatus && (
-                            <div
-                                className="card"
-                                style={{
-                                    marginBottom: 'var(--spacing-lg)',
-                                    background: txStatus.includes('Success:') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                                    border: txStatus.includes('Success:') ? '1px solid var(--color-success)' : '1px solid var(--color-warning)',
-                                }}
-                            >
-                                <p>{txStatus}</p>
+                            <div className="card" style={{ marginBottom: 'var(--spacing-lg)', background: txStatus.includes('Success') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${txStatus.includes('Success') ? 'var(--color-success)' : 'var(--color-danger)'}` }}>
+                                <p style={{ color: txStatus.includes('Success') ? 'var(--color-success)' : 'var(--color-danger)' }}>{txStatus}</p>
                             </div>
                         )}
-
-                        {/* Action Buttons */}
-                        <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+                         <div className="flex gap-md">
                             <Button
                                 variant="secondary"
-                                leftIcon={<DollarSign size={18} />}
                                 onClick={handleClaimYield}
-                                disabled={isRepaying || loading || isClaiming}
-                                isLoading={isClaiming}
+                                disabled={continuumLoading}
+                                isLoading={continuumLoading}
                                 style={{ flex: 1 }}
                             >
                                 Claim Yield
@@ -312,39 +236,17 @@ export const AssetDetails: React.FC = () => {
                                 variant="primary"
                                 leftIcon={<Zap size={18} />}
                                 onClick={() => setShowFlashModal(true)}
-                                disabled={isRepaying || loading || isFlashing}
-                                isLoading={isFlashing}
+                                disabled={continuumLoading}
+                                isLoading={continuumLoading}
                                 style={{ flex: 1 }}
                             >
                                 Flash Advance
                             </Button>
                         </div>
-
-                        {isRepaying && (
-                            <div
-                                className="card"
-                                style={{
-                                    marginTop: 'var(--spacing-lg)',
-                                    border: '1px solid var(--color-warning)',
-                                }}
-                            >
-                                <p style={{ color: 'var(--color-warning)', fontSize: 'var(--font-size-sm)' }}>
-                                    Lock: Stream is currently repaying a flash advance. All yield is being automatically allocated to repayment.
-                                </p>
-                            </div>
-                        )}
                     </div>
                 </div>
             </motion.div>
-
-            {/* Flash Advance Modal */}
-            {showFlashModal && (
-                <FlashAdvanceModal
-                    asset={asset}
-                    onClose={() => setShowFlashModal(false)}
-                    onConfirm={handleFlashAdvance}
-                />
-            )}
+            {showFlashModal && streamInfo && <FlashAdvanceModal asset={assetForModal} onClose={() => setShowFlashModal(false)} onConfirm={handleFlashAdvance} />}
         </div>
     );
 };

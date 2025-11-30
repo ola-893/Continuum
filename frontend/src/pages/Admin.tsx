@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAccount } from 'wagmi';
 import { LayoutDashboard, Factory, Users, Radio, Shield, ArrowLeft } from 'lucide-react';
-import { useContinuum } from '../hooks/useContinuum';
 import { GodView } from './admin/GodView';
 import { AssetFactory } from './admin/AssetFactory';
 import { ComplianceDesk } from './admin/ComplianceDesk';
 import { FleetControl } from './admin/FleetControl';
+import { truncateAddress } from '../utils/formatting';
+// import { CONTRACT_CONFIG } from '../config/contracts'; // Removed as it's not directly used for admin address here
 
 type AdminTab = 'god-view' | 'factory' | 'compliance' | 'fleet';
 
+const ADMIN_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+
 export const Admin: React.FC = () => {
     const navigate = useNavigate();
-    const { complianceStatus, account } = useContinuum();
-    const [activeTab, setActiveTab] = useState<AdminTab>('god-view');
+    const { address, isConnected } = useAccount();
+    const [activeTab, setActiveTab] = useState<AdminTab>('god-view'); // Corrected useState usage
 
-    // Check if user is admin
-    if (!account || !complianceStatus.isAdmin) {
+    const isAdmin = isConnected && address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
+
+    if (!isConnected || !isAdmin) {
         return (
             <div className="container" style={{ paddingTop: 'var(--spacing-2xl)' }}>
                 <div
@@ -33,7 +38,8 @@ export const Admin: React.FC = () => {
                         Access Denied
                     </h2>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)' }}>
-                        This area is restricted to administrators only. Your wallet address is not authorized.
+                        This area is restricted to administrators only. Your connected wallet address is not authorized.
+                        Please connect with the admin wallet: {truncateAddress(ADMIN_ADDRESS)}
                     </p>
                     <button
                         onClick={() => navigate('/dashboard')}
@@ -68,7 +74,6 @@ export const Admin: React.FC = () => {
                 background: 'linear-gradient(135deg, #0a0e27 0%, #1a1027 100%)',
             }}
         >
-            {/* Admin Header */}
             <div
                 className="glass"
                 style={{
@@ -87,7 +92,6 @@ export const Admin: React.FC = () => {
                             padding: 'var(--spacing-lg) 0',
                         }}
                     >
-                        {/* Logo & Title */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
                             <button
                                 onClick={() => navigate('/dashboard')}
@@ -105,10 +109,10 @@ export const Admin: React.FC = () => {
                             </button>
                             <div>
                                 <h2 style={{ fontSize: 'var(--font-size-xl)', marginBottom: '4px' }}>
-                                    Control: Continuum Command Center
+                                    Control: YieldStream Command Center
                                 </h2>
                                 <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                    Operator: {account?.address.slice(0, 10)}...{account?.address.slice(-6)}
+                                    Operator: {address ? truncateAddress(address) : "Not Connected"}
                                     <span
                                         style={{
                                             marginLeft: 'var(--spacing-sm)',
@@ -126,7 +130,6 @@ export const Admin: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Tab Navigation */}
                     <div style={{ display: 'flex', gap: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: 'var(--spacing-md)' }}>
                         {tabs.map((tab) => (
                             <button
@@ -154,7 +157,6 @@ export const Admin: React.FC = () => {
                 </div>
             </div>
 
-            {/* Tab Content */}
             <div>
                 {activeTab === 'god-view' && <GodView />}
                 {activeTab === 'factory' && <AssetFactory />}

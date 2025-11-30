@@ -1,45 +1,29 @@
 import React from 'react';
 import { Badge } from './Badge';
 import { ExternalLink, TrendingUp } from 'lucide-react';
-
-export interface ExplorerAsset {
-    tokenAddress: string;
-    assetType?: string;
-    title?: string;
-    imageUrl?: string;
-    streamInfo: {
-        startTime: number;
-        flowRate: number; // Already in APT/sec
-        amountWithdrawn: number; // Already in APT
-        totalAmount: number; // Already in APT
-        stopTime: number;
-        isActive: boolean;
-    } | null;
-}
+import { AssetData } from '../../hooks/useAssetList'; 
+import { CONTRACT_CONFIG } from '../../config/contracts'; 
 
 export interface AssetExplorerCardProps {
-    asset: ExplorerAsset;
+    asset: AssetData;
     className?: string;
 }
 
 export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, className = '' }) => {
     const {
-        tokenAddress,
+        tokenId,
         assetType = 'Unknown Asset',
-        title = `Asset ${tokenAddress?.slice(0, 6) || 'Unknown'}`,
+        title = `Asset #${tokenId}`,
         imageUrl,
         streamInfo,
     } = asset || {};
 
-    // Calculate APY (values already in APT, no conversion needed)
     const calculateAPY = () => {
         if (!streamInfo?.flowRate || !streamInfo?.totalAmount || streamInfo.totalAmount === 0) {
             return null;
         }
-
         const annualYield = streamInfo.flowRate * 365 * 24 * 60 * 60;
         const apy = (annualYield / streamInfo.totalAmount) * 100;
-
         return apy > 0 ? apy.toFixed(1) : null;
     };
 
@@ -62,7 +46,6 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                 e.currentTarget.style.boxShadow = '';
             }}
         >
-            {/* Asset Image */}
             <div
                 style={{
                     height: '220px',
@@ -75,7 +58,6 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                     overflow: 'hidden',
                 }}
             >
-                {/* Gradient Overlay */}
                 <div
                     style={{
                         position: 'absolute',
@@ -83,8 +65,6 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                         background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 50%, rgba(0,0,0,0.4) 100%)',
                     }}
                 />
-
-                {/* Top Badges Row */}
                 <div
                     style={{
                         position: 'absolute',
@@ -98,7 +78,6 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                         zIndex: 1,
                     }}
                 >
-                    {/* Asset Type Badge */}
                     <div
                         style={{
                             background: 'rgba(0, 217, 255, 0.15)',
@@ -114,8 +93,6 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                     >
                         {assetType}
                     </div>
-
-                    {/* APY Badge (if available) */}
                     {apy && (
                         <div
                             style={{
@@ -140,18 +117,13 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                     )}
                 </div>
             </div>
-
-            {/* Asset Info */}
             <div>
                 <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--spacing-xs)' }}>
                     {title}
                 </h3>
-
                 <p className="text-muted" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-md)' }}>
-                    {tokenAddress ? `${tokenAddress.slice(0, 10)}...${tokenAddress.slice(-8)}` : 'No address'}
+                    Token ID: {tokenId}
                 </p>
-
-                {/* Stream Stats */}
                 {streamInfo && (
                     <div
                         style={{
@@ -169,7 +141,7 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                                 Total Yield
                             </p>
                             <p style={{ fontSize: 'var(--font-size-base)', fontWeight: 600 }}>
-                                {streamInfo.totalAmount.toFixed(2)} APT
+                                {streamInfo.totalAmount.toFixed(2)} BUSD
                             </p>
                         </div>
                         <div>
@@ -182,12 +154,10 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                         </div>
                     </div>
                 )}
-
-                {/* View Details Button */}
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        window.open(`https://explorer.aptoslabs.com/object/${tokenAddress}?network=testnet`, '_blank');
+                        window.open(`https://testnet.bscscan.com/token/${CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS}?a=${tokenId}`, '_blank');
                     }}
                     style={{
                         width: '100%',
@@ -214,21 +184,9 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                         e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
                     }}
                 >
-                    View on Explorer
+                    View on BscScan
                     <ExternalLink size={14} />
                 </button>
-
-                {/* Info Note */}
-                <p
-                    className="text-muted"
-                    style={{
-                        fontSize: 'var(--font-size-xs)',
-                        marginTop: 'var(--spacing-md)',
-                        textAlign: 'center',
-                    }}
-                >
-                    Only NFT owners can claim yield
-                </p>
             </div>
         </div>
     );

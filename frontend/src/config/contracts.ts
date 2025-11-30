@@ -1,34 +1,48 @@
-/**
- * Contract Configuration for Continuum Protocol on Aptos Testnet
- */
+// This file will be populated with the actual contract addresses and ABIs 
+// after the contracts are deployed to the BNB Smart Chain.
+
+// Simplified ABIs for now. In a real project, these would be imported from 
+// the Hardhat artifacts (e.g., ../../artifacts/contracts/RWAHub.sol/RWAHub.json)
+const RWAHub_ABI = [
+    "function createCompliantRWAStream(address owner, uint8 assetType, string metadataUri, uint256 totalYield, uint256 duration) public",
+    "function tokenRegistry() view returns (address)",
+    "function streamingProtocol() view returns (address)"
+]; 
+
+const TokenRegistry_ABI = [
+    "function registerToken(address owner, uint8 assetType, uint64 streamId, string memory metadataUri) public returns (uint256)",
+    "function tokenDetails(uint256) view returns (uint8 assetType, uint64 streamId, string metadataUri, uint256 registeredAt)",
+    "function totalSupply() view returns (uint256)",
+    "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+    "function tokenURI(uint256 tokenId) view returns (string memory)"
+];
+
+const StreamingProtocol_ABI = [
+    "function createStream(address sender, address recipient, uint256 totalAmount, uint256 duration) public returns (uint256)",
+    "function streams(uint256) view returns (address sender, address recipient, uint256 totalAmount, uint256 flowRate, uint256 startTime, uint256 stopTime, uint256 amountWithdrawn, bool isActive)",
+    "function claimableBalance(uint256 streamId) view returns (uint256)",
+    "function claimFromStream(uint256 streamId) public",
+    "function cancelStream(uint256 streamId) public"
+];
 
 export const CONTRACT_CONFIG = {
-    // Newly deployed Continuum contract address (continuum-v3)
-    MODULE_ADDRESS: "0xf630676ecb561cf2b2fadc1a34daa8a054d24f0e936439f2e63a90d2651b87ef",
+    // These addresses are for BSC Testnet. Replace with your deployed addresses.
+    RWA_HUB_ADDRESS: "0xYOUR_RWA_HUB_ADDRESS_HERE",
+    TOKEN_REGISTRY_ADDRESS: "0xYOUR_TOKEN_REGISTRY_ADDRESS_HERE", // This will be fetched from RWAHub once deployed
+    STREAMING_PROTOCOL_ADDRESS: "0xYOUR_STREAMING_PROTOCOL_ADDRESS_HERE", // This will be fetched from RWAHub once deployed
+    
+    // The address of the BUSD token on BSC Testnet (or whichever ERC20 you use)
+    STREAM_TOKEN_ADDRESS: "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
 
-    // Network
-    NETWORK: "testnet" as const,
-
-    // Module names
-    MODULES: {
-        RWA_HUB: "rwa_hub",
-        STREAMING_PROTOCOL: "streaming_protocol",
-        ASSET_YIELD_PROTOCOL: "asset_yield_protocol",
-        COMPLIANCE_GUARD: "compliance_guard",
-        TOKEN_REGISTRY: "token_registry",
+    ABIS: {
+        RWAHub: RWAHub_ABI,
+        TokenRegistry: TokenRegistry_ABI,
+        StreamingProtocol: StreamingProtocol_ABI,
     },
 
-    // Coin type (AptosCoin for testnet)
-    COIN_TYPE: "0x1::aptos_coin::AptosCoin",
-
-    // Asset types (from your Move contract)
     ASSET_TYPES: {
-        REAL_ESTATE: 0,  // Updated to match new registry
+        REAL_ESTATE: 0,
         CAR: 1,
         COMMODITIES: 2,
-    },
-
-    // Constants
-    ONE_APT: 100_000_000, // 1 APT = 10^8 octas
-    THIRTY_DAYS_SECONDS: 30 * 24 * 60 * 60,
+    }
 };

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Wallet, Compass, Zap } from 'lucide-react';
-import { Portfolio } from './Portfolio';
-import { AssetExplorer } from './AssetExplorer';
-import { MyRentals } from './MyRentals';
+import { Portfolio } from '../pages/Portfolio';
+import { AssetExplorer } from '../pages/AssetExplorer';
+import { MyRentals } from '../pages/MyRentals';
 
 type TabType = 'portfolio' | 'explore' | 'rentals';
 
@@ -11,8 +11,8 @@ export const Dashboard: React.FC = () => {
 
     const tabs = [
         { id: 'portfolio' as TabType, label: 'My Portfolio', icon: Wallet },
-        { id: 'explore' as TabType, label: 'Explore', icon: Compass },
-        { id: 'rentals' as TabType, label: 'Active Rentals', icon: Zap },
+        { id: 'explore' as TabType, label: 'Explore Assets', icon: Compass },
+        { id: 'rentals' as TabType, label: 'My Rentals', icon: Zap },
     ];
 
     return (

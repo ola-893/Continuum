@@ -1,62 +1,78 @@
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, Search } from 'lucide-react';
+import { CheckCircle, XCircle, Search, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { pendingKYCRequests } from '../../data/mockAdminData';
 import { ContinuumService } from '../../services/continuumService';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useAccount, useWriteContract } from 'wagmi';
+import { CONTRACT_CONFIG } from '../../config/contracts';
 import { truncateAddress } from '../../utils/formatting';
 
+// Mock data for pending requests (for demonstration purposes)
+const MOCK_PENDING_REQUESTS = [
+    { address: "0x70997970C51812dc3A01088e6d530de32a4e0a", jurisdiction: "US", riskScore: "medium", verificationLevel: 1, requestedAt: Date.now() - 86400000 },
+    { address: "0x3C44CdDdB6a900fa2b585dd299e03d12fa4293", jurisdiction: "EU", riskScore: "low", verificationLevel: 2, requestedAt: Date.now() - 172800000 },
+];
+
 export const ComplianceDesk: React.FC = () => {
-    const { signAndSubmitTransaction } = useWallet();
-    const [pendingRequests, setPendingRequests] = useState(pendingKYCRequests);
+    const { isConnected, address } = useAccount();
+    const { writeContractAsync } = useWriteContract();
+    const [pendingRequests, setPendingRequests] = useState(MOCK_PENDING_REQUESTS);
     const [searchTerm, setSearchTerm] = useState('');
     const [processing, setProcessing] = useState<string | null>(null);
+    const [txStatus, setTxStatus] = useState('');
 
-    const handleApprove = async (address: string, jurisdiction: string, verificationLevel: number) => {
-        setProcessing(address);
+    const handleApprove = async (userAddr: string, jurisdiction: string, verificationLevel: number) => {
+        if (!isConnected || !address) {
+            setTxStatus("Error: Please connect your wallet first.");
+            return;
+        }
+
+        setProcessing(userAddr);
+        setTxStatus('Simulating approval...');
+
         try {
-            const transaction = ContinuumService.registerIdentity(address, jurisdiction, verificationLevel);
-            await signAndSubmitTransaction(transaction);
+            // Call the placeholder service function for identity registration
+            await ContinuumService.registerIdentity(userAddr, jurisdiction, verificationLevel);
+            
+            // Call the placeholder service function for whitelisting (assuming asset types 0, 1, 2 for demo)
+            await ContinuumService.whitelistUser(userAddr, [0, 1, 2]);
 
-            // Remove from pending
-            setPendingRequests(prev => prev.filter(req => req.address !== address));
-            alert(`Success: User ${truncateAddress(address)} approved!`);
-        } catch (error) {
-            console.error('Approval failed:', error);
-            alert('Error: Failed to approve user');
+            // Simulate a transaction confirmation
+            await writeContractAsync({
+                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`, 
+                abi: CONTRACT_CONFIG.ABIS.RWAHub,
+                functionName: 'owner', 
+                args: [],
+            });
+
+            setPendingRequests(prev => prev.filter(req => req.address !== userAddr));
+            setTxStatus(`Success: User ${truncateAddress(userAddr)} approved and whitelisted (simulated)!`);
+            setTimeout(() => setTxStatus(''), 3000);
+        } catch (error: any) {
+            console.error('Approval failed (simulated):', error);
+            setTxStatus(`Error: ${error.message || "Simulated approval failed"}`);
+            setTimeout(() => setTxStatus(''), 5000);
         } finally {
             setProcessing(null);
         }
     };
 
-    const handleReject = (address: string) => {
-        if (confirm(`Reject KYC request for ${truncateAddress(address)}?`)) {
-            setPendingRequests(prev => prev.filter(req => req.address !== address));
-        }
-    };
-
-    const getRiskColor = (score: string) => {
-        switch (score) {
-            case 'low':
-                return 'success';
-            case 'medium':
-                return 'warning';
-            case 'high':
-                return 'error';
-            default:
-                return 'info';
+    const handleReject = (userAddr: string) => {
+        if (confirm(`Reject KYC request for ${truncateAddress(userAddr)}? This is a simulated action.`)) {
+            setPendingRequests(prev => prev.filter(req => req.address !== userAddr));
+            setTxStatus(`User ${truncateAddress(userAddr)} request rejected (simulated).`);
+            setTimeout(() => setTxStatus(''), 3000);
         }
     };
 
     return (
         <div style={{ padding: 'var(--spacing-2xl)' }}>
             <div style={{ marginBottom: 'var(--spacing-2xl)' }}>
-                <h1 style={{ marginBottom: 'var(--spacing-sm)' }}>Compliance Desk</h1>
-                <p style={{ color: 'var(--color-text-secondary)' }}>
-                    Review and approve KYC requests for ecosystem access
-                </p>
+                <h1 style={{ marginBottom: 'var(--spacing-sm)' }}>Compliance Desk (EVM Simulated)</h1>
+                <p className="text-secondary">Review and approve KYC requests for ecosystem access. All actions are simulated for the EVM demo.</p>
             </div>
+
+            {txStatus && <div className="card mb-xl p-md">{txStatus}</div>}
 
             <div className="grid grid-cols-2 gap-xl">
                 {/* Left Panel - Pending Requests */}
@@ -68,7 +84,7 @@ export const ComplianceDesk: React.FC = () => {
 
                         {pendingRequests.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: 'var(--spacing-2xl)', color: 'var(--color-text-secondary)' }}>
-                                <p>No pending requests</p>
+                                <p>No pending requests (all actions simulated)</p>
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
@@ -85,7 +101,7 @@ export const ComplianceDesk: React.FC = () => {
                                                 </p>
                                                 <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
                                                     <Badge variant="info">{request.jurisdiction}</Badge>
-                                                    <Badge variant={getRiskColor(request.riskScore) as any}>
+                                                    <Badge variant={request.riskScore === 'low' ? 'success' : request.riskScore === 'medium' ? 'warning' : 'error'}>
                                                         {request.riskScore.toUpperCase()} RISK
                                                     </Badge>
                                                 </div>
@@ -98,22 +114,22 @@ export const ComplianceDesk: React.FC = () => {
                                         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
                                             <Button
                                                 variant="secondary"
-                                                leftIcon={<CheckCircle size={16} />}
+                                                leftIcon={processing === request.address ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle size={16} />}
                                                 onClick={() => handleApprove(request.address, request.jurisdiction, request.verificationLevel)}
-                                                disabled={processing === request.address}
+                                                disabled={processing !== null || !isConnected}
                                                 isLoading={processing === request.address}
                                                 style={{ flex: 1 }}
                                             >
-                                                Approve
+                                                {processing === request.address ? 'Approving...' : 'Approve (Sim)'}
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 leftIcon={<XCircle size={16} />}
                                                 onClick={() => handleReject(request.address)}
-                                                disabled={processing !== null}
+                                                disabled={processing !== null || !isConnected}
                                                 style={{ flex: 1 }}
                                             >
-                                                Reject
+                                                Reject (Sim)
                                             </Button>
                                         </div>
                                     </div>
@@ -123,12 +139,12 @@ export const ComplianceDesk: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Right Panel - Active Whitelist */}
+                {/* Right Panel - Active Whitelist (Simulated) */}
                 <div>
                     <div className="card" style={{ padding: 'var(--spacing-xl)' }}>
-                        <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Active Whitelist</h3>
+                        <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Active Whitelist (Simulated)</h3>
+                        <p className="text-secondary mb-lg">This list is simulated. Real data would come from a ComplianceGuard contract.</p>
 
-                        {/* Search */}
                         <div style={{ marginBottom: 'var(--spacing-lg)', position: 'relative' }}>
                             <Search
                                 size={18}
@@ -150,7 +166,6 @@ export const ComplianceDesk: React.FC = () => {
                             />
                         </div>
 
-                        {/* Table */}
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', fontSize: 'var(--font-size-sm)' }}>
                                 <thead>
@@ -164,19 +179,28 @@ export const ComplianceDesk: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                    <tr>
                                         <td style={{ padding: 'var(--spacing-sm)' }}>
-                                            {truncateAddress(CONTRACT_CONFIG.MODULE_ADDRESS)}
+                                            {truncateAddress(address || "0x0")}
                                         </td>
                                         <td style={{ padding: 'var(--spacing-sm)' }}>
-                                            <Badge variant="success">Admin</Badge>
+                                            <Badge variant="success">Connected User (Simulated)</Badge>
                                         </td>
                                     </tr>
-                                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                                        <td colSpan={2} style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                            Connect to blockchain to view active whitelist
+                                    <tr>
+                                        <td style={{ padding: 'var(--spacing-sm)' }}>
+                                            {truncateAddress(CONTRACT_CONFIG.RWA_HUB_ADDRESS)}
+                                        </td>
+                                        <td style={{ padding: 'var(--spacing-sm)' }}>
+                                            <Badge variant="info">RWA Hub (Contract)</Badge>
                                         </td>
                                     </tr>
+                                    {MOCK_PENDING_REQUESTS.filter(req => !pendingRequests.includes(req)).map((req, index) => (
+                                        <tr key={index}>
+                                            <td style={{ padding: 'var(--spacing-sm)' }}>{truncateAddress(req.address)}</td>
+                                            <td style={{ padding: 'var(--spacing-sm)' }}><Badge variant="success">Whitelisted (Sim)</Badge></td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
@@ -187,5 +211,4 @@ export const ComplianceDesk: React.FC = () => {
     );
 };
 
-// Import needed at top
-import { CONTRACT_CONFIG } from '../../config/contracts';
+export default ComplianceDesk;

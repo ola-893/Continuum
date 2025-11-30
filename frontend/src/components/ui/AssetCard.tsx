@@ -3,18 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { LiveBalance } from './LiveBalance';
 import { StreamVisualization } from './StreamVisualization';
 import { Badge } from './Badge';
-import type { StreamInfo } from '../../hooks/useStreamBalance';
-
-export interface Asset {
-    tokenAddress: string;
-    assetType?: string;
-    title?: string;
-    imageUrl?: string;
-    streamInfo: StreamInfo | null;
-}
+import { AssetData } from '../../hooks/useAssetList'; 
 
 export interface AssetCardProps {
-    asset: Asset;
+    asset: AssetData;
     className?: string;
 }
 
@@ -22,15 +14,15 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) =
     const navigate = useNavigate();
 
     const {
-        tokenAddress,
-        assetType = 'Unknown Asset', // Debugging: shows we couldn't determine type
-        title = `Asset ${tokenAddress?.slice(0, 6) || 'Unknown'}`,
+        tokenId,
+        assetType = 'Unknown Asset',
+        title = `Asset #${tokenId}`,
         imageUrl,
         streamInfo,
     } = asset || {};
 
     const handleClick = () => {
-        navigate(`/asset/${tokenAddress}`);
+        navigate(`/asset/${tokenId}`);
     };
 
     return (
@@ -39,7 +31,6 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) =
             onClick={handleClick}
             style={{ overflow: 'hidden', position: 'relative' }}
         >
-            {/* Asset Image */}
             <div
                 style={{
                     height: '200px',
@@ -51,7 +42,6 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) =
                     position: 'relative',
                 }}
             >
-                {/* Asset Type Badge */}
                 <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                     <Badge variant="info" showIcon={false}>
                         {assetType}
@@ -59,21 +49,18 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) =
                 </div>
             </div>
 
-            {/* Asset Info */}
             <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--spacing-sm)' }}>
                 {title}
             </h3>
             <p className="text-muted" style={{ fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-lg)' }}>
-                {tokenAddress ? `${tokenAddress.slice(0, 10)}...${tokenAddress.slice(-8)}` : 'No address'}
+                Token ID: {tokenId}
             </p>
 
-            {/* Live Balance - The "WOW" Moment */}
             <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <LiveBalance streamInfo={streamInfo} showRate={true} />
+                <LiveBalance streamInfo={streamInfo || null} showRate={true} />
             </div>
 
-            {/* Progress Bar */}
-            <StreamVisualization streamInfo={streamInfo} />
+            <StreamVisualization streamInfo={streamInfo || null} />
         </div>
     );
 };

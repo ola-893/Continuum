@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useAccount } from 'wagmi';
 import { X, Shield, CheckCircle } from 'lucide-react';
 import { Button } from './Button';
 import { LoadingScreen } from './LoadingScreen';
 import { useContinuum } from '../../hooks/useContinuum';
-import { ContinuumService } from '../../services/continuumService';
 import { truncateAddress } from '../../utils/formatting';
 
 interface ProfileModalProps {
@@ -13,32 +12,31 @@ interface ProfileModalProps {
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
-    const { account, signAndSubmitTransaction } = useWallet();
+    const { address, isConnected } = useAccount();
     const { complianceStatus } = useContinuum();
     const [verifying, setVerifying] = useState(false);
     const [txStatus, setTxStatus] = useState('');
 
-    if (!isOpen || !account) return null;
+    if (!isOpen || !isConnected || !address) return null; // Render only if connected
 
     const handleVerifyIdentity = async () => {
         setVerifying(true);
-        setTxStatus('Initiating KYC verification...');
+        setTxStatus('Simulating KYC verification for EVM...');
 
         try {
-            // Use simulateKYC for testnet
-            const transaction = ContinuumService.simulateKYC();
-            await signAndSubmitTransaction(transaction);
+            // In a real EVM implementation, this would involve calling a compliance contract.
+            // For now, we simulate success.
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-            setTxStatus('Success: Identity Verified Successfully!');
+            setTxStatus('Success: Identity Verified (Simulated)!');
             setTimeout(() => {
                 setVerifying(false);
                 setTxStatus('');
-                // Ideally refresh compliance status here, but page reload works too
-                window.location.reload();
+                onClose(); // Close modal after simulated verification
             }, 2000);
         } catch (error) {
-            console.error('KYC verification failed:', error);
-            setTxStatus('Error: Verification Failed');
+            console.error('KYC verification failed (simulated):', error);
+            setTxStatus('Error: Verification Failed (Simulated)');
             setTimeout(() => {
                 setVerifying(false);
                 setTxStatus('');
@@ -122,17 +120,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                                         color: 'white'
                                     }}
                                 >
-                                    {account.address.slice(2, 4).toUpperCase()}
+                                    {address.slice(2, 4).toUpperCase()} 
                                 </div>
                                 <div>
-                                    <h4 style={{ margin: 0 }}>{truncateAddress(account.address)}</h4>
+                                    <h4 style={{ margin: 0 }}>{truncateAddress(address)}</h4>
                                     <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                                        Connected via Petra
+                                        Connected to BNB Smart Chain
                                     </span>
                                 </div>
                             </div>
 
-                            {/* KYC Status Card */}
+                            {/* Simplified Status Card */}
                             <div
                                 style={{
                                     background: complianceStatus.hasKYC
@@ -150,47 +148,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                                         <Shield size={24} color="var(--color-warning)" />
                                     )}
                                     <h4 style={{ margin: 0, color: complianceStatus.hasKYC ? 'var(--color-success)' : 'var(--color-warning)' }}>
-                                        {complianceStatus.hasKYC ? 'Identity Verified' : 'Identity Not Verified'}
+                                        {complianceStatus.hasKYC ? 'Identity Verified (Simulated)' : 'Identity Not Verified (Simulated)'}
                                     </h4>
                                 </div>
 
                                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
                                     {complianceStatus.hasKYC
-                                        ? 'Your identity has been verified. You have full access to trade Real World Assets.'
-                                        : 'You need to verify your identity to trade Real World Assets on Continuum Protocol.'}
+                                        ? 'Your identity has been simulated as verified for EVM demo.'
+                                        : 'Identity verification is simulated for EVM demo. This feature requires a ComplianceGuard contract.'}
                                 </p>
 
                                 {!complianceStatus.hasKYC && (
                                     <div style={{ marginTop: 'var(--spacing-md)' }}>
                                         <Button onClick={handleVerifyIdentity} className="w-full">
-                                            Verify Identity Now
+                                            Simulate Identity Verification
                                         </Button>
-                                        <p style={{
-                                            marginTop: 'var(--spacing-sm)',
-                                            fontSize: '10px',
-                                            color: 'var(--color-text-muted)',
-                                            textAlign: 'center'
-                                        }}>
-                                            * Testnet Mode: This will simulate KYC verification
-                                        </p>
                                     </div>
                                 )}
                             </div>
-
-                            {/* Additional Details */}
-                            {complianceStatus.hasKYC && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
-                                    <div className="card" style={{ padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.03)' }}>
-                                        <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>Jurisdiction</span>
-                                        <div style={{ fontWeight: 600 }}>United States</div>
-                                    </div>
-                                    <div className="card" style={{ padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.03)' }}>
-                                        <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>Level</span>
-                                        <div style={{ fontWeight: 600 }}>Tier 1</div>
-                                    </div>
-                                </div>
-                            )}
-
                         </div>
                     )}
                 </div>

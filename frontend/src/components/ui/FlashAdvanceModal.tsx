@@ -4,16 +4,19 @@ import { X, Zap, Loader2 } from 'lucide-react';
 import { Button } from './Button';
 import { formatCurrency, formatDuration } from '../../utils/formatting';
 import { ContinuumService } from '../../services/continuumService';
+import { ethers } from 'ethers';
 
 interface Asset {
-    tokenAddress: string;
+    tokenAddress: string; 
+    tokenId: number; 
     title: string;
-    streamInfo: {
-        flowRate: number;
-        totalAmount: number;
-        amountWithdrawn: number;
+    streamId?: number;
+    streamInfo?: { 
+        flowRate: number; 
+        totalAmount: number; 
+        amountWithdrawn: number; 
+        isActive: boolean;
     };
-    streamId?: number; // Add streamId to fetch escrow balance
 }
 
 export interface FlashAdvanceModalProps {
@@ -28,14 +31,12 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
     const [amount, setAmount] = useState(0);
     const [pauseDuration, setPauseDuration] = useState(0);
 
-    // Fetch actual escrow balance from smart contract
     useEffect(() => {
         const fetchEscrowBalance = async () => {
-            if (!asset.streamId) {
-                // Fallback to calculated max if streamId not available
-                const calculatedMax = asset.streamInfo.totalAmount - asset.streamInfo.amountWithdrawn;
+            if (!asset.streamId || !asset.streamInfo) { 
+                const calculatedMax = (asset.streamInfo?.totalAmount || 0) - (asset.streamInfo?.amountWithdrawn || 0); 
                 setEscrowBalance(calculatedMax);
-                setAmount(calculatedMax * 0.5); // Default to 50% of max
+                setAmount(calculatedMax * 0.5);
                 setLoading(false);
                 return;
             }
@@ -45,20 +46,17 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                 const streamStatus = await ContinuumService.getStreamStatus(asset.streamId);
 
                 if (streamStatus) {
-                    // Use the actual escrow balance from the smart contract
-                    const balance = streamStatus.escrowBalance / 100_000_000; // Convert from octas to APT
+                    const balance = Number(ethers.formatUnits(streamStatus.escrowBalance, 18)); 
                     setEscrowBalance(balance);
-                    setAmount(balance * 0.5); // Default to 50% of available balance
+                    setAmount(balance * 0.5);
                 } else {
-                    // Fallback to calculated max
-                    const calculatedMax = asset.streamInfo.totalAmount - asset.streamInfo.amountWithdrawn;
+                    const calculatedMax = (asset.streamInfo?.totalAmount || 0) - (asset.streamInfo?.amountWithdrawn || 0); 
                     setEscrowBalance(calculatedMax);
                     setAmount(calculatedMax * 0.5);
                 }
             } catch (error) {
                 console.error('Error fetching escrow balance:', error);
-                // Fallback to calculated max on error
-                const calculatedMax = asset.streamInfo.totalAmount - asset.streamInfo.amountWithdrawn;
+                const calculatedMax = (asset.streamInfo?.totalAmount || 0) - (asset.streamInfo?.amountWithdrawn || 0); 
                 setEscrowBalance(calculatedMax);
                 setAmount(calculatedMax * 0.5);
             } finally {
@@ -70,18 +68,24 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
     }, [asset.streamId, asset.streamInfo]);
 
     useEffect(() => {
-        // Calculate pause duration based on amount and flow rate
-        const durationSeconds = amount / asset.streamInfo.flowRate;
-        setPauseDuration(durationSeconds);
-    }, [amount, asset.streamInfo.flowRate]);
+        const calculateDuration = () => {
+            if (asset.streamInfo?.flowRate && asset.streamInfo.flowRate > 0) { 
+                const durationSeconds = amount / asset.streamInfo.flowRate;
+                setPauseDuration(durationSeconds);
+            } else {
+                setPauseDuration(0);
+            }
+        };
+        calculateDuration();
+    }, [amount, asset.streamInfo?.flowRate]);
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAmount(parseFloat(e.target.value));
-    };
+    }; // Added handleSliderChange
 
-    const maxAdvance = escrowBalance || 0; // Use escrowBalance as the max
-    const minAdvance = maxAdvance * 0.01; // Minimum is 1% of max balance
-    const sliderStep = maxAdvance * 0.005; // Step is 0.5% of max balance
+    const maxAdvance = escrowBalance || 0;
+    const minAdvance = maxAdvance * 0.01; 
+    const sliderStep = maxAdvance * 0.005;
 
     return (
         <AnimatePresence>
@@ -120,7 +124,6 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header */}
                     <div className="flex justify-between items-center" style={{ marginBottom: 'var(--spacing-xl)' }}>
                         <div className="flex items-center gap-sm">
                             <Zap size={24} style={{ color: 'var(--color-primary)' }} />
@@ -140,7 +143,6 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                     </div>
 
                     {loading ? (
-                        /* Loading State */
                         <div style={{ textAlign: 'center', padding: 'var(--spacing-4xl)' }}>
                             <Loader2 size={48} style={{ color: 'var(--color-primary)', margin: '0 auto', animation: 'spin 1s linear infinite' }} />
                             <p style={{ marginTop: 'var(--spacing-lg)', color: 'var(--color-text-secondary)' }}>
@@ -149,12 +151,10 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                         </div>
                     ) : (
                         <>
-                            {/* Explanation */}
                             <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)' }}>
                                 Borrow against your future earnings. The stream will automatically repay the advance.
                             </p>
 
-                            {/* Contract Balance Info */}
                             <div
                                 className="card"
                                 style={{
@@ -175,7 +175,6 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                                 </p>
                             </div>
 
-                            {/* Amount Display */}
                             <div
                                 className="card"
                                 style={{
@@ -193,7 +192,6 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                                 </p>
                             </div>
 
-                            {/* Slider */}
                             <div style={{ marginBottom: 'var(--spacing-xl)' }}>
                                 <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-sm)' }}>
                                     Select Amount (min: {formatCurrency(minAdvance, 2)} - max: {formatCurrency(maxAdvance, 2)})
@@ -221,7 +219,6 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                                 </div>
                             </div>
 
-                            {/* Trade-off Display */}
                             <div
                                 className="card"
                                 style={{
@@ -241,7 +238,6 @@ export const FlashAdvanceModal: React.FC<FlashAdvanceModalProps> = ({ asset, onC
                                 </p>
                             </div>
 
-                            {/* Action Buttons */}
                             <div className="flex gap-md">
                                 <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>
                                     Cancel

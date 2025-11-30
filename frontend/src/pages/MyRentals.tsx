@@ -1,141 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useAccount, useWriteContract } from 'wagmi';
 import { Car, Home, Wrench, Clock, XCircle, Zap, AlertTriangle, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ContinuumService } from '../services/continuumService';
-import { generateMockAssetData } from '../utils/mockDataGenerator';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { fetchIpfsMetadata } from '../utils/ipfs'; 
+import { ethers } from 'ethers';
+import { CONTRACT_CONFIG } from '../config/contracts';
 import { ActiveRental } from '../types/continuum';
 
 export const MyRentals: React.FC = () => {
-    const { account, signAndSubmitTransaction } = useWallet();
+    const { address, isConnected } = useAccount();
+    const { writeContractAsync } = useWriteContract();
     const [rentals, setRentals] = useState<ActiveRental[]>([]);
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Fetch user's active rental streams from blockchain
-    useEffect(() => {
-        if (account?.address) {
-            loadMyRentals();
-        }
-    }, [account]);
-
-    const loadMyRentals = async () => {
-        if (!account?.address) {
-            setRentals([]);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-
-            // NEW APPROACH: Use the RentalRegistry to find active rentals
-            // This is much more efficient than iterating all tokens!
-
-            // Get all registered tokens
-            const allTokens = await ContinuumService.getAllRegisteredTokens();
-
-            console.log('Checking tokens for active rentals:', allTokens);
-
-            const activeRentals: ActiveRental[] = [];
-
-            for (const token of allTokens) {
-                const tokenAddress = token.token_address;
-                const assetType = token.asset_type !== undefined ? Number(token.asset_type) : 0;
-
-                try {
-                    // Check if this asset has an active rental using the new view function
-                    const rentalStatus = await ContinuumService.getActiveRental(tokenAddress);
-
-                    if (rentalStatus.isRented && rentalStatus.streamId > 0) {
-                        // Get the rental details
-                        const rentalDetails = await ContinuumService.getRentalDetails(rentalStatus.streamId);
-
-                        // Check if the current user is the tenant (renter)
-                        if (rentalDetails && rentalDetails.tenant === account.address && rentalDetails.isActive) {
-                            // Fetch NFT name
-                            let assetName = '';
-                            try {
-                                const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
-                                assetName = nftMetadata.name || '';
-                            } catch (error) {
-                                console.warn(`Could not fetch NFT metadata for ${tokenAddress}`);
-                            }
-
-                            // Use smart mock data if no real name
-                            if (!assetName) {
-                                const mockData = generateMockAssetData(assetType, tokenAddress, 'rental');
-                                assetName = mockData.name;
-                            }
-
-                            // Get full stream info for additional details
-                            const streamInfo = await ContinuumService.getStreamInfo(rentalStatus.streamId);
-
-                            if (!streamInfo) {
-                                console.warn(`Could not fetch stream info for stream ${rentalStatus.streamId}`);
-                                continue;
-                            }
-
-                            // Calculate rental details
-                            const flowRate = Number(streamInfo.flowRate);
-                            const pricePerHour = (flowRate / 100_000_000) * 3600; // Convert octas/sec to APT/hour
-                            const totalBudget = Number(streamInfo.totalAmount) / 100_000_000; // Convert to APT
-                            const startTime = Number(streamInfo.startTime);
-                            const stopTime = Number(streamInfo.stopTime);
-                            const duration = stopTime - startTime;
-                            const amountWithdrawn = rentalDetails.totalPaidSoFar / 100_000_000; // Already in octas
-
-                            activeRentals.push({
-                                streamId: rentalStatus.streamId,
-                                tokenAddress,
-                                assetType,
-                                title: assetName,
-                                pricePerHour,
-                                startTime,
-                                duration,
-                                totalBudget,
-                                amountSpent: amountWithdrawn,
-                            });
-
-                            console.log(`Found active rental for ${assetName} (Stream ID: ${rentalStatus.streamId})`);
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`Error checking rental for ${tokenAddress}:`, error);
-                }
-            }
-
-            console.log(`Total active rentals found: ${activeRentals.length}`);
-            setRentals(activeRentals);
-        } catch (error) {
-            console.error('Error loading rentals:', error);
-            setRentals([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getAssetIcon = (assetType: number) => {
-        switch (assetType) {
-            case 1: return Car;
-            case 0: return Home;
-            case 2: return Wrench;
-            default: return Car;
-        }
-    };
-
-    const getAssetTypeName = (assetType: number | undefined): string => {
-        if (assetType === undefined) return 'Unknown Asset';
+    const getAssetTypeName = (assetType: number): 'Real Estate' | 'Vehicle' | 'Heavy Machinery' | 'Unknown Asset' => {
         switch (assetType) {
             case 0: return 'Real Estate';
             case 1: return 'Vehicle';
-            case 2: return 'Commodities';
-            default: return 'Unknown Asset'; // Debugging: shows we couldn't determine type
+            case 2: return 'Heavy Machinery';
+            default: return 'Unknown Asset';
         }
     };
 
+    const getAssetIcon = (assetType: string) => {
+        const iconSize = 24;
+        switch (assetType) {
+            case 'Vehicle': return <Car size={iconSize} />;
+            case 'Real Estate': return <Home size={iconSize} />;
+            case 'Heavy Machinery': return <Wrench size={iconSize} />;
+            default: return <Car size={iconSize} />;
+        }
+    };
+
+    useEffect(() => {
+        const loadMyRentals = async () => {
+            if (!isConnected || !address) {
+                setRentals([]);
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
+            setError(null);
+            try {
+                const allTokenIds = await ContinuumService.getAllTokenIds();
+                const activeRentals: ActiveRental[] = [];
+
+                for (const tokenId of allTokenIds) {
+                    try {
+                        const tokenDetails = await ContinuumService.getTokenDetails(tokenId);
+                        const streamId = Number(tokenDetails.stream_id);
+
+                        if (streamId > 0) {
+                            const streamInfo = await ContinuumService.getStreamInfo(streamId);
+
+                            if (streamInfo && streamInfo.sender.toLowerCase() === address.toLowerCase() && streamInfo.isActive) {
+                                let assetMetadata: any = {};
+                                if (tokenDetails.metadata_uri) {
+                                    assetMetadata = await fetchIpfsMetadata(tokenDetails.metadata_uri);
+                                }
+
+                                const flowRateDisplay = Number(ethers.formatUnits(streamInfo.flowRate, 18));
+                                const totalAmountDisplay = Number(ethers.formatUnits(streamInfo.totalAmount, 18));
+                                const amountWithdrawnDisplay = Number(ethers.formatUnits(streamInfo.amountWithdrawn, 18));
+
+                                const durationSeconds = Number(streamInfo.stopTime) - Number(streamInfo.startTime);
+
+                                activeRentals.push({
+                                    tokenId,
+                                    tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+                                    assetType: getAssetTypeName(Number(tokenDetails.asset_type)),
+                                    title: assetMetadata.name || `Asset #${tokenId}`,
+                                    pricePerHour: flowRateDisplay * 3600,
+                                    startTime: Number(streamInfo.startTime),
+                                    duration: durationSeconds,
+                                    totalBudget: totalAmountDisplay,
+                                    amountSpent: amountWithdrawnDisplay,
+                                    streamId: streamId,
+                                    description: assetMetadata.description || '',
+                                    imageUrl: assetMetadata.image || undefined,
+                                    streamInfo: streamInfo, 
+                                    metadataUri: tokenDetails.metadata_uri,
+                                    attributes: assetMetadata.attributes || [],
+                                    location: { lat: 0, lng: 0, city: 'N/A' },
+                                });
+                            }
+                        }
+                    } catch (innerError) {
+                        console.warn(`Error processing token ${tokenId} for rentals:`, innerError);
+                    }
+                }
+                setRentals(activeRentals);
+            } catch (outerError: any) {
+                console.error('[MyRentals] Error loading rentals:', outerError);
+                setError(outerError.message || "Failed to load rentals.");
+                setRentals([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadMyRentals();
+        const interval = setInterval(loadMyRentals, 15000);
+        return () => clearInterval(interval);
+    }, [address, isConnected, writeContractAsync]);
+
     const handleCancelRental = async (streamId: number, assetTitle: string) => {
-        if (!account) return;
+        if (!address) return;
 
         const confirmCancel = window.confirm(
             `Are you sure you want to end the rental for ${assetTitle}? You will be refunded for unused time.`
@@ -143,16 +118,12 @@ export const MyRentals: React.FC = () => {
 
         if (!confirmCancel) return;
 
+        setCancellingId(streamId);
         try {
-            setCancellingId(streamId);
-
-            const transaction = ContinuumService.cancelStream(streamId);
-            await signAndSubmitTransaction(transaction);
+            const tx = await ContinuumService.cancelStream(streamId);
+            await tx.wait();
 
             alert(`Rental cancelled for ${assetTitle}. Unused funds have been refunded.`);
-
-            // Reload rentals from blockchain
-            await loadMyRentals();
         } catch (error: any) {
             console.error('Cancel rental failed:', error);
             alert(`Failed to cancel rental: ${error?.message || 'Please try again'}`);
@@ -181,17 +152,20 @@ export const MyRentals: React.FC = () => {
     };
 
     const calculateRefund = (rental: ActiveRental): number => {
-        return rental.totalBudget - calculateCurrentCost(rental);
+        const currentCost = calculateCurrentCost(rental);
+        return Math.max(rental.totalBudget - currentCost, 0);
     };
 
     const isRentalCompleted = (rental: ActiveRental): boolean => {
-        const currentCost = calculateCurrentCost(rental);
-        return currentCost >= rental.totalBudget;
+        const now = Math.floor(Date.now() / 1000);
+        return now >= (rental.startTime + rental.duration);
     };
 
     const getBudgetPercentage = (rental: ActiveRental): number => {
-        const currentCost = calculateCurrentCost(rental);
-        return Math.min((currentCost / rental.totalBudget) * 100, 100);
+        const now = Math.floor(Date.now() / 1000);
+        const elapsed = now - rental.startTime;
+        const totalDuration = rental.duration;
+        return Math.min((elapsed / totalDuration) * 100, 100);
     };
 
     return (
@@ -206,9 +180,20 @@ export const MyRentals: React.FC = () => {
                 </p>
             </div>
 
-            {loading ? (
-                <div className="card" style={{ padding: 'var(--spacing-4xl)', textAlign: 'center' }}>
-                    <p>Loading your active rentals...</p>
+            {!isConnected ? (
+                <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)' }}>🔒</div>
+                    <h2 style={{ marginBottom: 'var(--spacing-md)' }}>Connect Your Wallet</h2>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>
+                        Connect your wallet to view your active rental streams
+                    </p>
+                </div>
+            ) : loading ? (
+                <LoadingScreen message="Loading your active rentals..." />
+            ) : error ? (
+                <div className="card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
+                    <h2 style={{ marginBottom: 'var(--spacing-md)' }}>Error Loading Rentals</h2>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{error}</p>
                 </div>
             ) : rentals.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--spacing-4xl)', textAlign: 'center' }}>
@@ -219,15 +204,15 @@ export const MyRentals: React.FC = () => {
                     </p>
                     <Button
                         variant="primary"
-                        onClick={() => window.location.href = '/rentals'}
+                        onClick={() => window.location.href = '/dashboard'}
                     >
-                        Browse Rentals
+                        Browse Assets
                     </Button>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
                     {rentals.map((rental) => {
-                        const Icon = getAssetIcon(rental.assetType);
+                        const IconComponent = getAssetIcon(rental.assetType); 
                         const currentCost = calculateCurrentCost(rental);
                         const refund = calculateRefund(rental);
                         const timeElapsed = calculateTimeElapsed(rental.startTime);
@@ -235,12 +220,11 @@ export const MyRentals: React.FC = () => {
                         const budgetPercentage = getBudgetPercentage(rental);
 
                         return (
-                            <div key={rental.streamId} className="card" style={{ padding: 'var(--spacing-xl)' }}>
+                            <div key={rental.tokenId} className="card" style={{ padding: 'var(--spacing-xl)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                    {/* Left: Asset Info */}
                                     <div style={{ flex: 1 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-sm)' }}>
-                                            <Icon size={24} style={{ color: 'var(--color-primary)' }} />
+                                            {IconComponent}
                                             <h3>{rental.title}</h3>
                                             <span
                                                 style={{
@@ -260,16 +244,15 @@ export const MyRentals: React.FC = () => {
                                             </span>
                                         </div>
                                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                                            {getAssetTypeName(rental.assetType)} • ${rental.pricePerHour}/hour
+                                            {rental.assetType} • ${rental.pricePerHour.toFixed(4)}/hour
                                         </p>
                                     </div>
 
-                                    {/* Right: Action Button */}
                                     {!isCompleted ? (
                                         <Button
                                             variant="secondary"
-                                            onClick={() => handleCancelRental(rental.streamId, rental.title)}
-                                            disabled={cancellingId === rental.streamId}
+                                            onClick={() => rental.streamId && handleCancelRental(rental.streamId, rental.title)} // Added null check
+                                            disabled={cancellingId === rental.streamId || !isConnected || !rental.streamId}
                                             isLoading={cancellingId === rental.streamId}
                                             leftIcon={<XCircle size={16} />}
                                         >
@@ -291,7 +274,6 @@ export const MyRentals: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Stats */}
                                 <div style={{
                                     display: 'grid',
                                     gridTemplateColumns: 'repeat(4, 1fr)',
@@ -339,7 +321,6 @@ export const MyRentals: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Progress Bar */}
                                 <div style={{ marginTop: 'var(--spacing-md)' }}>
                                     <div style={{
                                         width: '100%',
@@ -366,7 +347,6 @@ export const MyRentals: React.FC = () => {
                                     </p>
                                 </div>
 
-                                {/* Warning/Completion messages */}
                                 {isCompleted ? (
                                     <div
                                         className="card"
@@ -379,7 +359,7 @@ export const MyRentals: React.FC = () => {
                                     >
                                         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
                                             <AlertTriangle size={16} />
-                                            Budget fully used. Your access to this asset has ended. To continue using, rent it again from the Rentals page.
+                                            Budget fully used. Your access to this asset has ended. To continue using, rent it again from the Dashboard.
                                         </p>
                                     </div>
                                 ) : refund < rental.pricePerHour && (
@@ -404,7 +384,6 @@ export const MyRentals: React.FC = () => {
                 </div>
             )}
 
-            {/* Info Card */}
             <div
                 className="card"
                 style={{
