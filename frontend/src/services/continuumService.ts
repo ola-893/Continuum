@@ -220,4 +220,30 @@ export class ContinuumService {
         const tx = await streamingProtocol.createStream(sender, recipient, totalAmount, duration);
         return tx;
     }
+
+    static async isWhitelisted(_userAddress: string): Promise<boolean> {
+        console.warn("EVM: isWhitelisted is a placeholder. Full implementation requires ComplianceGuard contract.");
+        return true;
+    }
+
+    static async addToWhitelist(_userAddress: string): Promise<ethers.ContractTransactionResponse | void> {
+        console.warn("EVM: addToWhitelist is a placeholder. Full implementation requires ComplianceGuard contract.");
+        return Promise.resolve();
+    }
+
+    static async removeFromWhitelist(_userAddress: string): Promise<ethers.ContractTransactionResponse | void> {
+        console.warn("EVM: removeFromWhitelist is a placeholder. Full implementation requires ComplianceGuard contract.");
+        return Promise.resolve();
+    }
+
+    static async transferTokens(_network: string, recipient: string, amount: string): Promise<ethers.ContractTransactionResponse> {
+        const signer = await this.getEthersSigner();
+        const tokenContract = new ethers.Contract(
+            CONTRACT_CONFIG.bscTestnet.MOCK_ERC20_ADDRESS,
+            CONTRACT_CONFIG.ABIS.MockERC20,
+            signer
+        );
+        const tx = await tokenContract.transfer(recipient, ethers.parseEther(amount));
+        return tx;
+    }
 }

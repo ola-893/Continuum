@@ -43,10 +43,6 @@ const App: React.FC = () => {
         <BrowserRouter>
             <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Routes>
-                    import {LandingPage} from './pages/LandingPage';
-                    // ... imports
-
-                    // ... inside Routes
                     <Route
                         path="/"
                         element={<LandingPage />}

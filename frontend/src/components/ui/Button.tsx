@@ -2,7 +2,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
     isLoading?: boolean;
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
@@ -22,6 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
         primary: 'btn-primary',
         secondary: 'btn-secondary',
         ghost: 'btn-ghost',
+        danger: 'btn-danger',
     }[variant];
 
     return (
