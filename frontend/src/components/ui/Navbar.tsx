@@ -28,10 +28,23 @@ export const Navbar: React.FC<NavbarProps> = ({ walletButton }) => {
                             Dashboard
                         </Link>
                         <Link
+                            to="/rentals"
+                            className={`nav-link ${location.pathname.startsWith('/rentals') ? 'active' : ''}`}
+                        >
+                            Rentals
+                        </Link>
+
+                        <Link
                             to="/admin"
                             className={`nav-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
                         >
                             Admin
+                        </Link>
+                        <Link
+                            to="/chat"
+                            className={`nav-link ${location.pathname.startsWith('/chat') ? 'active' : ''}`}
+                        >
+                            AI Matcher
                         </Link>
                     </div>
 

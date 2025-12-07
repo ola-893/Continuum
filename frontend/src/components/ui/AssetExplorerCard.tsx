@@ -12,11 +12,12 @@ export interface AssetExplorerCardProps {
 export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, className = '' }) => {
     const {
         tokenId,
-        assetType = 'Unknown Asset',
         title = `Asset #${tokenId}`,
         imageUrl,
         streamInfo,
     } = asset || {};
+
+    const assetType = 'Real Estate';
 
     const calculateAPY = () => {
         if (!streamInfo?.flowRate || !streamInfo?.totalAmount || streamInfo.totalAmount === 0) {

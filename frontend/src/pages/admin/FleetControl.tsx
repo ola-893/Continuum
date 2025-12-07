@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, X, Lock, Rocket } from 'lucide-react'; 
+import { AlertTriangle, X, Lock, Rocket } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { formatCurrency } from '../../utils/formatting';
@@ -8,7 +8,7 @@ import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { useAccount, useWriteContract } from 'wagmi';
 import { CONTRACT_CONFIG } from '../../config/contracts';
 import { AssetData, useAssetList } from '../../hooks/useAssetList';
-import { Car, Home, Wrench, MapPin } from 'lucide-react'; // Moved here for getAssetIcon
+import { Home } from 'lucide-react';
 
 export const FleetControl: React.FC = () => {
     const { isConnected, address } = useAccount();
@@ -20,20 +20,12 @@ export const FleetControl: React.FC = () => {
     // Removed processing state as it's unused
 
     const getStatusBadgeVariant = (asset: AssetData): 'success' | 'warning' | 'error' | 'info' => {
-        if (!asset.streamInfo) return 'warning'; 
-        if (!asset.streamInfo.isActive) return 'error'; 
-        return 'success'; 
+        if (!asset.streamInfo) return 'warning';
+        if (!asset.streamInfo.isActive) return 'error';
+        return 'success';
     };
 
-    const getAssetIcon = (assetType: string) => {
-        const iconSize = 20;
-        switch (assetType) {
-            case 'Vehicle': return <Car size={iconSize} />;
-            case 'Real Estate': return <Home size={iconSize} />;
-            case 'Heavy Machinery': return <Wrench size={iconSize} />;
-            default: return <MapPin size={iconSize} />;
-        }
-    };
+
 
     const handleFreeze = async () => {
         if (!selectedAsset || !selectedAsset.streamId) {
@@ -51,9 +43,9 @@ export const FleetControl: React.FC = () => {
             await ContinuumService.freezeAsset(selectedAsset.streamId, 'Frozen by admin via Command Center (Simulated)');
 
             await writeContractAsync({
-                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`, 
+                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`,
                 abi: CONTRACT_CONFIG.ABIS.RWAHub,
-                functionName: 'owner', 
+                functionName: 'owner',
                 args: [],
             });
 
@@ -72,7 +64,7 @@ export const FleetControl: React.FC = () => {
             <div style={{ marginBottom: 'var(--spacing-2xl)' }}>
                 <h1 style={{ marginBottom: 'var(--spacing-sm)' }}>Fleet Control (EVM Simulated)</h1>
                 <p className="text-secondary">
-                    Monitor all assets and execute emergency actions ({assets.length} asset{assets.length !== 1 ? 's' : ''} registered). All actions are simulated for the EVM demo.
+                    Monitor all real estate assets and execute emergency actions ({assets.length} asset{assets.length !== 1 ? 's' : ''} registered). All actions are simulated for the EVM demo.
                 </p>
             </div>
 
@@ -110,7 +102,7 @@ export const FleetControl: React.FC = () => {
                                     >
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-md">
-                                                <span className="text-2xl">{getAssetIcon(asset.assetType)}</span>
+                                                <span className="text-2xl"><Home size={20} /></span>
                                                 <div>
                                                     <p className="font-semibold mb-xs">{asset.title}</p>
                                                     <p className="text-xs text-secondary">{'San Francisco Bay Area'}</p> {/* Simplified */}

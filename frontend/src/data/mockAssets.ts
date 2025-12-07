@@ -4,12 +4,12 @@
 
 export const mockAssets = [
     {
-        tokenAddress: '0x1234567890abcdef1234567890abcdef12345678',
+        tokenAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
         assetType: 'Real Estate',
-        title: 'Aptos Tower Unit #501',
+        title: 'Skyline Tower Unit #501',
         imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
         metadata: {
-            location: 'Downtown Aptos City',
+            location: 'Downtown Metro City',
             squareFeet: '1,250 sq ft',
             tenant: 'TechCorp Inc.',
         },
@@ -23,7 +23,7 @@ export const mockAssets = [
         },
     },
     {
-        tokenAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
+        tokenAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
         assetType: 'Real Estate',
         title: 'Beachside Villa #203',
         imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
@@ -42,12 +42,12 @@ export const mockAssets = [
         },
     },
     {
-        tokenAddress: '0x9876543210fedcba9876543210fedcba98765432',
+        tokenAddress: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
         assetType: 'Securities',
         title: 'Corporate Bond #A451',
         imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80',
         metadata: {
-            issuer: 'Aptos Corp',
+            issuer: 'Global Corp',
             maturity: '2026-12-31',
             couponRate: '5.5%',
         },

@@ -1,0 +1,61 @@
+# Continuum: Unibase Property Matcher - AI Knowledge Base
+
+## Project Overview
+**Continuum** is a decentralized finance (DeFi) protocol on the BNB Chain that tokenizes Real-World Assets (RWAs) and enables yield streaming. The **Unibase Property Matcher** is a core feature that leverages AI and decentralized data storage to match users with ideal rental properties based on their preferences.
+
+## Core Value Proposition
+- **Tokenization of RWAs**: Physical assets (Real Estate, Vehicles, Equipment) are represented as ERC721 NFTs on the blockchain.
+- **Yield Streaming**: Rental income flows in real-time (per second) from tenants to asset owners using a Superfluid-inspired streaming protocol.
+- **AI-Powered Matching**: Uses ChainGPT to analyze user intent and Unibase to store/retrieve rich property data and user preferences.
+- **Decentralized Verification**: Ensures ownership and compliance via on-chain registries.
+
+## Technical Architecture
+
+### Blockchain Layer (BNB Chain)
+1.  **PropertyRegistry (ERC721Enumerable)**: 
+    *   Acts as the central "phonebook" for all tokenized assets.
+    *   Stores immutable metadata links (IPFS) and Unibase IDs.
+    *   Tracks ownership and total supply of registered properties.
+    *   Symbol: `UPM-PROP`.
+2.  **StreamingProtocol**:
+    *   Handles the logic for creating and managing money streams (BUSD/Stablecoins).
+    *   Calculates real-time balances based on flow rates (`flowRate * (now - lastUpdate)`).
+3.  **RWAHub**:
+    *   The central controller that coordinates between the Registry and Streaming protocols.
+    *   Validates compliance (KYC/AML checks) before allowing interactions.
+
+### AI & Data Layer
+1.  **ChainGPT Integration**:
+    *   Role: The "Brain".
+    *   Function: Processes natural language queries from users (e.g., "Find me a 2-bedroom apartment in Dubai under $2000").
+    *   Output: Structured search criteria used to query the Unibase database.
+2.  **Unibase Integration**:
+    *   Role: The "Memory".
+    *   Function: Stores granular, off-chain data about properties (amenities, high-res images, location data) and user preferences.
+    *   Linkage: Each on-chain NFT maps to a `unibaseId`, linking the tamper-proof asset to its rich data context.
+
+## Key Features & User Flows
+
+### 1. Renting a Property (The "Stream")
+*   **Discovery**: User asks the AI Chatbot for a property. ChainGPT finds matches in Unibase.
+*   **Rental Config**: User selects a property and duration.
+*   **Payment**: User approves a BUSD transaction.
+*   **Execution**: A money stream is opened on-chain. Money flows every second.
+*   **Access**: User gets physical access (via QR code/digital key) as long as the stream is active.
+*   **Cancellation**: User can stop the stream at any time; billing stops immediately to the second.
+
+### 2. Listing an Asset
+*   **Minting**: Landlord provides details. `PropertyRegistry` mints an NFT.
+*   **Data Entry**: High-fidelity data is stored in Unibase.
+*   **Verification**: Compliance checks (KYC) are performed via `RWAHub`.
+
+## Terminology
+*   **Flow Rate**: The amount of tokens paid per second (e.g., 0.000038 BUSD/sec).
+*   **Superfluid**: The underlying concept (and potential protocol fork) used for streaming.
+*   **RWAs**: Real-World Assets.
+*   **KYC**: Know Your Customer (identity verification).
+
+## Development Stack
+*   **Frontend**: React, TypeScript, Wagmi, Ethers.js, Lucide-React.
+*   **Backend/Contracts**: Solidity, Hardhat, BNB Chain Testnet.
+*   **AI/Data services**: ChainGPT SDK, Unibase SDK.

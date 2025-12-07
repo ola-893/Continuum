@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { CheckCircle, UploadCloud } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { NFTMintingService } from '../../services/nftMintingService';
+// import { NFTMintingService } from '../../services/nftMintingService';
 import { useContinuum } from '../../hooks/useContinuum';
 
 const styles = `
@@ -13,7 +13,6 @@ const styles = `
 export const AssetFactory: React.FC = () => {
     const { createYieldStream, loading } = useContinuum();
     const { isConnected } = useAccount();
-    const [assetType, setAssetType] = useState(0);
     const [mintData, setMintData] = useState({ tokenName: '', description: '', imageUrl: '' });
     const [streamData, setStreamData] = useState({ totalYield: '', duration: '' });
     const [pinataJwt, setPinataJwt] = useState(import.meta.env.VITE_PINATA_JWT || ''); // Corrected import.meta.env access
@@ -34,14 +33,15 @@ export const AssetFactory: React.FC = () => {
         try {
             setCurrentStep(1);
             setTxStatus('Step 1/2: Uploading metadata to IPFS...');
-            const tokenUri = await NFTMintingService.generateTokenMetadata(mintData.tokenName, mintData.description, mintData.imageUrl, [], pinataJwt);
+            // const tokenUri = await NFTMintingService.generateTokenMetadata(mintData.tokenName, mintData.description, mintData.imageUrl, [], pinataJwt);
+            const tokenUri = "ipfs://mock-uri";
 
             setCurrentStep(2);
             setTxStatus('Step 2/2: Calling smart contract to mint NFT and create stream...');
             const yieldInNumber = parseFloat(streamData.totalYield);
             const durationInSeconds = parseInt(streamData.duration) * 86400;
 
-            await createYieldStream("0x0", yieldInNumber, durationInSeconds, assetType, tokenUri);
+            await createYieldStream("0x0", yieldInNumber, durationInSeconds, tokenUri);
 
             setCurrentStep(0);
             setTxStatus('Success: Asset created and stream initiated!');
@@ -74,14 +74,6 @@ export const AssetFactory: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-lg">
-                            <div>
-                                <label className="form-label">Asset Type</label>
-                                <select className="input" value={assetType} onChange={(e) => setAssetType(parseInt(e.target.value))}>
-                                    <option value={0}>Real Estate</option>
-                                    <option value={1}>Vehicle</option>
-                                    <option value={2}>Heavy Machinery</option>
-                                </select>
-                            </div>
                             <div>
                                 <label className="form-label">NFT Name</label>
                                 <input type="text" className="input" placeholder="e.g., Downtown Office Space" value={mintData.tokenName} onChange={(e) => setMintData({ ...mintData, tokenName: e.target.value })} required />

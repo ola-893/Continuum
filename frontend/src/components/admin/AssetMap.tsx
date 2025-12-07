@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { AssetLocation } from '@/types/continuum'; // Corrected import path
-import { Car, Home, Wrench, MapPin, Map } from 'lucide-react';
+import { Map, Home } from 'lucide-react';
 
 interface AssetMapProps {
     assets: AssetLocation[];
@@ -35,19 +35,10 @@ export const AssetMap: React.FC<AssetMapProps> = ({ assets, onAssetClick }) => {
         }
     };
 
-    const getAssetMarker = (assetType: string) => {
+    const getAssetMarker = (_assetType: string) => {
         const iconSize = 20;
         const iconColor = 'white';
-        switch (assetType) {
-            case 'Vehicle': // Updated to match GodView.tsx
-                return <Car size={iconSize} color={iconColor} />;
-            case 'Real Estate': // Updated to match GodView.tsx
-                return <Home size={iconSize} color={iconColor} />;
-            case 'Heavy Machinery': // Updated to match GodView.tsx
-                return <Wrench size={iconSize} color={iconColor} />;
-            default:
-                return <MapPin size={iconSize} color={iconColor} />;
-        }
+        return <Home size={iconSize} color={iconColor} />;
     };
 
     return (

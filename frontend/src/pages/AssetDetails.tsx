@@ -132,14 +132,7 @@ export const AssetDetails: React.FC = () => {
     if (loadingAsset) return <div className="container card text-center p-xl">Loading asset data...</div>;
     if (!streamInfo || error) return <div className="container card text-center p-xl">{error || 'Asset not found'}</div>;
 
-    const getAssetTypeName = (type: number | undefined) => {
-        switch (type) {
-            case 0: return 'Real Estate';
-            case 1: return 'Vehicle';
-            case 2: return 'Commodities';
-            default: return 'Unknown Asset';
-        }
-    };
+
 
     const assetForModal: FlashAdvanceAsset = {
         tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
@@ -167,7 +160,6 @@ export const AssetDetails: React.FC = () => {
                             <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Asset Details</h3>
                             <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)' }}>{assetMetadata?.description || 'No description available.'}</p>
                             <div className="grid grid-cols-2 gap-lg">
-                                <div className="flex justify-between items-center"><span className="text-secondary">Asset Type</span><Badge variant="info">{getAssetTypeName(streamInfo.assetType)}</Badge></div>
                                 <div className="flex justify-between items-center"><span className="text-secondary">Owner</span><span>You</span></div>
                                 {(assetMetadata?.attributes || []).map(attr => (
                                     <div key={attr.trait_type} className="flex justify-between items-center"><span className="text-secondary">{attr.trait_type}</span><span>{attr.value}</span></div>

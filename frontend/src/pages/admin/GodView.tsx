@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, DollarSign, Zap, TrendingUp, Car, Home, Wrench, Rocket } from 'lucide-react';
+import { Activity, DollarSign, Zap, TrendingUp, Rocket, Home } from 'lucide-react';
 import { StatCard } from '../../components/admin/StatCard';
 import { AssetMap } from '../../components/admin/AssetMap';
 import { formatCurrency } from '../../utils/formatting';
@@ -7,11 +7,11 @@ import { ContinuumService } from '../../services/continuumService';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { ethers } from 'ethers';
 import { CONTRACT_CONFIG } from '../../config/contracts';
-import { fetchIpfsMetadata, IPFS_GATEWAY } from '../../utils/ipfs'; 
+import { fetchIpfsMetadata, IPFS_GATEWAY } from '../../utils/ipfs';
 import { StreamInfo, AssetLocation } from '../../types/continuum'; // Imported AssetLocation
 
 export const GodView: React.FC = () => {
-    const [assets, setAssets] = useState<AssetLocation[]>([]); 
+    const [assets, setAssets] = useState<AssetLocation[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         activeStreams: 0,
@@ -20,14 +20,7 @@ export const GodView: React.FC = () => {
         iotUptime: 99.9,
     });
 
-    const getAssetTypeName = (assetType: number | undefined): 'Real Estate' | 'Vehicle' | 'Heavy Machinery' | 'Unknown Asset' => {
-        switch (assetType) {
-            case 0: return 'Real Estate';
-            case 1: return 'Vehicle';
-            case 2: return 'Heavy Machinery';
-            default: return 'Unknown Asset';
-        }
-    };
+
 
     useEffect(() => {
         const fetchRealAssets = async () => {
@@ -66,11 +59,11 @@ export const GodView: React.FC = () => {
                             return {
                                 id: tokenId.toString(),
                                 tokenId: tokenId,
-                                assetType: getAssetTypeName(Number(tokenDetails.asset_type)),
+                                assetType: 'Real Estate',
                                 title: assetMetadata.name || `Asset #${tokenId}`,
                                 description: assetMetadata.description || 'No description available.',
                                 imageUrl: assetMetadata.image || undefined,
-                                tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS, 
+                                tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
                                 status: streamStatus?.isFrozen ? 'frozen' : (streamInfo ? 'active' : 'idle'),
                                 location: {
                                     lat: 37.7749 + (Math.random() - 0.5) * 0.5,
@@ -181,26 +174,18 @@ export const GodView: React.FC = () => {
             <div className="grid grid-cols-3 gap-md">
                 <div className="card" style={{ padding: 'var(--spacing-lg)', background: 'rgba(0, 217, 255, 0.05)', border: '1px solid var(--color-primary)' }}>
                     <h4 style={{ marginBottom: 'var(--spacing-xs)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <Car size={18} /> Fleet Status
+                        <Home size={18} /> Asset Streams
                     </h4>
                     <p className="text-secondary">
-                        {assets.filter(a => a.assetType === 'Vehicle' && a.status === 'active').length} vehicles active, {assets.filter(a => a.assetType === 'Vehicle' && a.status === 'frozen').length} frozen
+                        {assets.filter(a => a.status === 'active').length} active, {assets.filter(a => a.status === 'frozen').length} frozen
                     </p>
                 </div>
                 <div className="card" style={{ padding: 'var(--spacing-lg)', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid var(--color-success)' }}>
                     <h4 style={{ marginBottom: 'var(--spacing-xs)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <Home size={18} /> Properties
+                        <Home size={18} /> Asset Status
                     </h4>
                     <p className="text-secondary">
-                        {assets.filter(a => a.assetType === 'Real Estate' && a.status === 'active').length} with active streams, {assets.filter(a => a.assetType === 'Real Estate' && a.status === 'idle').length} idle
-                    </p>
-                </div>
-                <div className="card" style={{ padding: 'var(--spacing-lg)', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid var(--color-warning)' }}>
-                    <h4 style={{ marginBottom: 'var(--spacing-xs)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <Wrench size={18} /> Machinery
-                    </h4>
-                    <p className="text-secondary">
-                        {assets.filter(a => a.assetType === 'Heavy Machinery').length} units deployed
+                        {assets.filter(a => a.status === 'active').length} active streams, {assets.filter(a => a.status === 'idle').length} idle, {assets.filter(a => a.status === 'frozen').length} frozen
                     </p>
                 </div>
             </div>

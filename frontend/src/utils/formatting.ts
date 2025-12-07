@@ -3,7 +3,7 @@
  */
 
 /**
- * Format a number as currency with APT symbol
+ * Format a number as currency with BNB symbol
  */
 export function formatCurrency(amount: number, decimals: number = 2): string {
     return `$${amount.toLocaleString('en-US', {
@@ -13,20 +13,21 @@ export function formatCurrency(amount: number, decimals: number = 2): string {
 }
 
 /**
- * Format APT amount (converts from octas)
+ * Format BNB amount (converts from wei)
  */
-export function formatAPT(octas: number, decimals: number = 4): string {
-    const apt = octas / 100000000; // 1 APT = 100,000,000 octas
-    return `${apt.toLocaleString('en-US', {
+export function formatBNB(wei: bigint | number, decimals: number = 4): string {
+    const bnb = Number(wei) / 1e18; // 1 BNB = 10^18 wei
+    return `${bnb.toLocaleString('en-US', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-    })} APT`;
+    })} BNB`;
 }
 
 /**
- * Truncate Aptos address for display
+ * Truncate Address for display
  */
-export function truncateAddress(address: string, startChars: number = 6, endChars: number = 4): string {
+export function truncateAddress(address: string | undefined, startChars: number = 6, endChars: number = 4): string {
+    if (!address) return '';
     if (address.length <= startChars + endChars) return address;
     return `${address.slice(0, startChars)}...${address.slice(-endChars)}`;
 }

@@ -4,10 +4,10 @@
 
 export interface TokenIndexEntry {
     tokenId: number; // ERC721 Token ID
-    asset_type: number;
     stream_id: number;
     metadata_uri: string;
     registered_at: number;
+    unibase_id?: string;
 }
 
 // Note: These values are typically converted from raw BigNumberish (wei) to display numbers (e.g., APT, BUSD) in hooks/components.
@@ -40,10 +40,10 @@ export interface ActiveRental {
     streamId: number;
     tokenId: number; // ERC721 Token ID
     tokenAddress: string; // The address of the TokenRegistry contract
-    assetType: 'Real Estate' | 'Vehicle' | 'Heavy Machinery' | 'Unknown Asset'; // Updated to string literals
+    assetType: 'Real Estate';
     title: string;
     pricePerHour: number; // In display units per hour
-    startTime: number; 
+    startTime: number;
     duration: number; // Total stream duration in seconds
     totalBudget: number; // In display units
     amountSpent: number; // In display units
@@ -51,6 +51,7 @@ export interface ActiveRental {
     imageUrl?: string; // Added imageUrl
     streamInfo?: StreamInfo; // Added streamInfo
     metadataUri?: string; // Added metadataUri
+    unibaseId?: string; // Added unibaseId
     attributes?: Array<{ trait_type: string; value: string | number }>; // Added attributes
     location?: { lat: number; lng: number; city: string; }; // Added location
 }
@@ -58,7 +59,7 @@ export interface ActiveRental {
 export interface AssetLocation {
     id: string; // ERC721 tokenId as string for unique key
     tokenId: number; // ERC721 Token ID as number
-    assetType: 'Real Estate' | 'Vehicle' | 'Heavy Machinery' | 'Unknown Asset'; // Updated type strings
+    assetType: 'Real Estate';
     title: string;
     tokenAddress: string; // The address of the TokenRegistry contract
     status: 'active' | 'frozen' | 'idle';
@@ -72,9 +73,9 @@ export interface AssetLocation {
     yieldRate: number;
     totalEarned: number;
     lastUpdate: number;
-    description: string; 
-    imageUrl?: string; 
-    streamInfo?: StreamInfo; 
-    metadataUri?: string; 
-    attributes?: Array<{ trait_type: string; value: string | number }>; 
+    description: string;
+    imageUrl?: string;
+    streamInfo?: StreamInfo;
+    metadataUri?: string;
+    attributes?: Array<{ trait_type: string; value: string | number }>;
 }

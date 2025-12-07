@@ -12,7 +12,6 @@ export interface RealStreamInfo {
     stopTime: number;
     amountWithdrawn: number;
     isActive: boolean;
-    assetType?: number;
     metadataUri?: string;
     title?: string;
     description?: string;
@@ -61,7 +60,6 @@ export function useAssetStream(tokenId: string | null) {
                 let currentStreamInfo: RealStreamInfo = {
                     sender: "", recipient: "", totalAmount: 0, flowRate: 0, 
                     startTime: 0, stopTime: 0, amountWithdrawn: 0, isActive: false,
-                    assetType: Number(tokenDetails.asset_type),
                     metadataUri: tokenDetails.metadata_uri
                 };
 

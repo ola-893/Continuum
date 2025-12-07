@@ -33,15 +33,15 @@ export const ComplianceDesk: React.FC = () => {
         try {
             // Call the placeholder service function for identity registration
             await ContinuumService.registerIdentity(userAddr, jurisdiction, verificationLevel);
-            
+
             // Call the placeholder service function for whitelisting (assuming asset types 0, 1, 2 for demo)
-            await ContinuumService.whitelistUser(userAddr, [0, 1, 2]);
+            await ContinuumService.whitelistUser(userAddr);
 
             // Simulate a transaction confirmation
             await writeContractAsync({
-                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`, 
+                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`,
                 abi: CONTRACT_CONFIG.ABIS.RWAHub,
-                functionName: 'owner', 
+                functionName: 'owner',
                 args: [],
             });
 

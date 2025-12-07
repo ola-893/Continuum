@@ -6,8 +6,12 @@ import { Navbar } from './components/ui/Navbar';
 import { Dashboard } from './pages/Dashboard';
 import { AssetDetails } from './pages/AssetDetails';
 import { Admin } from './pages/Admin';
+import Rentals from './pages/Rentals';
+import MyStreams from './pages/MyStreams';
+import { ChatInterface } from './pages/ChatInterface';
 import { Button } from './components/ui/Button';
 import { ContinuumService } from './services/continuumService';
+import { LandingPage } from './pages/LandingPage';
 import './index.css';
 
 const App: React.FC = () => {
@@ -39,9 +43,13 @@ const App: React.FC = () => {
         <BrowserRouter>
             <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Routes>
+                    import {LandingPage} from './pages/LandingPage';
+                    // ... imports
+
+                    // ... inside Routes
                     <Route
                         path="/"
-                        element={<Navigate to="/dashboard" replace />}
+                        element={<LandingPage />}
                     />
                     <Route
                         path="/dashboard"
@@ -61,15 +69,41 @@ const App: React.FC = () => {
                             </>
                         }
                     />
-
-                    <Route 
-                        path="/admin/*" 
+                    <Route
+                        path="/rentals"
+                        element={
+                            <>
+                                <Navbar walletButton={<WalletConnectButton />} />
+                                <Rentals />
+                            </>
+                        }
+                    />
+                    <Route
+                        path="/my-streams"
+                        element={
+                            <>
+                                <Navbar walletButton={<WalletConnectButton />} />
+                                <MyStreams />
+                            </>
+                        }
+                    />
+                    <Route
+                        path="/chat"
+                        element={
+                            <>
+                                <Navbar walletButton={<WalletConnectButton />} />
+                                <ChatInterface />
+                            </>
+                        }
+                    />
+                    <Route
+                        path="/admin/*"
                         element={
                             <>
                                 <Navbar walletButton={<WalletConnectButton />} />
                                 <Admin />
                             </>
-                        } 
+                        }
                     />
 
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -15,11 +15,12 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, className = '' }) =
 
     const {
         tokenId,
-        assetType = 'Unknown Asset',
         title = `Asset #${tokenId}`,
         imageUrl,
         streamInfo,
     } = asset || {};
+
+    const assetType = 'Real Estate';
 
     const handleClick = () => {
         navigate(`/asset/${tokenId}`);

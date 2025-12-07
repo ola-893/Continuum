@@ -3,31 +3,25 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { ContinuumService } from '../services/continuumService';
 import { fetchIpfsMetadata, IPFS_GATEWAY } from '../utils/ipfs';
-import type { StreamInfo } from '../types/continuum'; 
-import { CONTRACT_CONFIG } from '../config/contracts'; 
+import type { StreamInfo } from '../types/continuum';
+import { CONTRACT_CONFIG } from '../config/contracts';
 
 export interface AssetData {
     tokenId: number;
     tokenAddress: string;
-    assetType: string;
+    assetType: 'Real Estate';
     title: string;
     description: string;
     imageUrl?: string;
     streamId?: number;
     streamInfo?: StreamInfo;
     metadataUri?: string;
+    unibaseId?: string;
     attributes?: Array<{ trait_type: string; value: string | number }>;
     location?: { lat: number; lng: number; city: string; }; // Added location
 }
 
-function getAssetTypeName(assetType: number): string {
-    switch (assetType) {
-        case 0: return 'Real Estate';
-        case 1: return 'Vehicle';
-        case 2: return 'Commodities';
-        default: return 'Unknown Asset';
-    }
-}
+
 
 export function useAssetList(ownerAddress?: string) {
     const [assets, setAssets] = useState<AssetData[]>([]);
@@ -48,7 +42,7 @@ export function useAssetList(ownerAddress?: string) {
                     try {
                         const tokenDetails = await ContinuumService.getTokenDetails(tokenId);
                         const metadataUri = tokenDetails.metadata_uri;
-                        
+
                         let assetMetadata: any = {};
                         if (metadataUri) {
                             assetMetadata = await fetchIpfsMetadata(metadataUri);
@@ -64,7 +58,7 @@ export function useAssetList(ownerAddress?: string) {
                                 sender: rawStreamInfo.sender,
                                 recipient: rawStreamInfo.recipient,
                                 startTime: Number(rawStreamInfo.startTime),
-                                flowRate: Number(ethers.formatUnits(rawStreamInfo.flowRate, 18)), 
+                                flowRate: Number(ethers.formatUnits(rawStreamInfo.flowRate, 18)),
                                 amountWithdrawn: Number(ethers.formatUnits(rawStreamInfo.amountWithdrawn, 18)),
                                 totalAmount: Number(ethers.formatUnits(rawStreamInfo.totalAmount, 18)),
                                 stopTime: Number(rawStreamInfo.stopTime),
@@ -79,13 +73,14 @@ export function useAssetList(ownerAddress?: string) {
                             fetchedAssets.push({
                                 tokenId,
                                 tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
-                                assetType: getAssetTypeName(tokenDetails.asset_type),
+                                assetType: 'Real Estate',
                                 title: assetMetadata.name || `Asset #${tokenId}`,
                                 description: assetMetadata.description || 'No description available.',
                                 imageUrl: assetMetadata.image || undefined,
                                 streamId: Number(tokenDetails.stream_id),
                                 streamInfo,
                                 metadataUri,
+                                unibaseId: tokenDetails.unibase_id,
                                 attributes: assetMetadata.attributes || [],
                                 location: {
                                     lat: 37.7749 + (Math.random() - 0.5) * 0.5,
@@ -108,7 +103,7 @@ export function useAssetList(ownerAddress?: string) {
         };
 
         loadAssets();
-    }, [address, ownerAddress]); 
+    }, [address, ownerAddress]);
 
     return { assets, loading, error };
 }

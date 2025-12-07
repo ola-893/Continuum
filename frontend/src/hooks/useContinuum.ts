@@ -12,7 +12,7 @@ export const useContinuum = () => {
         _tokenAddress: string, // Unused in EVM as token is created in same tx
         totalYield: number,
         durationInSeconds: number,
-        assetType: number,
+        // assetType: number, // Unused in EVM
         metadataUri: string
     ) => {
         if (!address) {
@@ -25,10 +25,11 @@ export const useContinuum = () => {
 
         try {
             const yieldInWei = ethers.parseUnits(totalYield.toString(), 18);
-            const tx = await ContinuumService.createAssetStream(
+            const unibaseId = "mock-unibase-id-" + Date.now(); // Placeholder
+            const tx = await ContinuumService.createPropertyStream(
                 address,
-                assetType,
                 metadataUri,
+                unibaseId,
                 yieldInWei,
                 durationInSeconds
             );
@@ -36,7 +37,7 @@ export const useContinuum = () => {
         } catch (err: any) {
             console.error("Error creating asset stream:", err);
             setError(err.message || "An unexpected error occurred.");
-            throw err; 
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -92,6 +93,6 @@ export const useContinuum = () => {
         flashAdvance,
         loading,
         error,
-        complianceStatus: { hasKYC: true, isAdmin: false, canTradeRealEstate: true }, 
+        complianceStatus: { hasKYC: true, isAdmin: false, canTradeRealEstate: true },
     };
 };
