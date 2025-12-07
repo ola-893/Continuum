@@ -13,9 +13,10 @@ import { useContinuum } from '../hooks/useContinuum';
 import { useAssetStream } from '../hooks/useRealAssetStream';
 import { fetchIpfsMetadata, IPFS_GATEWAY } from '../utils/ipfs';
 import { CONTRACT_CONFIG } from '../config/contracts';
-import { StreamInfo as EVMStreamInfo } from '../types/continuum'; 
+import { StreamInfo as EVMStreamInfo } from '../types/continuum';
 import { ethers } from 'ethers';
-import { ContinuumService } from '../services/continuumService'; 
+import { ContinuumService } from '../services/continuumService';
+import { useNetwork } from '../contexts/NetworkContext';
 
 interface AssetMetadata {
     name: string;
@@ -29,7 +30,7 @@ interface FlashAdvanceAsset {
     tokenId: number;
     title: string;
     streamId?: number;
-    streamInfo?: { 
+    streamInfo?: {
         flowRate: number;
         totalAmount: number;
         amountWithdrawn: number;
@@ -41,10 +42,11 @@ export const AssetDetails: React.FC = () => {
     const { tokenId: tokenIdParam } = useParams<{ tokenId: string }>();
     const navigate = useNavigate();
     const { claimYield, flashAdvance, loading: continuumLoading } = useContinuum();
+    const { network } = useNetwork();
     const [showFlashModal, setShowFlashModal] = useState(false);
     const [txStatus, setTxStatus] = useState('');
     const [assetMetadata, setAssetMetadata] = useState<AssetMetadata | null>(null);
-    const [currentStreamStatus, setCurrentStreamStatus] = useState<{ claimable: number, escrowBalance: number, remaining: number, isFrozen: boolean } | null>(null); 
+    const [currentStreamStatus, setCurrentStreamStatus] = useState<{ claimable: number, escrowBalance: number, remaining: number, isFrozen: boolean } | null>(null);
 
     const numericTokenId = Number(tokenIdParam);
     const { streamId, streamInfo, loading: loadingAsset, error } = useAssetStream(tokenIdParam || null);
@@ -67,7 +69,7 @@ export const AssetDetails: React.FC = () => {
             }
         };
         fetchLiveStreamStatus();
-        const interval = setInterval(fetchLiveStreamStatus, 5000); 
+        const interval = setInterval(fetchLiveStreamStatus, 5000);
         return () => clearInterval(interval);
     }, [streamId]);
 
@@ -135,7 +137,7 @@ export const AssetDetails: React.FC = () => {
 
 
     const assetForModal: FlashAdvanceAsset = {
-        tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+        tokenAddress: CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS,
         tokenId: numericTokenId,
         title: assetMetadata?.name || `Asset #${tokenIdParam?.slice(0, 6)}...`,
         streamId: streamId || undefined,
@@ -164,7 +166,7 @@ export const AssetDetails: React.FC = () => {
                                 {(assetMetadata?.attributes || []).map(attr => (
                                     <div key={attr.trait_type} className="flex justify-between items-center"><span className="text-secondary">{attr.trait_type}</span><span>{attr.value}</span></div>
                                 ))}
-                                <div className="flex justify-between items-center col-span-2"><span className="text-secondary">Token ID</span><a href={`https://testnet.bscscan.com/token/${CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS}?a=${numericTokenId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-xs text-primary">{tokenIdParam?.slice(0, 10)}...{tokenIdParam?.slice(-8)} <ExternalLink size={14} /></a></div>
+                                <div className="flex justify-between items-center col-span-2"><span className="text-secondary">Token ID</span><a href={`https://testnet.bscscan.com/token/${CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS}?a=${numericTokenId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-xs text-primary">{tokenIdParam?.slice(0, 10)}...{tokenIdParam?.slice(-8)} <ExternalLink size={14} /></a></div>
                                 <div className="flex justify-between items-center col-span-2"><span className="text-secondary">Metadata URI</span><a href={streamInfo.metadataUri ? `${IPFS_GATEWAY}${streamInfo.metadataUri.replace('ipfs://', '')}` : '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-xs text-primary">{streamInfo.metadataUri} <ExternalLink size={14} /></a></div>
                             </div>
                         </div>

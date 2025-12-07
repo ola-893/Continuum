@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # Python microservice that wraps AIP Agent SDK
+  python-service:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: continuum-python-service
+    ports:
+      - "5000:5000"
+    environment:
+      # Blockchain Identity (REQUIRED)
+      - MEMBASE_ACCOUNT=${MEMBASE_ACCOUNT}
+      - MEMBASE_SECRET_KEY=${MEMBASE_SECRET_KEY}
+      - MEMBASE_ID=${MEMBASE_ID:-continuum_agent_001}
+      
+      # Network Configuration
+      - MEMBASE_NETWORK=${MEMBASE_NETWORK:-bsc-testnet}
+      - MEMORY_HUB_ADDRESS=${MEMORY_HUB_ADDRESS:-54.169.29.193:8081}
+      
+      # LLM Integration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHAINGPT_API_KEY=${CHAINGPT_API_KEY}
+      
+      # Service Configuration
+      - PORT=5000
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount local code for development (comment out for production)
+      - ./backend-python:/app
+      # Preserve Python packages
+      - python-packages:/usr/local/lib/python3.10/site-packages
+    networks:
+      - continuum-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Node.js backend that orchestrates agent operations
+  nodejs-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: continuum-nodejs-backend
+    ports:
+      - "3001:3001"
+    environment:
+      # Python Service Connection
+      - PYTHON_SERVICE_URL=http://python-service:5000
+      
+      # AIP Configuration
+      - AIP_TIMEOUT=${AIP_TIMEOUT:-30000}
+      - AIP_MAX_RETRIES=${AIP_MAX_RETRIES:-3}
+      
+      # BitAgent Configuration (legacy)
+      - BITAGENT_API_KEY=${BITAGENT_API_KEY}
+      - BITAGENT_NETWORK=${BITAGENT_NETWORK:-bnb-testnet}
+      
+      # BSC Configuration
+      - BSC_TESTNET_RPC_URL=${BSC_TESTNET_RPC_URL:-https://bsc-testnet.publicnode.com}
+      
+      # Server Configuration
+      - PORT=3001
+      - NODE_ENV=${NODE_ENV:-production}
+    volumes:
+      # Mount local code for development (comment out for production)
+      - ./backend:/app
+      # Preserve node_modules
+      - nodejs-modules:/app/node_modules
+    networks:
+      - continuum-network
+    depends_on:
+      python-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Named volumes for preserving dependencies
+volumes:
+  python-packages:
+    driver: local
+  nodejs-modules:
+    driver: local
+
+# Network for inter-service communication
+networks:
+  continuum-network:
+    driver: bridge
+    name: continuum-network

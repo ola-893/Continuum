@@ -258,6 +258,18 @@ a:hover {
   }
 }
 
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 
 /* ==========================================
    UTILITY CLASSES
@@ -571,4 +583,31 @@ a:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+}
+
+
+/* ==========================================
+   SIDEBAR LAYOUT RESPONSIVE STYLES
+   ========================================== */
+@media (max-width: 768px) {
+  main {
+    margin-left: 60px !important;
+    width: calc(100% - 60px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }

@@ -8,10 +8,12 @@ import { fetchIpfsMetadata } from '../utils/ipfs';
 import { ethers } from 'ethers';
 import { CONTRACT_CONFIG } from '../config/contracts';
 import { ActiveRental } from '../types/continuum';
+import { useNetwork } from '../contexts/NetworkContext';
 
 const MyStreams: React.FC = () => {
     const { address, isConnected } = useAccount();
     const { writeContractAsync } = useWriteContract();
+    const { network } = useNetwork();
     const [rentals, setRentals] = useState<ActiveRental[]>([]);
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ const MyStreams: React.FC = () => {
 
                                 activeRentals.push({
                                     tokenId,
-                                    tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+                                    tokenAddress: CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS,
                                     assetType: 'Real Estate',
                                     title: assetMetadata.name || `Asset #${tokenId}`,
                                     pricePerHour: flowRateDisplay * 3600,
@@ -93,7 +95,7 @@ const MyStreams: React.FC = () => {
         loadMyRentals();
         const interval = setInterval(loadMyRentals, 15000);
         return () => clearInterval(interval);
-    }, [address, isConnected, writeContractAsync]);
+    }, [address, isConnected, writeContractAsync, network]);
 
     const handleCancelRental = async (streamId: number, assetTitle: string) => {
         if (!address) return;

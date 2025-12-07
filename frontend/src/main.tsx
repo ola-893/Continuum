@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { injected } from 'wagmi/connectors'
 
 import App from './App';
+import { NetworkProvider } from './contexts/NetworkContext';
 import './index.css';
 
 // 1. Create a wagmi config
@@ -25,7 +26,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-                <App />
+                <NetworkProvider>
+                    <App />
+                </NetworkProvider>
             </QueryClientProvider>
         </WagmiProvider>
     </React.StrictMode>,

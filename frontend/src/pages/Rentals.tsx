@@ -6,6 +6,8 @@ import { ContinuumService } from '../services/continuumService';
 import { CONTRACT_CONFIG } from '../config/contracts';
 import { ethers } from 'ethers';
 
+import { useNetwork } from '../contexts/NetworkContext';
+
 interface RentalAsset {
     tokenAddress: string;
     tokenId: number;
@@ -20,6 +22,7 @@ interface RentalAsset {
 
 export const Rentals: React.FC = () => {
     const { address, isConnected } = useAccount();
+    const { network } = useNetwork();
     const [assets, setAssets] = useState<RentalAsset[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | string>('all');
@@ -31,7 +34,7 @@ export const Rentals: React.FC = () => {
 
     useEffect(() => {
         loadAvailableAssets();
-    }, []);
+    }, [network]);
 
     const loadAvailableAssets = async () => {
         try {
@@ -59,7 +62,7 @@ export const Rentals: React.FC = () => {
                     }
 
                     rentalAssets.push({
-                        tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+                        tokenAddress: CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS,
                         tokenId: tokenId,
                         assetType: 'Real Estate', // Defaulting to Real Estate for now
                         metadata_uri: tokenDetails.metadata_uri,

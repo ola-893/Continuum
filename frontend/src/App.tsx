@@ -1,18 +1,50 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect, usePublicClient, useWalletClient } from 'wagmi';
 import { injected } from 'wagmi/connectors';
-import { Navbar } from './components/ui/Navbar';
+import { Sidebar } from './components/ui/Sidebar';
+import { TopBar } from './components/ui/TopBar';
 import { Dashboard } from './pages/Dashboard';
 import { AssetDetails } from './pages/AssetDetails';
 import { Admin } from './pages/Admin';
 import Rentals from './pages/Rentals';
 import MyStreams from './pages/MyStreams';
 import { ChatInterface } from './pages/ChatInterface';
+import { LaunchAgent } from './pages/LaunchAgent';
+import { Help } from './pages/Help';
 import { Button } from './components/ui/Button';
 import { ContinuumService } from './services/continuumService';
+import { useNetwork } from './contexts/NetworkContext';
 import { LandingPage } from './pages/LandingPage';
 import './index.css';
+
+const AppLayout: React.FC<{ children: React.ReactNode; walletButton: React.ReactNode }> = ({ children, walletButton }) => {
+    const location = useLocation();
+    const isLandingPage = location.pathname === '/';
+
+    if (isLandingPage) {
+        return <>{children}</>;
+    }
+
+    return (
+        <div style={{ display: 'flex', minHeight: '100vh' }}>
+            <Sidebar />
+            <div style={{ 
+                marginLeft: '240px', 
+                flex: 1,
+                width: 'calc(100% - 240px)',
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <TopBar walletButton={walletButton} />
+                <main style={{ flex: 1 }}>
+                    {children}
+                </main>
+            </div>
+        </div>
+    );
+};
 
 const App: React.FC = () => {
     const { address, isConnected } = useAccount();
@@ -20,12 +52,13 @@ const App: React.FC = () => {
     const { disconnect } = useDisconnect();
     const publicClient = usePublicClient();
     const { data: walletClient } = useWalletClient();
+    const { network } = useNetwork();
 
     useEffect(() => {
         if (publicClient) {
-            ContinuumService.setClients(publicClient, walletClient || undefined);
+            ContinuumService.setClients(publicClient, network, walletClient || undefined);
         }
-    }, [publicClient, walletClient]);
+    }, [publicClient, walletClient, network]);
 
     const WalletConnectButton = () => {
         if (isConnected) {
@@ -41,70 +74,20 @@ const App: React.FC = () => {
 
     return (
         <BrowserRouter>
-            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <AppLayout walletButton={<WalletConnectButton />}>
                 <Routes>
-                    <Route
-                        path="/"
-                        element={<LandingPage />}
-                    />
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <>
-                                <Navbar walletButton={<WalletConnectButton />} />
-                                <Dashboard />
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/asset/:tokenId"
-                        element={
-                            <>
-                                <Navbar walletButton={<WalletConnectButton />} />
-                                <AssetDetails />
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/rentals"
-                        element={
-                            <>
-                                <Navbar walletButton={<WalletConnectButton />} />
-                                <Rentals />
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/my-streams"
-                        element={
-                            <>
-                                <Navbar walletButton={<WalletConnectButton />} />
-                                <MyStreams />
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/chat"
-                        element={
-                            <>
-                                <Navbar walletButton={<WalletConnectButton />} />
-                                <ChatInterface />
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/admin/*"
-                        element={
-                            <>
-                                <Navbar walletButton={<WalletConnectButton />} />
-                                <Admin />
-                            </>
-                        }
-                    />
-
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/asset/:tokenId" element={<AssetDetails />} />
+                    <Route path="/rentals" element={<Rentals />} />
+                    <Route path="/my-streams" element={<MyStreams />} />
+                    <Route path="/chat" element={<ChatInterface />} />
+                    <Route path="/launch-agent" element={<LaunchAgent />} />
+                    <Route path="/help" element={<Help />} />
+                    <Route path="/admin/*" element={<Admin />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
-            </div>
+            </AppLayout>
         </BrowserRouter>
     );
 };

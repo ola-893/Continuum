@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Infinity } from 'lucide-react';
+import { ConnectionStatus } from './ConnectionStatus';
 
 interface NavbarProps {
     walletButton?: React.ReactNode;
@@ -33,7 +34,12 @@ export const Navbar: React.FC<NavbarProps> = ({ walletButton }) => {
                         >
                             Rentals
                         </Link>
-
+                        <Link
+                            to="/launch-agent"
+                            className={`nav-link ${location.pathname.startsWith('/launch-agent') ? 'active' : ''}`}
+                        >
+                            Launch Agent
+                        </Link>
                         <Link
                             to="/admin"
                             className={`nav-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
@@ -46,10 +52,17 @@ export const Navbar: React.FC<NavbarProps> = ({ walletButton }) => {
                         >
                             AI Matcher
                         </Link>
+                        <Link
+                            to="/help"
+                            className={`nav-link ${location.pathname.startsWith('/help') ? 'active' : ''}`}
+                        >
+                            Help
+                        </Link>
                     </div>
 
-                    {/* Wallet Connection */}
+                    {/* Connection Status & Wallet Connection */}
                     <div className="flex items-center gap-md">
+                        <ConnectionStatus />
                         {walletButton}
                     </div>
                 </div>

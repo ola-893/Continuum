@@ -3,6 +3,7 @@ import { Badge } from './Badge';
 import { ExternalLink, TrendingUp } from 'lucide-react';
 import { AssetData } from '../../hooks/useAssetList'; 
 import { CONTRACT_CONFIG } from '../../config/contracts'; 
+import { useNetwork } from '../../contexts/NetworkContext';
 
 export interface AssetExplorerCardProps {
     asset: AssetData;
@@ -17,6 +18,7 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
         streamInfo,
     } = asset || {};
 
+    const { network } = useNetwork();
     const assetType = 'Real Estate';
 
     const calculateAPY = () => {
@@ -158,7 +160,7 @@ export const AssetExplorerCard: React.FC<AssetExplorerCardProps> = ({ asset, cla
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        window.open(`https://testnet.bscscan.com/token/${CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS}?a=${tokenId}`, '_blank');
+                        window.open(`https://testnet.bscscan.com/token/${CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS}?a=${tokenId}`, '_blank');
                     }}
                     style={{
                         width: '100%',

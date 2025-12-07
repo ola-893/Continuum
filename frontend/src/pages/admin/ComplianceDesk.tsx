@@ -6,6 +6,7 @@ import { ContinuumService } from '../../services/continuumService';
 import { useAccount, useWriteContract } from 'wagmi';
 import { CONTRACT_CONFIG } from '../../config/contracts';
 import { truncateAddress } from '../../utils/formatting';
+import { useNetwork } from '../../contexts/NetworkContext';
 
 // Mock data for pending requests (for demonstration purposes)
 const MOCK_PENDING_REQUESTS = [
@@ -16,6 +17,7 @@ const MOCK_PENDING_REQUESTS = [
 export const ComplianceDesk: React.FC = () => {
     const { isConnected, address } = useAccount();
     const { writeContractAsync } = useWriteContract();
+    const { network } = useNetwork();
     const [pendingRequests, setPendingRequests] = useState(MOCK_PENDING_REQUESTS);
     const [searchTerm, setSearchTerm] = useState('');
     const [processing, setProcessing] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export const ComplianceDesk: React.FC = () => {
 
             // Simulate a transaction confirmation
             await writeContractAsync({
-                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`,
+                address: CONTRACT_CONFIG[network].RWA_HUB_ADDRESS as `0x${string}`,
                 abi: CONTRACT_CONFIG.ABIS.RWAHub,
                 functionName: 'owner',
                 args: [],
@@ -189,7 +191,7 @@ export const ComplianceDesk: React.FC = () => {
                                     </tr>
                                     <tr>
                                         <td style={{ padding: 'var(--spacing-sm)' }}>
-                                            {truncateAddress(CONTRACT_CONFIG.RWA_HUB_ADDRESS)}
+                                            {truncateAddress(CONTRACT_CONFIG[network].RWA_HUB_ADDRESS)}
                                         </td>
                                         <td style={{ padding: 'var(--spacing-sm)' }}>
                                             <Badge variant="info">RWA Hub (Contract)</Badge>

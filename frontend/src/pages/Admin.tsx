@@ -11,7 +11,7 @@ import { truncateAddress } from '../utils/formatting';
 
 type AdminTab = 'god-view' | 'factory' | 'compliance' | 'fleet';
 
-const ADMIN_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+const ADMIN_ADDRESS = "0x0Fa7969c807AA299F668e7d4E9c6227bb13d3802";
 
 export const Admin: React.FC = () => {
     const navigate = useNavigate();

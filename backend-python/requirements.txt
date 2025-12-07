@@ -1,0 +1,37 @@
+# AIP Agent SDK and dependencies
+# Install membase from local directory first (required by aip-agent)
+-e ../membase
+# Install aip-agent from local directory for development
+-e ../aip-agent
+
+# Web framework
+flask>=3.1.0
+flask-cors>=4.0.0
+
+# Alternative: FastAPI (uncomment if using FastAPI instead of Flask)
+# fastapi>=0.115.6
+# uvicorn>=0.30.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Blockchain interaction
+web3>=6.0.0
+
+# Async support
+aiohttp>=3.9.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+hypothesis>=6.98.0
+
+# Logging and monitoring
+python-json-logger>=2.0.7
+
+# HTTP client (for testing)
+requests>=2.31.0

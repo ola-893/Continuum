@@ -10,7 +10,7 @@ interface NetworkContextType {
     chain: typeof bsc | typeof bscTestnet;
 }
 
-const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
+export const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
 export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [network, setNetwork] = useState<Network>('bscTestnet');

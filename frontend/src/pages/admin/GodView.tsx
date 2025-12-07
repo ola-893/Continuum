@@ -9,10 +9,12 @@ import { ethers } from 'ethers';
 import { CONTRACT_CONFIG } from '../../config/contracts';
 import { fetchIpfsMetadata, IPFS_GATEWAY } from '../../utils/ipfs';
 import { StreamInfo, AssetLocation } from '../../types/continuum'; // Imported AssetLocation
+import { useNetwork } from '../../contexts/NetworkContext';
 
 export const GodView: React.FC = () => {
     const [assets, setAssets] = useState<AssetLocation[]>([]);
     const [loading, setLoading] = useState(true);
+    const { network } = useNetwork();
     const [stats, setStats] = useState({
         activeStreams: 0,
         totalValueLocked: 0,
@@ -63,7 +65,7 @@ export const GodView: React.FC = () => {
                                 title: assetMetadata.name || `Asset #${tokenId}`,
                                 description: assetMetadata.description || 'No description available.',
                                 imageUrl: assetMetadata.image || undefined,
-                                tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+                                tokenAddress: CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS,
                                 status: streamStatus?.isFrozen ? 'frozen' : (streamInfo ? 'active' : 'idle'),
                                 location: {
                                     lat: 37.7749 + (Math.random() - 0.5) * 0.5,
@@ -110,7 +112,7 @@ export const GodView: React.FC = () => {
         fetchRealAssets();
         const interval = setInterval(fetchRealAssets, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [network]);
 
     const handleAssetClick = (asset: AssetLocation) => {
         console.log('Asset clicked:', asset);

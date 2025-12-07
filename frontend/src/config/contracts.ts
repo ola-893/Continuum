@@ -74,18 +74,29 @@ const StreamingProtocol_ABI = [
     "function transferOwnership(address newOwner)"
 ];
 
+
 export const CONTRACT_CONFIG = {
-    // Deployed addresses on BSC Testnet
-    RWA_HUB_ADDRESS: "0xEc30ceaf9c8aedf25aa2840041C459D6831859C2",
-    TOKEN_REGISTRY_ADDRESS: "0xaB546773894A311bc3c1d8f3F93bF332662A87Ea", // PropertyRegistry
-    STREAMING_PROTOCOL_ADDRESS: "0x7dA30575c1e88870572d999bfa9c390A078B8598",
-
-    // The address of the BUSD token on BSC Testnet (or whichever ERC20 you use)
-    STREAM_TOKEN_ADDRESS: "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
-
+    bscTestnet: {
+        RWA_HUB_ADDRESS: "0xEc30ceaf9c8aedf25aa2840041C459D6831859C2",
+        TOKEN_REGISTRY_ADDRESS: "0xaB546773894A311bc3c1d8f3F93bF332662A87Ea",
+        STREAMING_PROTOCOL_ADDRESS: "0x7dA30575c1e88870572d999bfa9c390A078B8598",
+        STREAM_TOKEN_ADDRESS: "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
+        MOCK_ERC20_ADDRESS: "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
+    },
+    bsc: {
+        RWA_HUB_ADDRESS: "0x..._MAINNET_ADDRESS_...",
+        TOKEN_REGISTRY_ADDRESS: "0x..._MAINNET_ADDRESS_...",
+        STREAMING_PROTOCOL_ADDRESS: "0x..._MAINNET_ADDRESS_...",
+        STREAM_TOKEN_ADDRESS: "0x..._MAINNET_ADDRESS_...",
+        MOCK_ERC20_ADDRESS: "0x..._MAINNET_ADDRESS_...",
+    },
     ABIS: {
         RWAHub: RWAHub_ABI,
-        TokenRegistry: PropertyRegistry_ABI, // Mapped to PropertyRegistry ABI
+        TokenRegistry: PropertyRegistry_ABI,
         StreamingProtocol: StreamingProtocol_ABI,
+        MockERC20: [
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+        ]
     },
 };

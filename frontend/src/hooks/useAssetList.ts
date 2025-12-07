@@ -5,6 +5,7 @@ import { ContinuumService } from '../services/continuumService';
 import { fetchIpfsMetadata, IPFS_GATEWAY } from '../utils/ipfs';
 import type { StreamInfo } from '../types/continuum';
 import { CONTRACT_CONFIG } from '../config/contracts';
+import { useNetwork } from '../contexts/NetworkContext';
 
 export interface AssetData {
     tokenId: number;
@@ -28,6 +29,7 @@ export function useAssetList(ownerAddress?: string) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { address } = useAccount();
+    const { network } = useNetwork();
 
     useEffect(() => {
         const loadAssets = async () => {
@@ -72,7 +74,7 @@ export function useAssetList(ownerAddress?: string) {
                         if (isOwnedByUser) {
                             fetchedAssets.push({
                                 tokenId,
-                                tokenAddress: CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS,
+                                tokenAddress: CONTRACT_CONFIG[network].TOKEN_REGISTRY_ADDRESS,
                                 assetType: 'Real Estate',
                                 title: assetMetadata.name || `Asset #${tokenId}`,
                                 description: assetMetadata.description || 'No description available.',
@@ -103,7 +105,7 @@ export function useAssetList(ownerAddress?: string) {
         };
 
         loadAssets();
-    }, [address, ownerAddress]);
+    }, [address, ownerAddress, network]);
 
     return { assets, loading, error };
 }

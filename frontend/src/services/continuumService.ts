@@ -2,13 +2,18 @@ import { ethers } from 'ethers';
 import { PublicClient, WalletClient } from 'viem';
 import { CONTRACT_CONFIG } from '../config/contracts';
 
+
+type Network = 'bsc' | 'bscTestnet';
+
 export class ContinuumService {
     private static _publicClient: PublicClient | undefined;
     private static _walletClient: WalletClient | undefined;
+    private static _network: Network = 'bscTestnet'; // Default network
 
-    static setClients(publicClient: PublicClient, walletClient?: WalletClient) {
+    static setClients(publicClient: PublicClient, network: Network, walletClient?: WalletClient) {
         ContinuumService._publicClient = publicClient;
         ContinuumService._walletClient = walletClient;
+        ContinuumService._network = network;
     }
 
     static getPublicClient(): PublicClient {
@@ -44,17 +49,17 @@ export class ContinuumService {
 
     static async getHubContract(signerRequired: boolean = false) {
         const providerOrSigner = signerRequired ? await this.getEthersSigner() : this.getEthersProvider();
-        return new ethers.Contract(CONTRACT_CONFIG.RWA_HUB_ADDRESS, CONTRACT_CONFIG.ABIS.RWAHub, providerOrSigner);
+        return new ethers.Contract(CONTRACT_CONFIG[this._network].RWA_HUB_ADDRESS, CONTRACT_CONFIG.ABIS.RWAHub, providerOrSigner);
     }
 
     static async getTokenRegistryContract(signerRequired: boolean = false) {
         const providerOrSigner = signerRequired ? await this.getEthersSigner() : this.getEthersProvider();
-        return new ethers.Contract(CONTRACT_CONFIG.TOKEN_REGISTRY_ADDRESS, CONTRACT_CONFIG.ABIS.TokenRegistry, providerOrSigner);
+        return new ethers.Contract(CONTRACT_CONFIG[this._network].TOKEN_REGISTRY_ADDRESS, CONTRACT_CONFIG.ABIS.TokenRegistry, providerOrSigner);
     }
 
     static async getStreamingProtocolContract(signerRequired: boolean = false) {
         const providerOrSigner = signerRequired ? await this.getEthersSigner() : this.getEthersProvider();
-        return new ethers.Contract(CONTRACT_CONFIG.STREAMING_PROTOCOL_ADDRESS, CONTRACT_CONFIG.ABIS.StreamingProtocol, providerOrSigner);
+        return new ethers.Contract(CONTRACT_CONFIG[this._network].STREAMING_PROTOCOL_ADDRESS, CONTRACT_CONFIG.ABIS.StreamingProtocol, providerOrSigner);
     }
 
     static async createPropertyStream(
@@ -236,10 +241,10 @@ export class ContinuumService {
         return Promise.resolve();
     }
 
-    static async transferTokens(_network: string, recipient: string, amount: string): Promise<ethers.ContractTransactionResponse> {
+    static async transferTokens(recipient: string, amount: string): Promise<ethers.ContractTransactionResponse> {
         const signer = await this.getEthersSigner();
         const tokenContract = new ethers.Contract(
-            CONTRACT_CONFIG.bscTestnet.MOCK_ERC20_ADDRESS,
+            CONTRACT_CONFIG[this._network].MOCK_ERC20_ADDRESS,
             CONTRACT_CONFIG.ABIS.MockERC20,
             signer
         );

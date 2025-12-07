@@ -8,11 +8,13 @@ import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { useAccount, useWriteContract } from 'wagmi';
 import { CONTRACT_CONFIG } from '../../config/contracts';
 import { AssetData, useAssetList } from '../../hooks/useAssetList';
+import { useNetwork } from '../../contexts/NetworkContext';
 import { Home } from 'lucide-react';
 
 export const FleetControl: React.FC = () => {
     const { isConnected, address } = useAccount();
     const { writeContractAsync } = useWriteContract();
+    const { network } = useNetwork();
     const [selectedAsset, setSelectedAsset] = useState<AssetData | null>(null);
     const [showFreezeModal, setShowFreezeModal] = useState(false);
     const { assets, loading, error } = useAssetList();
@@ -43,7 +45,7 @@ export const FleetControl: React.FC = () => {
             await ContinuumService.freezeAsset(selectedAsset.streamId, 'Frozen by admin via Command Center (Simulated)');
 
             await writeContractAsync({
-                address: CONTRACT_CONFIG.RWA_HUB_ADDRESS as `0x${string}`,
+                address: CONTRACT_CONFIG[network].RWA_HUB_ADDRESS as `0x${string}`,
                 abi: CONTRACT_CONFIG.ABIS.RWAHub,
                 functionName: 'owner',
                 args: [],
