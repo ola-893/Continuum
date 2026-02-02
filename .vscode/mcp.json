@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"MNEE Docs": {
+			"url": "https://docs.mnee.io/~gitbook/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
