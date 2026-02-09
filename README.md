@@ -1,6 +1,6 @@
 # 🌐 Continuum Protocol
 
-> **Tokenized Real-World Assets with Live Yield Streaming on Aptos**
+> **Tokenized Real-World Assets with Live Yield Streaming on Tezos**
 
 📊 **[View Pitch Deck](https://www.canva.com/design/DAG5h9VH2_0/G-h4K2yC4yjSU-DoLZES-w/view?utm_content=DAG5h9VH2_0&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0aae785077)**
 
@@ -14,7 +14,7 @@ In the current Real World Asset (RWA) market, asset ownership is static while fi
 
 ## The Solution: Continuum - The Solvency-Aware RWA Protocol
 
-Continuum is a compliant, object-oriented streaming protocol on Aptos that turns static assets into liquid, programmable cash flow.
+Continuum is a compliant, object-oriented streaming protocol on Tezos that turns static assets into liquid, programmable cash flow.
 
 ### 1. Instant Liquidity via "Flash Advance" (The Innovation)
 
@@ -24,7 +24,7 @@ Continuum is a compliant, object-oriented streaming protocol on Aptos that turns
 
 ### 2. True Asset-Yield Coupling (The Architecture)
 
-**How it works**: By leveraging Aptos Objects, we bind the income stream directly to the NFT, not a user address.
+**How it works**: By leveraging Tezos smart contracts, we bind the income stream directly to the NFT, not a user address.
 
 **The Fix**: If Alice sells her Real Estate NFT to Bob on a marketplace, the stream instantly redirects the very next second of yield to Bob. There is no manual transfer required; the yield follows the asset, ensuring 100% fair distribution during secondary sales.
 
@@ -70,24 +70,24 @@ A premium React + Vite app with:
 
 ---
 
-## 🌐 Deployed Contracts (Aptos Testnet)
+## 🌐 Deployed Contracts (Tezos Mainnet)
 
-**Network**: Aptos Testnet  
-**Module Address**: `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b`
+**Network**: Tezos Mainnet  
+**Explorer**: https://tzkt.io
 
 ### Live Contracts
 
-| Module | Address | Explorer |
-|--------|---------|----------|
-| **RWA Hub** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::rwa_hub` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/rwa_hub?network=testnet) |
-| **Asset Yield Protocol** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::asset_yield_protocol` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/asset_yield_protocol?network=testnet) |
-| **Streaming Protocol** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::streaming_protocol` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/streaming_protocol?network=testnet) |
-| **Compliance Guard** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::compliance_guard` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/compliance_guard?network=testnet) |
-| **Token Registry** | `0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b::token_registry` | [View on Explorer](https://explorer.aptoslabs.com/account/0x3d736659c9bd22dc89c1ef88c04becd804b372396975571559225f1e8c78d49b/modules/code/token_registry?network=testnet) |
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| **RWA Hub** | `KT1...` | [View on TzKT](https://tzkt.io/) |
+| **Asset Yield Protocol** | `KT1...` | [View on TzKT](https://tzkt.io/) |
+| **Streaming Protocol** | `KT1...` | [View on TzKT](https://tzkt.io/) |
+| **Compliance Guard** | `KT1...` | [View on TzKT](https://tzkt.io/) |
+| **Token Registry** | `KT1...` | [View on TzKT](https://tzkt.io/) |
 
 ### Test with Faucet
 
-Get testnet APT tokens: [Aptos Faucet](https://aptoslabs.com/testnet-faucet)
+Get testnet XTZ tokens: [Tezos Faucet](https://faucet.ghostnet.teztnets.xyz)
 
 ---
 
@@ -95,7 +95,7 @@ Get testnet APT tokens: [Aptos Faucet](https://aptoslabs.com/testnet-faucet)
 
 ### For Users
 
-1. **Connect Wallet** - Use Petra, Martian, or Pontem
+1. **Connect Wallet** - Use Temple, Kukai, or Umami
 2. **Get Whitelisted** - Admin must approve your KYC
 3. **Add Assets** - Paste token addresses to track your RWAs
 4. **Claim Yields** - Collect streaming returns anytime
@@ -179,7 +179,6 @@ All documentation has been consolidated into the `docs/` folder. See the [Docume
 
 **Quick Links:**
 - [User Guide](./docs/user-guide-getting-started.md) - How to use the protocol
-- [Migration Guide](./docs/migrating-from-aptos-to-tezos.md) - Migrating from Aptos to Tezos
 - [API Reference](./docs/api-reference.md) - Complete API documentation
 - [Deployment Guide](./docs/deployment/how-to-deploy-step-by-step.md) - Deploy contracts and frontend
 - [Troubleshooting](./docs/troubleshooting-common-issues.md) - Common issues and solutions
@@ -224,9 +223,9 @@ All interactions check KYC status:
 ---
 
 ## 📞 Support
-- **Website**: https://aptoscontinuum.vercel.app/
+- **Website**: https://continuumprotocol.io
 - **CodeBase**: https://github.com/ola-893/Continuum
 - **Socials**: https://www.linkedin.com/in/olaoluwa-marvellous/
 ---
 
-**Built with ❤️ on Aptos**
+**Built with ❤️ on Tezos**

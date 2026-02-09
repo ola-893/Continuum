@@ -11,10 +11,6 @@ Welcome to the comprehensive documentation for the Continuum Protocol - a next-g
 - [Installation Guide](./development/complete-installation-guide.md) - Setup for developers
 - [Deployment Guide](./deployment/how-to-deploy-step-by-step.md) - Deploy the protocol
 
-**Migrating from Aptos?**
-- [User Migration Guide](./migrating-from-aptos-to-tezos.md) - For users
-- [Data Migration Guide](./migration/how-to-migrate-data-guide.md) - For admins
-
 ---
 
 ## 📖 Documentation Categories
@@ -44,7 +40,7 @@ Test reports, verification results, and testing guides.
 
 - [Mainnet Verification Results](./testing/mainnet-verification-results.md) - Comprehensive mainnet verification
 - [User Flow Testing Results](./testing/user-flow-testing-results.md) - End-to-end user flow testing
-- [Aptos vs Tezos Feature Comparison](./testing/aptos-vs-tezos-feature-comparison.md) - Feature parity check
+- [Feature Comparison Checklist](./testing/feature-comparison-checklist.md) - Feature parity check
 - [Contract Test Results](./testing/contract-test-results.md) - Contract test suite results
 - [Performance and Load Testing](./testing/performance-and-load-testing.md) - Performance testing
 - [Frontend Testing Strategy](./testing/frontend-testing-strategy.md) - Frontend testing plan
@@ -84,7 +80,6 @@ Task summaries, audit reports, and system metrics.
 End-user guides and references.
 
 - [User Guide (Getting Started)](./user-guide-getting-started.md) - Complete user manual
-- [Migrating from Aptos to Tezos](./migrating-from-aptos-to-tezos.md) - Migration guide for users
 - [API Reference](./api-reference.md) - Complete API documentation
 - [How to Deploy Contracts](./how-to-deploy-contracts.md) - Contract deployment guide
 - [How to Deploy Frontend](./how-to-deploy-frontend.md) - Frontend deployment guide
@@ -104,7 +99,6 @@ Historical documents and development checkpoints.
 
 ### For Users
 - **Getting Started:** [User Guide](./user-guide-getting-started.md)
-- **Migration Help:** [Migrating from Aptos](./migrating-from-aptos-to-tezos.md)
 - **Troubleshooting:** [Common Issues](./troubleshooting-common-issues.md)
 - **Costs:** [Transaction Fees](./transaction-fees-and-costs.md)
 
@@ -152,7 +146,6 @@ Historical documents and development checkpoints.
 ### Migration
 - **Guide:** [How to Migrate Data](./migration/how-to-migrate-data-guide.md)
 - **Report:** [Data Migration Report](./migration/data-migration-complete-report.md)
-- **User Guide:** [Migrating from Aptos](./migrating-from-aptos-to-tezos.md)
 - **Announcement:** [Migration Completion](./migration-completion-announcement.md)
 
 ---

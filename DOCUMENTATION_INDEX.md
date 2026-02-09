@@ -10,7 +10,7 @@ All documentation has been consolidated into the `docs/` folder for easy access.
 
 ---
 
-## � Documentation Structure
+## 📁 Documentation Structure
 
 ```
 docs/
@@ -35,7 +35,7 @@ docs/
 ├── testing/                                     # Testing and verification
 │   ├── mainnet-verification-results.md         # Mainnet verification
 │   ├── user-flow-testing-results.md            # End-to-end testing
-│   ├── aptos-vs-tezos-feature-comparison.md   # Feature parity check
+│   ├── feature-comparison-checklist.md         # Feature parity check
 │   ├── contract-test-results.md                # Contract test suite
 │   ├── performance-and-load-testing.md         # Load testing results
 │   ├── manual-testing-procedures.md            # Manual testing guide
@@ -72,7 +72,6 @@ docs/
 │   └── frontend-error-fix-summary.md           # Historical error fixes
 │
 ├── user-guide-getting-started.md               # Complete user manual
-├── migrating-from-aptos-to-tezos.md           # User migration guide
 ├── api-reference.md                            # API documentation
 ├── how-to-deploy-contracts.md                  # Contract deployment
 ├── how-to-deploy-frontend.md                   # Frontend deployment
@@ -89,7 +88,6 @@ docs/
 ### For Users
 Essential documents:
 - [User Guide](./docs/user-guide-getting-started.md) - How to use the protocol
-- [Migration Guide](./docs/migrating-from-aptos-to-tezos.md) - Migrating from Aptos
 - [Troubleshooting](./docs/troubleshooting-common-issues.md) - Common issues
 - [Transaction Fees](./docs/transaction-fees-and-costs.md) - Transaction costs
 
@@ -115,7 +113,7 @@ Project reports:
 - [Migration Verification](./docs/deployment/migration-completion-verification.md) - Final check
 - [Security Audit](./docs/reports/security-audit-findings.md) - Security review
 - [Performance Testing](./docs/testing/performance-and-load-testing.md) - Load tests
-- [Feature Comparison](./docs/testing/aptos-vs-tezos-feature-comparison.md) - Aptos vs Tezos
+- [Feature Comparison](./docs/testing/feature-comparison-checklist.md) - Feature parity
 
 ---
 
@@ -136,7 +134,7 @@ Project reports:
 1. [Contract Tests](./docs/testing/contract-test-results.md)
 2. [User Flow Tests](./docs/testing/user-flow-testing-results.md)
 3. [Load Testing](./docs/testing/performance-and-load-testing.md)
-4. [Feature Comparison](./docs/testing/aptos-vs-tezos-feature-comparison.md)
+4. [Feature Comparison](./docs/testing/feature-comparison-checklist.md)
 
 ### Phase 4: Deployment
 1. [Deployment Guide](./docs/deployment/how-to-deploy-step-by-step.md)
@@ -144,10 +142,9 @@ Project reports:
 3. [Frontend Deployment](./docs/deployment/frontend-deployment-to-netlify.md)
 4. [Verification](./docs/testing/mainnet-verification-results.md)
 
-### Phase 5: Migration
+### Phase 5: Data Migration
 1. [Migration Guide](./docs/migration/how-to-migrate-data-guide.md)
 2. [Data Migration Report](./docs/migration/data-migration-complete-report.md)
-3. [User Migration Guide](./docs/migrating-from-aptos-to-tezos.md)
 
 ---
 
@@ -162,7 +159,7 @@ Project reports:
 ### "I want to deploy contracts"
 → Start with [Deployment Guide](./docs/deployment/how-to-deploy-step-by-step.md)
 
-### "I want to migrate from Aptos"
+### "I want to migrate data"
 → Start with [Migration Guide](./docs/migration/how-to-migrate-data-guide.md)
 
 ### "I'm having issues"
@@ -189,4 +186,4 @@ Project reports:
 ---
 
 **Last Updated**: February 8, 2026  
-**Documentation Version**: 2.0 (Reorganized with user-friendly names)
+**Documentation Version**: 2.0 (User-friendly names, Tezos-focused)
