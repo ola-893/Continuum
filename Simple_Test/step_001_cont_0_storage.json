@@ -1,0 +1,17 @@
+{
+  "prim": "Pair",
+  "args": [
+    [ { "string": "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" } ],
+    {
+      "prim": "Pair",
+      "args": [
+        [
+          { "prim": "Elt", "args": [ { "int": "0" }, { "string": "real_estate" } ] },
+          { "prim": "Elt", "args": [ { "int": "1" }, { "string": "vehicles" } ] },
+          { "prim": "Elt", "args": [ { "int": "2" }, { "string": "commodities" } ] }
+        ],
+        { "prim": "Pair", "args": [ [], [] ] }
+      ]
+    }
+  ]
+}

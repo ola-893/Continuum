@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { ContinuumService } from '../services/continuumService';
 import { generateMockAssetData, getMockImage } from '../utils/mockDataGenerator';
-import type { StreamInfo } from '../hooks/useStreamBalance';
+import type { StreamInfo } from '../types/continuum';
 
 /**
  * Convert blockchain stream info to UI StreamInfo format
  */
 function convertToStreamInfo(blockchainInfo: any): StreamInfo {
     return {
+        sender: blockchainInfo.sender || '',
+        recipient: blockchainInfo.recipient || '',
         startTime: blockchainInfo.startTime,
         flowRate: blockchainInfo.flowRate / 100_000_000, // Convert to APT/sec for display
         amountWithdrawn: blockchainInfo.amountWithdrawn,
         totalAmount: blockchainInfo.totalAmount,
         stopTime: blockchainInfo.stopTime,
-        isActive: blockchainInfo.status === 0, // 0 = Active
+        status: blockchainInfo.status || 0, // 0 = Active
     };
 }
 

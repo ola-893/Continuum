@@ -1,0 +1,9 @@
+Creating contract KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1
+ -> (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair {} (Pair 0 (Pair {} {})))))
+file FA2_Compilation_Test/step_001_cont_0_storage.tz
+file FA2_Compilation_Test/step_001_cont_0_storage.json
+file FA2_Compilation_Test/step_001_cont_0_storage.py
+file FA2_Compilation_Test/step_001_cont_0_types.py
+Error in generated contract: Missing type in parameters (unknown type variable: a72)
+file FA2_Compilation_Test/step_001_cont_0_contract.tz contract FA2Token
+file FA2_Compilation_Test/step_001_cont_0_contract.json contract FA2Token

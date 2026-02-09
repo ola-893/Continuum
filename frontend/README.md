@@ -60,3 +60,13 @@ Query blockchain data:
 - Registry addresses are typically the deployer's address
 - You need a real NFT/Token Object address to create streams
 - Ensure proper KYC and whitelisting before transactions
+
+## Documentation
+
+For comprehensive documentation, see:
+- [User Guide](../docs/user-guide-getting-started.md) - Complete user manual
+- [Frontend Deployment Guide](../docs/how-to-deploy-frontend.md) - Deployment instructions
+- [Environment Configuration](../docs/development/environment-and-configuration.md) - Setup guide
+- [Wallet Integration](../docs/development/wallet-integration-guide.md) - Wallet setup
+- [Troubleshooting](../docs/troubleshooting-common-issues.md) - Common issues and solutions
+- [Documentation Index](../DOCUMENTATION_INDEX.md) - All documentation

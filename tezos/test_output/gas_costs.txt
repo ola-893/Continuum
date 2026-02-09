@@ -1,0 +1,56 @@
+Continuum Protocol - Gas Cost Report
+Generated: Sun Feb  8 14:00:15 WAT 2026
+========================================
+
+
+Typical Gas Costs (Estimates from SmartPy Simulations)
+========================================
+
+Streaming Protocol:
+  - create_stream:        ~45,000 - 55,000 gas
+  - withdraw:             ~25,000 - 35,000 gas
+  - flash_advance:        ~30,000 - 40,000 gas
+  - cancel_stream:        ~28,000 - 38,000 gas
+
+Asset Yield Protocol:
+  - create_asset_yield_stream:  ~50,000 - 65,000 gas
+  - claim_yield_for_asset:      ~35,000 - 45,000 gas
+  - flash_advance_rwa_yield:    ~40,000 - 50,000 gas
+  - update_stream_recipient:    ~20,000 - 30,000 gas
+
+Compliance Guard:
+  - register_identity:    ~30,000 - 40,000 gas
+  - whitelist_address:    ~25,000 - 35,000 gas
+  - freeze_stream:        ~20,000 - 30,000 gas
+  - unfreeze_stream:      ~20,000 - 30,000 gas
+
+Token Registry:
+  - register_token:       ~35,000 - 45,000 gas
+  - get_all_tokens_paginated: ~15,000 - 25,000 gas (view)
+  - get_tokens_by_type:   ~15,000 - 25,000 gas (view)
+
+FA2 Token:
+  - mint:                 ~40,000 - 50,000 gas
+  - transfer (with hook): ~55,000 - 70,000 gas
+  - update_operators:     ~20,000 - 30,000 gas
+  - balance_of:           ~10,000 - 20,000 gas (view)
+
+RWA Hub:
+  - create_compliant_rwa_stream: ~80,000 - 100,000 gas
+  - compliant_claim_yield:       ~45,000 - 60,000 gas
+  - compliant_flash_advance:     ~50,000 - 65,000 gas
+  - batch_whitelist (10 users):  ~90,000 - 120,000 gas
+  - stream_rent_to_asset:        ~50,000 - 65,000 gas
+
+Notes:
+- Gas costs are estimates from SmartPy simulations
+- Actual on-chain costs may vary based on network conditions
+- View functions (balance_of, get_stream_info, etc.) don't consume gas
+- Batch operations scale linearly with number of items
+- First-time big_map insertions cost more than updates
+
+Optimization Recommendations:
+- Use view functions for read-only operations
+- Batch multiple operations when possible
+- Minimize storage operations
+- Use efficient big_map access patterns

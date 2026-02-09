@@ -1,88 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, X, Lock, Car, Home, Wrench, MapPin, Rocket } from 'lucide-react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useTezosWallet } from '../../hooks/useTezosWallet';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { AssetLocation } from '../../types/continuum';
 import { formatCurrency } from '../../utils/formatting';
-import { ContinuumService } from '../../services/continuumService';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { calculateTotalStreamed } from '../../utils/streamCalculations';
+import * as TezosContract from '../../services/tezosContractService';
 
 export const FleetControl: React.FC = () => {
-    const { signAndSubmitTransaction } = useWallet();
+    const { isConnected } = useTezosWallet();
     const [selectedAsset, setSelectedAsset] = useState<AssetLocation | null>(null);
     const [showFreezeModal, setShowFreezeModal] = useState(false);
+    const [freezeReason, setFreezeReason] = useState('');
     const [assets, setAssets] = useState<AssetLocation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
 
     // Fetch real assets from blockchain
     useEffect(() => {
         const fetchRealAssets = async () => {
             setLoading(true);
             try {
-                const tokens = await ContinuumService.getAllRegisteredTokens();
-                console.log('Fetched tokens for fleet control:', tokens);
+                // Get token count from registry
+                const tokenCount = await TezosContract.getTokenCount();
+                console.log('Token count from registry:', tokenCount);
 
-                const transformedAssets: AssetLocation[] = await Promise.all(
-                    tokens.map(async (token: any, index: number) => {
-                        const tokenAddress = token.token_address || token.tokenAddress;
-                        const streamId = Number(token.stream_id || token.streamId);
-                        const assetType = token.asset_type !== undefined ? Number(token.asset_type) : (token.assetType !== undefined ? Number(token.assetType) : undefined);
-
-                        let streamInfo = null;
-                        let streamStatus = null;
-                        if (streamId) {
-                            try {
-                                streamInfo = await ContinuumService.getStreamInfo(streamId);
-                                streamStatus = await ContinuumService.getStreamStatus(streamId);
-                            } catch (error) {
-                                console.warn(`Failed to fetch stream info for stream ${streamId}:`, error);
-                            }
-                        }
-
-                        const typeMap: Record<number, 'real_estate' | 'car' | 'machinery'> = {
-                            0: 'real_estate',
-                            1: 'car',
-                            2: 'machinery',
-                        };
-
-                        const getAssetTypeOrDefault = (type: number | undefined): 'real_estate' | 'car' | 'machinery' => {
-                            if (type === undefined) return 'machinery'; // Unknown assets default to machinery
-                            return typeMap[type] || 'machinery';
-                        };
-
-                        // Transform streamInfo to match expected format for calculations
-                        const streamInfoForCalc = streamInfo ? {
-                            startTime: streamInfo.startTime,
-                            flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
-                            amountWithdrawn: streamInfo.amountWithdrawn / 100_000_000, // Convert to APT
-                            totalAmount: streamInfo.totalAmount / 100_000_000, // Convert to APT
-                            stopTime: streamInfo.stopTime,
-                            isActive: streamInfo.status === 0,
-                        } : null;
-
-                        return {
-                            id: `TOKEN-${index + 1}`,
-                            type: getAssetTypeOrDefault(assetType),
-                            name: `Asset #${index + 1}`,
-                            tokenAddress,
-                            status: streamStatus?.isFrozen ? 'frozen' : streamInfo ? 'active' : 'idle',
-                            location: {
-                                lat: 37.7749 + (Math.random() - 0.5) * 0.5,
-                                lng: -122.4194 + (Math.random() - 0.5) * 0.5,
-                                city: 'San Francisco Bay Area',
-                            },
-                            streamId: streamId || undefined,
-                            currentValue: streamInfo ? Number(streamInfo.totalAmount) / 100_000_000 : 0,
-                            yieldRate: streamInfo ? Number(streamInfo.flowRate) / 100_000_000 : 0,
-                            totalEarned: streamInfo ? calculateTotalStreamed(streamInfoForCalc) : 0,
-                            lastUpdate: Date.now(),
-                        };
-                    })
-                );
-
-                setAssets(transformedAssets);
+                // For now, we'll use mock data since we need indexer integration
+                // to properly iterate through big_map entries
+                // In production, this would use TzKT API to query all tokens
+                const mockAssets: AssetLocation[] = [];
+                
+                setAssets(mockAssets);
             } catch (error) {
                 console.error('Error fetching real assets:', error);
             } finally {
@@ -90,8 +40,80 @@ export const FleetControl: React.FC = () => {
             }
         };
 
-        fetchRealAssets();
-    }, []);
+        if (isConnected) {
+            fetchRealAssets();
+        } else {
+            setLoading(false);
+        }
+    }, [isConnected]);
+
+    const handleFreeze = async () => {
+        if (!selectedAsset || !selectedAsset.streamId) {
+            alert('Cannot freeze: stream ID not found');
+            return;
+        }
+
+        if (!freezeReason.trim()) {
+            alert('Please provide a reason for freezing');
+            return;
+        }
+
+        try {
+            setProcessing(true);
+            setShowFreezeModal(false);
+
+            // Call the emergency freeze function via RWA Hub
+            const opHash = await TezosContract.emergencyFreeze(
+                selectedAsset.streamId,
+                freezeReason
+            );
+
+            console.log('Freeze operation hash:', opHash);
+            alert(`Success: Asset ${selectedAsset.name} has been frozen on-chain!\nOperation: ${opHash.slice(0, 10)}...`);
+            
+            // Update local state
+            setAssets(prev => prev.map(a => 
+                a.id === selectedAsset.id ? { ...a, status: 'frozen' } : a
+            ));
+            setSelectedAsset(prev => prev ? { ...prev, status: 'frozen' } : null);
+            setFreezeReason('');
+
+        } catch (error) {
+            console.error('Freeze failed:', error);
+            alert(`Error: Failed to freeze asset - ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleUnfreeze = async () => {
+        if (!selectedAsset || !selectedAsset.streamId) {
+            alert('Cannot unfreeze: stream ID not found');
+            return;
+        }
+
+        try {
+            setProcessing(true);
+
+            // Call the unfreeze function via compliance guard
+            const opHash = await TezosContract.unfreezeStream(selectedAsset.streamId);
+
+            console.log('Unfreeze operation hash:', opHash);
+            alert(`Success: Asset ${selectedAsset.name} has been unfrozen!\nOperation: ${opHash.slice(0, 10)}...`);
+            
+            // Update local state
+            setAssets(prev => prev.map(a => 
+                a.id === selectedAsset.id ? { ...a, status: 'active' } : a
+            ));
+            setSelectedAsset(prev => prev ? { ...prev, status: 'active' } : null);
+
+        } catch (error) {
+            console.error('Unfreeze failed:', error);
+            alert(`Error: Failed to unfreeze asset - ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setProcessing(false);
+        }
+    };
 
 
     const getStatusBadgeVariant = (status: string) => {
@@ -118,32 +140,6 @@ export const FleetControl: React.FC = () => {
                 return <Wrench size={iconSize} />;
             default:
                 return <MapPin size={iconSize} />;
-        }
-    };
-
-    const handleFreeze = async () => {
-        if (!selectedAsset || !selectedAsset.streamId) {
-            alert('Cannot freeze: stream ID not found');
-            return;
-        }
-
-        try {
-            setShowFreezeModal(false);
-
-            // Call the real blockchain freeze function
-            const transaction = ContinuumService.freezeAsset(
-                selectedAsset.streamId,
-                'Frozen by admin via Command Center'
-            );
-
-            await signAndSubmitTransaction(transaction);
-            alert(`Success: Asset ${selectedAsset.name} has been frozen on-chain!`);
-            setSelectedAsset(null);
-
-            // In production, refresh asset list here
-        } catch (error) {
-            console.error('Freeze failed:', error);
-            alert('Error: Failed to freeze asset. Check console for details.');
         }
     };
 
@@ -289,6 +285,7 @@ export const FleetControl: React.FC = () => {
                                         <Button
                                             variant="ghost"
                                             onClick={() => setShowFreezeModal(true)}
+                                            disabled={processing || !isConnected}
                                             style={{
                                                 width: '100%',
                                                 background: 'rgba(239, 68, 68, 0.2)',
@@ -311,10 +308,19 @@ export const FleetControl: React.FC = () => {
                                             border: '1px solid #ef4444',
                                         }}
                                     >
-                                        <p style={{ color: '#ef4444', fontSize: 'var(--font-size-sm)' }}>
+                                        <p style={{ color: '#ef4444', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-md)' }}>
                                             <Lock size={16} style={{ display: 'inline', marginRight: '4px' }} />
                                             This asset is currently frozen
                                         </p>
+                                        <Button
+                                            variant="secondary"
+                                            onClick={handleUnfreeze}
+                                            disabled={processing || !isConnected}
+                                            isLoading={processing}
+                                            style={{ width: '100%' }}
+                                        >
+                                            Unfreeze Asset
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -360,19 +366,37 @@ export const FleetControl: React.FC = () => {
                             Are you sure you want to freeze <strong>{selectedAsset.name}</strong>?
                         </p>
 
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)' }}>
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
                             This will:
                         </p>
-                        <ul style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)', paddingLeft: 'var(--spacing-lg)' }}>
+                        <ul style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)', paddingLeft: 'var(--spacing-lg)' }}>
                             <li>Stop the payment stream immediately</li>
-                            <li>Disable the vehicle/asset</li>
-                            <li>Freeze all investor withdrawals</li>
+                            <li>Disable the asset</li>
+                            <li>Freeze all withdrawals</li>
                         </ul>
+
+                        <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+                            <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)', fontWeight: 500 }}>
+                                Reason for Freeze (required)
+                            </label>
+                            <textarea
+                                className="input"
+                                placeholder="e.g., Compliance violation, suspicious activity..."
+                                value={freezeReason}
+                                onChange={(e) => setFreezeReason(e.target.value)}
+                                rows={3}
+                                style={{ width: '100%', resize: 'vertical' }}
+                            />
+                        </div>
 
                         <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
                             <Button
                                 variant="ghost"
-                                onClick={() => setShowFreezeModal(false)}
+                                onClick={() => {
+                                    setShowFreezeModal(false);
+                                    setFreezeReason('');
+                                }}
+                                disabled={processing}
                                 style={{ flex: 1 }}
                             >
                                 Cancel
@@ -380,6 +404,8 @@ export const FleetControl: React.FC = () => {
                             <Button
                                 variant="primary"
                                 onClick={handleFreeze}
+                                disabled={processing || !freezeReason.trim()}
+                                isLoading={processing}
                                 style={{
                                     flex: 1,
                                     background: '#ef4444',

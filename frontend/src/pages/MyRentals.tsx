@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Car, Home, Wrench, Clock, XCircle, Zap, AlertTriangle, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { ContinuumService } from '../services/continuumService';
-import { generateMockAssetData } from '../utils/mockDataGenerator';
+import { useTezosWallet } from '../hooks/useTezosWallet';
 import { ActiveRental } from '../types/continuum';
 
 export const MyRentals: React.FC = () => {
-    const { account, signAndSubmitTransaction } = useWallet();
+    const { address } = useTezosWallet();
     const [rentals, setRentals] = useState<ActiveRental[]>([]);
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Fetch user's active rental streams from blockchain
     useEffect(() => {
-        if (account?.address) {
+        if (address) {
             loadMyRentals();
         }
-    }, [account]);
+    }, [address]);
 
     const loadMyRentals = async () => {
-        if (!account?.address) {
+        if (!address) {
             setRentals([]);
             setLoading(false);
             return;
@@ -28,85 +26,9 @@ export const MyRentals: React.FC = () => {
 
         try {
             setLoading(true);
-
-            // NEW APPROACH: Use the RentalRegistry to find active rentals
-            // This is much more efficient than iterating all tokens!
-
-            // Get all registered tokens
-            const allTokens = await ContinuumService.getAllRegisteredTokens();
-
-            console.log('Checking tokens for active rentals:', allTokens);
-
-            const activeRentals: ActiveRental[] = [];
-
-            for (const token of allTokens) {
-                const tokenAddress = token.token_address;
-                const assetType = token.asset_type !== undefined ? Number(token.asset_type) : 0;
-
-                try {
-                    // Check if this asset has an active rental using the new view function
-                    const rentalStatus = await ContinuumService.getActiveRental(tokenAddress);
-
-                    if (rentalStatus.isRented && rentalStatus.streamId > 0) {
-                        // Get the rental details
-                        const rentalDetails = await ContinuumService.getRentalDetails(rentalStatus.streamId);
-
-                        // Check if the current user is the tenant (renter)
-                        if (rentalDetails && rentalDetails.tenant === account.address && rentalDetails.isActive) {
-                            // Fetch NFT name
-                            let assetName = '';
-                            try {
-                                const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
-                                assetName = nftMetadata.name || '';
-                            } catch (error) {
-                                console.warn(`Could not fetch NFT metadata for ${tokenAddress}`);
-                            }
-
-                            // Use smart mock data if no real name
-                            if (!assetName) {
-                                const mockData = generateMockAssetData(assetType, tokenAddress, 'rental');
-                                assetName = mockData.name;
-                            }
-
-                            // Get full stream info for additional details
-                            const streamInfo = await ContinuumService.getStreamInfo(rentalStatus.streamId);
-
-                            if (!streamInfo) {
-                                console.warn(`Could not fetch stream info for stream ${rentalStatus.streamId}`);
-                                continue;
-                            }
-
-                            // Calculate rental details
-                            const flowRate = Number(streamInfo.flowRate);
-                            const pricePerHour = (flowRate / 100_000_000) * 3600; // Convert octas/sec to APT/hour
-                            const totalBudget = Number(streamInfo.totalAmount) / 100_000_000; // Convert to APT
-                            const startTime = Number(streamInfo.startTime);
-                            const stopTime = Number(streamInfo.stopTime);
-                            const duration = stopTime - startTime;
-                            const amountWithdrawn = rentalDetails.totalPaidSoFar / 100_000_000; // Already in octas
-
-                            activeRentals.push({
-                                streamId: rentalStatus.streamId,
-                                tokenAddress,
-                                assetType,
-                                title: assetName,
-                                pricePerHour,
-                                startTime,
-                                duration,
-                                totalBudget,
-                                amountSpent: amountWithdrawn,
-                            });
-
-                            console.log(`Found active rental for ${assetName} (Stream ID: ${rentalStatus.streamId})`);
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`Error checking rental for ${tokenAddress}:`, error);
-                }
-            }
-
-            console.log(`Total active rentals found: ${activeRentals.length}`);
-            setRentals(activeRentals);
+            // TODO: Implement Tezos rental loading logic
+            // For now, show empty state
+            setRentals([]);
         } catch (error) {
             console.error('Error loading rentals:', error);
             setRentals([]);
@@ -135,7 +57,7 @@ export const MyRentals: React.FC = () => {
     };
 
     const handleCancelRental = async (streamId: number, assetTitle: string) => {
-        if (!account) return;
+        if (!address) return;
 
         const confirmCancel = window.confirm(
             `Are you sure you want to end the rental for ${assetTitle}? You will be refunded for unused time.`
@@ -145,13 +67,8 @@ export const MyRentals: React.FC = () => {
 
         try {
             setCancellingId(streamId);
-
-            const transaction = ContinuumService.cancelStream(streamId);
-            await signAndSubmitTransaction(transaction);
-
-            alert(`Rental cancelled for ${assetTitle}. Unused funds have been refunded.`);
-
-            // Reload rentals from blockchain
+            // TODO: Implement Tezos rental cancellation
+            alert(`Rental cancellation not yet implemented for Tezos`);
             await loadMyRentals();
         } catch (error: any) {
             console.error('Cancel rental failed:', error);

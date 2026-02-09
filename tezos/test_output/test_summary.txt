@@ -1,0 +1,21 @@
+Continuum Protocol - Test Execution Report
+Generated: Sun Feb  8 14:00:15 WAT 2026
+========================================
+
+✓ PASSED: test_streaming_protocol
+✓ PASSED: test_asset_yield_protocol
+✗ FAILED: test_compliance_guard
+  See log: test_output/test_compliance_guard.log
+✓ PASSED: test_token_registry
+✗ FAILED: test_fa2_token
+  See log: test_output/test_fa2_token.log
+✗ FAILED: test_rwa_hub
+  See log: test_output/test_rwa_hub.log
+
+========================================
+Summary
+========================================
+Total Tests:  6
+Passed:       3
+Failed:       3
+Pass Rate:    50.0%

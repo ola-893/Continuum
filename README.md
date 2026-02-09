@@ -173,6 +173,19 @@ continuum/
 
 ---
 
+## 📖 Documentation
+
+All documentation has been consolidated into the `docs/` folder. See the [Documentation Index](./DOCUMENTATION_INDEX.md) for a complete guide.
+
+**Quick Links:**
+- [User Guide](./docs/user-guide-getting-started.md) - How to use the protocol
+- [Migration Guide](./docs/migrating-from-aptos-to-tezos.md) - Migrating from Aptos to Tezos
+- [API Reference](./docs/api-reference.md) - Complete API documentation
+- [Deployment Guide](./docs/deployment/how-to-deploy-step-by-step.md) - Deploy contracts and frontend
+- [Troubleshooting](./docs/troubleshooting-common-issues.md) - Common issues and solutions
+
+---
+
 ## 📖 Key Concepts
 
 ### Yield Streaming

@@ -1,30 +1,18 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Infinity, Wallet, Zap } from 'lucide-react';
 import { truncateAddress } from '../../utils/formatting';
-import { useContinuum } from '../../hooks/useContinuum';
+import { useTezosWallet } from '../../hooks/useTezosWallet';
 import { ProfileModal } from './ProfileModal';
 
 export const Navbar: React.FC = () => {
-    const { account, connected, connect, wallets } = useWallet();
-    const { complianceStatus } = useContinuum();
+    const { address, connected, connect } = useTezosWallet();
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
     const location = useLocation();
 
     const handleConnectWallet = async () => {
         try {
-            // Find Petra wallet
-            const petraWallet = wallets?.find(
-                (wallet) => wallet.name === 'Petra'
-            );
-
-            if (petraWallet) {
-                await connect(petraWallet.name);
-            } else {
-                // Fallback: open Petra installation page
-                window.open('https://petra.app/', '_blank');
-            }
+            await connect();
         } catch (error) {
             console.error('Failed to connect wallet:', error);
         }
@@ -84,7 +72,7 @@ export const Navbar: React.FC = () => {
 
                         {/* Wallet Connection */}
                         <div className="flex items-center gap-md">
-                            {connected && account ? (
+                            {connected && address ? (
                                 <div
                                     style={{
                                         display: 'flex',
@@ -105,14 +93,14 @@ export const Navbar: React.FC = () => {
                                         className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-base font-bold"
                                         style={{ flexShrink: 0 }}
                                     >
-                                        {account.address.slice(2, 4).toUpperCase()}
+                                        {address ? address.slice(0, 2).toUpperCase() : 'TZ'}
                                     </div>
 
                                     {/* Wallet Info */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
                                             <span className="text-sm font-medium">
-                                                {truncateAddress(account.address)}
+                                                {address ? truncateAddress(address) : ''}
                                             </span>
                                             <span
                                                 style={{
@@ -124,24 +112,13 @@ export const Navbar: React.FC = () => {
                                                     fontWeight: 500,
                                                 }}
                                             >
-                                                Testnet
+                                                Ghostnet
                                             </span>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                            {complianceStatus.hasKYC ? (
-                                                <span style={{ fontSize: '11px', color: 'var(--color-success)' }}>
-                                                    KYC Verified
-                                                </span>
-                                            ) : (
-                                                <span style={{ fontSize: '11px', color: 'var(--color-warning)' }}>
-                                                    No KYC
-                                                </span>
-                                            )}
-                                            {complianceStatus.isAdmin && (
-                                                <span style={{ fontSize: '11px', color: 'var(--color-primary)' }}>
-                                                    • Admin
-                                                </span>
-                                            )}
+                                            <span style={{ fontSize: '11px', color: 'var(--color-success)' }}>
+                                                Connected
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

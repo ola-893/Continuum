@@ -1,0 +1,1 @@
+sp.record(admin = sp.address('tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq'), asset_yield_protocol = sp.address('tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU'), ledger = {}, next_token_id = 0, operators = {}, token_metadata = {})

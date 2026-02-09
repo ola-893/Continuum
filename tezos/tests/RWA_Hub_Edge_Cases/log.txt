@@ -1,0 +1,42 @@
+Comment...
+ h1: RWA Hub Edge Cases
+Creating contract KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1
+ -> (Pair {} (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair "tz1NJTEFMjamn8F9hcForB5THPvpSkEy8nuo" (Pair "tz1QNiERgnEegX47ynN8vDBDpJ3hLvEJHCLm" "tz1TWefudUyTZa3wXKQm8j28Thcet9Y3TCiq")))))
+file RWA_Hub_Edge_Cases/step_002_cont_0_storage.tz
+file RWA_Hub_Edge_Cases/step_002_cont_0_storage.json
+file RWA_Hub_Edge_Cases/step_002_cont_0_storage.py
+file RWA_Hub_Edge_Cases/step_002_cont_0_types.py
+Error in generated contract: Missing type in get_stream_status (unknown type variable: a171) Missing type in parameters (unknown type variable: a128) Missing type in parameters (unknown type variable: a27) Missing type in parameters (unknown type variable: a29) Missing type in parameters (unknown type variable: a96)
+file RWA_Hub_Edge_Cases/step_002_cont_0_contract.tz contract RWAHub
+file RWA_Hub_Edge_Cases/step_002_cont_0_contract.json contract RWAHub
+Comment...
+ h2: Test 1: Register multiple rentals
+file RWA_Hub_Edge_Cases/step_004_cont_0_params.py
+file RWA_Hub_Edge_Cases/step_004_cont_0_params.tz
+file RWA_Hub_Edge_Cases/step_004_cont_0_params.json
+Executing register_rental_stream(sp.record(stream_id = 1, token_address = sp.address('tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC')))...
+ -> (Pair {Elt "tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC" 1} (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair "tz1NJTEFMjamn8F9hcForB5THPvpSkEy8nuo" (Pair "tz1QNiERgnEegX47ynN8vDBDpJ3hLvEJHCLm" "tz1TWefudUyTZa3wXKQm8j28Thcet9Y3TCiq")))))
+  + Event(tag: "rental_stream_registered")
+sp.record(stream_id = 1, timestamp = sp.timestamp(0), token_address = sp.address('tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC'))
+file RWA_Hub_Edge_Cases/step_005_cont_0_params.py
+file RWA_Hub_Edge_Cases/step_005_cont_0_params.tz
+file RWA_Hub_Edge_Cases/step_005_cont_0_params.json
+Executing register_rental_stream(sp.record(stream_id = 2, token_address = sp.address('tz1Wwc5goaSTKJofamCshEF4XD3RRgh6rkJq')))...
+ -> (Pair {Elt "tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC" 1; Elt "tz1Wwc5goaSTKJofamCshEF4XD3RRgh6rkJq" 2} (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair "tz1NJTEFMjamn8F9hcForB5THPvpSkEy8nuo" (Pair "tz1QNiERgnEegX47ynN8vDBDpJ3hLvEJHCLm" "tz1TWefudUyTZa3wXKQm8j28Thcet9Y3TCiq")))))
+  + Event(tag: "rental_stream_registered")
+sp.record(stream_id = 2, timestamp = sp.timestamp(0), token_address = sp.address('tz1Wwc5goaSTKJofamCshEF4XD3RRgh6rkJq'))
+Verifying sp.contract_data(0).active_rentals[sp.test_account("Token1").address] == 1...
+ OK
+Verifying sp.contract_data(0).active_rentals[sp.test_account("Token2").address] == 2...
+ OK
+Comment...
+ h2: Test 2: Update rental stream
+file RWA_Hub_Edge_Cases/step_009_cont_0_params.py
+file RWA_Hub_Edge_Cases/step_009_cont_0_params.tz
+file RWA_Hub_Edge_Cases/step_009_cont_0_params.json
+Executing register_rental_stream(sp.record(stream_id = 3, token_address = sp.address('tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC')))...
+ -> (Pair {Elt "tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC" 3; Elt "tz1Wwc5goaSTKJofamCshEF4XD3RRgh6rkJq" 2} (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair "tz1NJTEFMjamn8F9hcForB5THPvpSkEy8nuo" (Pair "tz1QNiERgnEegX47ynN8vDBDpJ3hLvEJHCLm" "tz1TWefudUyTZa3wXKQm8j28Thcet9Y3TCiq")))))
+  + Event(tag: "rental_stream_registered")
+sp.record(stream_id = 3, timestamp = sp.timestamp(0), token_address = sp.address('tz1R1a1PV9EC93ur18ktvFvP2eNUbJNeJfbC'))
+Verifying sp.contract_data(0).active_rentals[sp.test_account("Token1").address] == 3...
+ OK

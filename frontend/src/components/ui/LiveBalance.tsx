@@ -2,7 +2,7 @@ import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatting';
 import { useStreamBalance } from '../../hooks/useStreamBalance';
-import type { StreamInfo } from '../../hooks/useStreamBalance';
+import type { StreamInfo } from '../../types/continuum';
 
 export interface LiveBalanceProps {
     streamInfo: StreamInfo | null;
@@ -23,6 +23,8 @@ export const LiveBalance: React.FC<LiveBalanceProps> = ({
         return <div className={className}>$0.00</div>;
     }
 
+    const isActive = streamInfo.status === 0; // 0 = Active
+
     return (
         <div className={`flex flex-col gap-sm ${className}`}>
             <div className="flex items-center gap-sm">
@@ -32,7 +34,7 @@ export const LiveBalance: React.FC<LiveBalanceProps> = ({
                 >
                     {formatCurrency(balance, decimals)}
                 </span>
-                {streamInfo.isActive && (
+                {isActive && (
                     <TrendingUp
                         size={24}
                         className="text-secondary animate-pulse"
@@ -40,7 +42,7 @@ export const LiveBalance: React.FC<LiveBalanceProps> = ({
                     />
                 )}
             </div>
-            {showRate && streamInfo.isActive && (
+            {showRate && isActive && (
                 <p className="text-sm text-secondary">
                     Streaming Rate: {formatCurrency(streamInfo.flowRate, 4)} / sec
                 </p>

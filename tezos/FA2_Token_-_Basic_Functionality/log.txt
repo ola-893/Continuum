@@ -1,0 +1,61 @@
+Comment...
+ h1: FA2 Token Contract Tests
+Comment...
+ h2: Contract Origination
+Creating contract KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1
+ -> (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair {} (Pair 0 (Pair {} {})))))
+file FA2_Token_-_Basic_Functionality/step_003_cont_0_storage.tz
+file FA2_Token_-_Basic_Functionality/step_003_cont_0_storage.json
+file FA2_Token_-_Basic_Functionality/step_003_cont_0_storage.py
+file FA2_Token_-_Basic_Functionality/step_003_cont_0_types.py
+Error in generated contract: Missing type in parameters (unknown type variable: a72)
+file FA2_Token_-_Basic_Functionality/step_003_cont_0_contract.tz contract FA2Token
+file FA2_Token_-_Basic_Functionality/step_003_cont_0_contract.json contract FA2Token
+Comment...
+ h2: Test 1: Mint NFT
+file FA2_Token_-_Basic_Functionality/step_005_cont_0_params.py
+file FA2_Token_-_Basic_Functionality/step_005_cont_0_params.tz
+file FA2_Token_-_Basic_Functionality/step_005_cont_0_params.json
+Executing mint(sp.record(metadata = {'decimals' : sp.bytes('0x30'), 'name' : sp.bytes('0x5465737420546f6b656e'), 'symbol' : sp.bytes('0x54455354')}, to_ = sp.address('tz1WxrQuZ4CK1MBUa2GqUWK1yJ4J6EtG1Gwi')))...
+ -> (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair {Elt (Pair "tz1WxrQuZ4CK1MBUa2GqUWK1yJ4J6EtG1Gwi" 0) 1} (Pair 1 (Pair {} {Elt 0 (Pair 0 {Elt "decimals" 0x30; Elt "name" 0x5465737420546f6b656e; Elt "symbol" 0x54455354})})))))
+  + Event(tag: "token_minted")
+sp.record(timestamp = sp.timestamp(0), to_ = sp.address('tz1WxrQuZ4CK1MBUa2GqUWK1yJ4J6EtG1Gwi'), token_id = 0)
+Verifying sp.contract_data(0).next_token_id == 1...
+ OK
+Verifying sp.static_view(0, "get_balance", sp.record(owner = sp.test_account("Alice").address, token_id = 0)) == 1...
+ OK
+Comment...
+ h2: Test 2: Transfer NFT
+file FA2_Token_-_Basic_Functionality/step_009_cont_0_params.py
+file FA2_Token_-_Basic_Functionality/step_009_cont_0_params.tz
+file FA2_Token_-_Basic_Functionality/step_009_cont_0_params.json
+Executing transfer([sp.record(from_ = sp.address('tz1WxrQuZ4CK1MBUa2GqUWK1yJ4J6EtG1Gwi'), txs = [sp.record(amount = 1, to_ = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), token_id = 0)])])...
+ -> (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair {Elt (Pair "tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C" 0) 1} (Pair 1 (Pair {} {Elt 0 (Pair 0 {Elt "decimals" 0x30; Elt "name" 0x5465737420546f6b656e; Elt "symbol" 0x54455354})})))))
+  + Transfer
+     params: sp.record(new_owner = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), token_address = sp.address('KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1'))
+     amount: sp.tez(0)
+     to:     sp.contract(sp.record(new_owner = sp.address, token_address = sp.address).layout(("new_owner", "token_address")), sp.address('tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU%update_stream_recipient')).open_some()
+  + Event(tag: "transfer")
+sp.record(amount = 1, from_ = sp.address('tz1WxrQuZ4CK1MBUa2GqUWK1yJ4J6EtG1Gwi'), timestamp = sp.timestamp(0), to_ = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), token_id = 0)
+Verifying sp.static_view(0, "get_balance", sp.record(owner = sp.test_account("Alice").address, token_id = 0)) == 0...
+ OK
+Verifying sp.static_view(0, "get_balance", sp.record(owner = sp.test_account("Bob").address, token_id = 0)) == 1...
+ OK
+Comment...
+ h2: Test 3: Operator Management
+file FA2_Token_-_Basic_Functionality/step_013_cont_0_params.py
+file FA2_Token_-_Basic_Functionality/step_013_cont_0_params.tz
+file FA2_Token_-_Basic_Functionality/step_013_cont_0_params.json
+Executing update_operators([add_operator(sp.record(operator = sp.address('tz1dotQT4SrJ2rbQfea4PfSK3CoAHVbeM9mk'), owner = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), token_id = 0))])...
+ -> (Pair "tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq" (Pair "tz1ePuYLCaNnSiC9ymDWW4kqJgXNtYZjGMMU" (Pair {Elt (Pair "tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C" 0) 1} (Pair 1 (Pair {Elt (Pair "tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C" "tz1dotQT4SrJ2rbQfea4PfSK3CoAHVbeM9mk") {0}} {Elt 0 (Pair 0 {Elt "decimals" 0x30; Elt "name" 0x5465737420546f6b656e; Elt "symbol" 0x54455354})})))))
+  + Event(tag: "operator_updated")
+sp.record(action = 'add', operator = sp.address('tz1dotQT4SrJ2rbQfea4PfSK3CoAHVbeM9mk'), owner = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), timestamp = sp.timestamp(0), token_id = 0)
+Verifying sp.static_view(0, "is_operator", sp.record(operator = sp.test_account("Charlie").address, owner = sp.test_account("Bob").address, token_id = 0)) == True...
+ OK
+Comment...
+ h2: Test 4: Operator Transfer
+file FA2_Token_-_Basic_Functionality/step_016_cont_0_params.py
+file FA2_Token_-_Basic_Functionality/step_016_cont_0_params.tz
+file FA2_Token_-_Basic_Functionality/step_016_cont_0_params.json
+Executing transfer([sp.record(from_ = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), txs = [sp.record(amount = 1, to_ = sp.address('tz1WxrQuZ4CK1MBUa2GqUWK1yJ4J6EtG1Gwi'), token_id = 0)])])...
+Unexpected error: Sender is undefined: sp.sender

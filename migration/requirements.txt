@@ -1,0 +1,10 @@
+# Python dependencies for Continuum Protocol migration scripts
+
+# Aptos SDK for exporting data from Aptos blockchain
+aptos-sdk>=0.6.0
+
+# PyTezos for importing data to Tezos blockchain
+pytezos>=3.10.0
+
+# Additional dependencies
+requests>=2.31.0

@@ -1,0 +1,1 @@
+sp.record(admins = {sp.address('tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq')}, asset_types = {0 : 'real_estate', 1 : 'vehicles', 2 : 'commodities'}, frozen_streams = {}, identities = {}, paused = False)

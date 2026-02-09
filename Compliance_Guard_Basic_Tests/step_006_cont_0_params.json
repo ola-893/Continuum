@@ -1,0 +1,7 @@
+{
+  "prim": "Pair",
+  "args": [
+    { "string": "2025-01-01T00:00:00Z" },
+    { "prim": "Pair", "args": [ { "string": "US" }, { "prim": "Pair", "args": [ { "string": "tz1UUAQHnHexp47p8ixiDVq9uu6jxBd8bpZT" }, { "int": "1" } ] } ] }
+  ]
+}

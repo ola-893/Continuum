@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LiveBalance } from './LiveBalance';
 import { StreamVisualization } from './StreamVisualization';
 import { Badge } from './Badge';
-import type { StreamInfo } from '../../hooks/useStreamBalance';
+import type { StreamInfo } from '../../types/continuum';
 
 export interface Asset {
     tokenAddress: string;

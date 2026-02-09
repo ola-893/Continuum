@@ -1,0 +1,1 @@
+sp.record(expiry_time = sp.timestamp(1735689600), jurisdiction = 'US', user = sp.address('tz1UUAQHnHexp47p8ixiDVq9uu6jxBd8bpZT'), verification_level = 1)

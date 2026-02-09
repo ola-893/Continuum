@@ -2,14 +2,7 @@
  * Utility functions for calculating real-time stream values
  */
 
-export interface StreamInfo {
-    startTime: number;
-    flowRate: number; // Amount per second (in octas or smallest unit)
-    amountWithdrawn: number;
-    totalAmount: number;
-    stopTime: number;
-    isActive: boolean;
-}
+import type { StreamInfo } from '../types/continuum';
 
 /**
  * Calculate the total amount that has been streamed so far

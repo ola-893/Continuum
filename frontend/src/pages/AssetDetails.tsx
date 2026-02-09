@@ -86,12 +86,14 @@ export const AssetDetails: React.FC = () => {
         imageUrl: undefined,
         streamId: streamId || undefined, // Add streamId for flash advance balance checking
         streamInfo: {
+            sender: streamInfo.sender || '',
+            recipient: streamInfo.recipient || '',
             startTime: streamInfo.startTime,
             flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
             amountWithdrawn: streamInfo.amountWithdrawn / 100_000_000, // Convert to APT
             totalAmount: streamInfo.totalAmount / 100_000_000, // Convert to APT
             stopTime: streamInfo.stopTime,
-            isActive: streamInfo.status === 0,
+            status: streamInfo.status || 0,
         },
         metadata: {
             'Stream ID': streamInfo.startTime.toString(),
@@ -103,7 +105,7 @@ export const AssetDetails: React.FC = () => {
     };
 
     const currentStreamInfo = isRepaying
-        ? { ...asset.streamInfo, isActive: false }
+        ? { ...asset.streamInfo, status: 1 } // 1 = Paused (repaying advance)
         : asset.streamInfo;
 
     // Handle claim yield transaction
@@ -226,8 +228,8 @@ export const AssetDetails: React.FC = () => {
                         <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
                             <div className="flex justify-between items-center" style={{ marginBottom: 'var(--spacing-md)' }}>
                                 <h2>{asset.title}</h2>
-                                <Badge variant={currentStreamInfo.isActive ? 'success' : 'warning'}>
-                                    Stream #{asset.tokenAddress.slice(-4)} - {currentStreamInfo.isActive ? 'Active' : 'Repaying Advance'}
+                                <Badge variant={currentStreamInfo.status === 0 ? 'success' : 'warning'}>
+                                    Stream #{asset.tokenAddress.slice(-4)} - {currentStreamInfo.status === 0 ? 'Active' : 'Repaying Advance'}
                                 </Badge>
                             </div>
 

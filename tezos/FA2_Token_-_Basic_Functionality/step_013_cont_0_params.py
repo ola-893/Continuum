@@ -1,0 +1,1 @@
+[add_operator(sp.record(operator = sp.address('tz1dotQT4SrJ2rbQfea4PfSK3CoAHVbeM9mk'), owner = sp.address('tz1Rp4Bv8iUhYnNoCryHQgNzN2D7i3L1LF9C'), token_id = 0))]

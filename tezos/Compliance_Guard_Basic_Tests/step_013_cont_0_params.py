@@ -1,0 +1,1 @@
+sp.record(asset_types = {0, 1}, user = sp.address('tz1UUAQHnHexp47p8ixiDVq9uu6jxBd8bpZT'))

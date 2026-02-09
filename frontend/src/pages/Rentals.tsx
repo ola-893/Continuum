@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Car, Home, Wrench, Clock, DollarSign, Zap, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { ContinuumService } from '../services/continuumService';
+import { useTezosWallet } from '../hooks/useTezosWallet';
 import { CONTRACT_CONFIG } from '../config/contracts';
-import { generateMockAssetData, getMockImage } from '../utils/mockDataGenerator';
 
 interface RentalAsset {
     tokenAddress: string;
@@ -18,7 +16,7 @@ interface RentalAsset {
 }
 
 export const Rentals: React.FC = () => {
-    const { signAndSubmitTransaction, account } = useWallet();
+    const { address } = useTezosWallet();
     const [assets, setAssets] = useState<RentalAsset[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | number>('all');
@@ -35,77 +33,12 @@ export const Rentals: React.FC = () => {
     const loadAvailableAssets = async () => {
         try {
             setLoading(true);
-            // Fetch all registered tokens from blockchain
-            const allTokens = await ContinuumService.getAllRegisteredTokens();
-
-            console.log('Loaded tokens from registry:', allTokens);
-
-            // Convert to rental asset format with real data
-            const rentalAssets: RentalAsset[] = await Promise.all(
-                allTokens.map(async (token: any) => {
-                    const tokenAddress = token.token_address || token.tokenAddress;
-                    const assetType = token.asset_type !== undefined ? Number(token.asset_type) : (token.assetType !== undefined ? Number(token.assetType) : undefined);
-                    const streamId = Number(token.stream_id || token.streamId || 0);
-                    const metadataUri = token.metadata_uri || '';
-
-                    // Fetch NFT metadata (name and description) directly from blockchain
-                    let assetName = '';
-                    let assetDescription = '';
-                    let assetImage = '';
-
-                    try {
-                        const nftMetadata = await ContinuumService.getNFTMetadata(tokenAddress);
-                        assetName = nftMetadata.name || '';
-                        assetDescription = nftMetadata.description || '';
-                        console.log(`Fetched NFT metadata from blockchain for ${tokenAddress}:`, nftMetadata);
-                    } catch (error) {
-                        console.warn(`Could not fetch NFT metadata from blockchain for ${tokenAddress}, using smart mock data`);
-                    }
-
-                    // Use smart mock data if real data is missing
-                    if (!assetName || !assetDescription) {
-                        const mockData = generateMockAssetData(assetType, tokenAddress, 'rental');
-                        assetName = assetName || mockData.name;
-                        assetDescription = assetDescription || mockData.description;
-                        assetImage = mockData.image;
-                    } else {
-                        // Use real image or fallback to mock
-                        assetImage = getMockImage(assetType, tokenAddress);
-                    }
-
-                    // Fetch stream info to get yield data
-                    let pricePerHour = getDefaultPricePerHour(assetType);
-                    try {
-                        if (streamId > 0) {
-                            const streamInfo = await ContinuumService.getStreamInfo(streamId);
-                            if (streamInfo && streamInfo.flowRate) {
-                                // Convert flow rate (APT per second) to APT per hour
-                                // flowRate is in octas per second, convert to APT per hour
-                                pricePerHour = (Number(streamInfo.flowRate) / 100_000_000) * 3600;
-                            }
-                        }
-                    } catch (error) {
-                        console.warn(`Could not fetch stream info for stream ${streamId}, using default price`);
-                    }
-
-                    return {
-                        tokenAddress,
-                        assetType,
-                        metadata_uri: metadataUri,
-                        streamId,
-                        title: assetName,
-                        description: assetDescription,
-                        imageUrl: assetImage,
-                        pricePerHour: Math.max(pricePerHour, 0.01), // Minimum price
-                    };
-                })
-            );
-
-            console.log('Processed rental assets:', rentalAssets);
-            setAssets(rentalAssets);
+            // TODO: Implement Tezos rental asset loading
+            // For now, show empty state
+            setAssets([]);
         } catch (error) {
             console.error('Error loading rental assets:', error);
-            setAssets([]); // Empty array on error
+            setAssets([]);
         } finally {
             setLoading(false);
         }
@@ -137,28 +70,14 @@ export const Rentals: React.FC = () => {
     };
 
     const confirmRental = async () => {
-        if (!selectedAsset || !account) return;
+        if (!selectedAsset || !address) return;
 
         try {
             setIsProcessing(true);
             setTxStatus('Preparing transaction...');
 
-            // Calculate total payment based on duration
-            // Use Math.floor to ensure we have a whole number (no decimals)
-            const totalPayment = Math.floor(selectedAsset.pricePerHour * rentalDuration * 100_000_000); // Convert to octas
-            const durationInSeconds = rentalDuration * 3600;
-
-            setTxStatus('Please approve transaction in your wallet...');
-
-            const transaction = ContinuumService.streamRentToAsset(
-                selectedAsset.tokenAddress,
-                totalPayment,
-                durationInSeconds
-            );
-
-            await signAndSubmitTransaction(transaction);
-
-            setTxStatus('Transaction confirmed! Rental stream is now active.');
+            // TODO: Implement Tezos rental transaction
+            setTxStatus('Rental not yet implemented for Tezos');
             setTimeout(() => {
                 setShowRentalModal(false);
                 setTxStatus('');
@@ -421,7 +340,7 @@ export const Rentals: React.FC = () => {
                                 variant="primary"
                                 onClick={confirmRental}
                                 style={{ flex: 1 }}
-                                disabled={!account || isProcessing}
+                                disabled={!address || isProcessing}
                                 isLoading={isProcessing}
                             >
                                 <DollarSign size={16} />

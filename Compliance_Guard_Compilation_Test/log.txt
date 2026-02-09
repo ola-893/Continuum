@@ -1,0 +1,13 @@
+Comment...
+ h1: Compliance Guard Contract
+Creating contract KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1
+ -> (Pair {"tz1SfRoaCkrBkXqTzhz67QYVPJAU9Y2g48kq"} (Pair {Elt 0 "real_estate"; Elt 1 "vehicles"; Elt 2 "commodities"} (Pair {} {})))
+file Compliance_Guard_Compilation_Test/step_002_cont_0_storage.tz
+file Compliance_Guard_Compilation_Test/step_002_cont_0_storage.json
+file Compliance_Guard_Compilation_Test/step_002_cont_0_storage.py
+file Compliance_Guard_Compilation_Test/step_002_cont_0_types.py
+Error in generated contract: Missing type in parameters (unknown type variable: a53)
+file Compliance_Guard_Compilation_Test/step_002_cont_0_contract.tz contract ComplianceGuard
+file Compliance_Guard_Compilation_Test/step_002_cont_0_contract.json contract ComplianceGuard
+Verifying sp.contract_data(0).admins.contains(sp.test_account("Admin").address)...
+ OK

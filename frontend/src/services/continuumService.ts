@@ -1,779 +1,220 @@
-import { InputTransactionData } from "@aptos-labs/wallet-adapter-react";
-import { aptosClient, buildFunctionId } from "./aptosClient";
-import { CONTRACT_CONFIG } from "../config/contracts";
-import {
-    TokenIndexEntry,
-    StreamInfo,
-    RentalDetails,
-    ComplianceStatus
-} from "../types/continuum";
-
 /**
- * Service layer for interacting with YieldStream smart contracts
+ * Continuum Service - Tezos Implementation Stub
+ * 
+ * This is a stub implementation for the Continuum service.
+ * TODO: Implement full Tezos integration using tezosContractService
  */
+
+import { TokenIndexEntry, StreamInfo } from '../types/continuum';
+
 export class ContinuumService {
+  /**
+   * Get all registered tokens from the marketplace
+   */
+  static async getAllRegisteredTokens(): Promise<TokenIndexEntry[]> {
+    console.warn('ContinuumService.getAllRegisteredTokens not yet implemented for Tezos');
+    return [];
+  }
 
-    // ============================================
-    // 1. USER COMPLIANCE CHECKS
-    // ============================================
+  /**
+   * Get stream information
+   */
+  static async getStreamInfo(streamId: number): Promise<StreamInfo | null> {
+    console.warn('ContinuumService.getStreamInfo not yet implemented for Tezos');
+    return null;
+  }
 
-    /**
-     * Check if user can participate in RWA ecosystem
-     */
-    static async canUserParticipate(
-        userAddress: string,
-        assetType: number = CONTRACT_CONFIG.ASSET_TYPES.REAL_ESTATE
-    ): Promise<boolean> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.RWA_HUB,
-                        "can_participate"
-                    ),
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                        userAddress,
-                        assetType,
-                    ],
-                },
-            });
-            return result[0] as boolean;
-        } catch (error) {
-            console.error("Error checking participation:", error);
-            return false;
-        }
-    }
+  /**
+   * Check if user can participate in RWA ecosystem
+   */
+  static async canUserParticipate(
+    userAddress: string,
+    assetType: number = 0
+  ): Promise<boolean> {
+    console.warn('ContinuumService.canUserParticipate not yet implemented for Tezos');
+    return false;
+  }
 
-    /**
-     * Get user's compliance status
-     */
-    static async getUserComplianceStatus(userAddress: string): Promise<ComplianceStatus> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.RWA_HUB,
-                        "get_user_compliance_status"
-                    ),
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS,
-                        userAddress,
-                    ],
-                },
-            });
+  /**
+   * Get user's compliance status
+   */
+  static async getUserComplianceStatus(userAddress: string): Promise<any> {
+    console.warn('ContinuumService.getUserComplianceStatus not yet implemented for Tezos');
+    return { isAdmin: false, hasKYC: false, canTradeRealEstate: false };
+  }
 
-            return {
-                isAdmin: result[0] as boolean,
-                hasKYC: result[1] as boolean,
-                canTradeRealEstate: result[2] as boolean,
-            };
-        } catch (error) {
-            console.error("Error getting compliance status:", error);
-            return { isAdmin: false, hasKYC: false, canTradeRealEstate: false };
-        }
-    }
+  /**
+   * Get asset stream ID
+   */
+  static async getAssetStreamId(tokenAddress: string): Promise<number | null> {
+    console.warn('ContinuumService.getAssetStreamId not yet implemented for Tezos');
+    return null;
+  }
 
-    // ============================================
-    // 8. TOKEN REGISTRY FUNCTIONS
-    // ============================================
+  /**
+   * Check if asset is registered
+   */
+  static async isAssetRegistered(tokenAddress: string): Promise<boolean> {
+    console.warn('ContinuumService.isAssetRegistered not yet implemented for Tezos');
+    return false;
+  }
 
-    /**
-     * Get all registered tokens from the global registry
-     * Uses rwa_hub wrapper for better compatibility
-     */
-    static async getAllRegisteredTokens(): Promise<TokenIndexEntry[]> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_all_marketplace_tokens`,
-                    functionArguments: [],
-                },
-            });
-            return result[0] as TokenIndexEntry[] || [];
-        } catch (error) {
-            console.error("Error fetching all registered tokens:", error);
-            return [];
-        }
-    }
+  /**
+   * Get claimable balance for a stream
+   */
+  static async getClaimableBalance(streamId: number): Promise<number> {
+    console.warn('ContinuumService.getClaimableBalance not yet implemented for Tezos');
+    return 0;
+  }
 
-    /**
-     * Get RWA tokens owned by a specific user
-     * Fetches all tokens owned by user and filters for registered RWA tokens
-     */
-    static async getOwnedRWATokens(ownerAddress: string): Promise<string[]> {
-        try {
-            // Get all registered RWA tokens first
-            const registeredTokens = await this.getAllRegisteredTokens();
-            const registeredAddresses = new Set(
-                registeredTokens.map((token) =>
-                    token.token_address
-                )
-            );
+  /**
+   * Get NFT metadata
+   */
+  static async getNFTMetadata(tokenAddress: string): Promise<{ name: string; description: string }> {
+    console.warn('ContinuumService.getNFTMetadata not yet implemented for Tezos');
+    return { name: '', description: '' };
+  }
 
-            // Get all digital assets owned by the user
-            const ownedAssets = await aptosClient.getOwnedDigitalAssets({
-                ownerAddress,
-            });
+  /**
+   * Get active rental for an asset
+   */
+  static async getActiveRental(tokenAddress: string): Promise<{ isRented: boolean; streamId: number }> {
+    console.warn('ContinuumService.getActiveRental not yet implemented for Tezos');
+    return { isRented: false, streamId: 0 };
+  }
 
-            // Filter for RWA tokens (those in our registry)
-            const ownedRWATokens = ownedAssets
-                .filter((asset: any) => {
-                    const tokenAddress = asset.token_data_id || asset.current_token_data?.token_data_id;
-                    return tokenAddress && registeredAddresses.has(tokenAddress);
-                })
-                .map((asset: any) => asset.token_data_id || asset.current_token_data?.token_data_id);
+  /**
+   * Get rental details
+   */
+  static async getRentalDetails(streamId: number): Promise<any | null> {
+    console.warn('ContinuumService.getRentalDetails not yet implemented for Tezos');
+    return null;
+  }
 
-            return ownedRWATokens;
-        } catch (error) {
-            console.error("Error fetching owned RWA tokens:", error);
-            return [];
-        }
-    }
-    /**
-     * Get paginated tokens for marketplace
-     */
-    static async getTokensPaginated(offset: number, limit: number): Promise<TokenIndexEntry[]> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_marketplace_tokens_paginated`,
-                    functionArguments: [offset.toString(), limit.toString()],
-                },
-            });
-            return result[0] as TokenIndexEntry[] || [];
-        } catch (error) {
-            console.error("Error fetching paginated tokens:", error);
-            return [];
-        }
-    }
+  /**
+   * Get token count
+   */
+  static async getTokenCount(): Promise<number> {
+    console.warn('ContinuumService.getTokenCount not yet implemented for Tezos');
+    return 0;
+  }
 
-    /**
-     * Get tokens by asset type
-     */
-    static async getTokensByType(assetType: number): Promise<TokenIndexEntry[]> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_tokens_by_asset_type`,
-                    functionArguments: [assetType],
-                },
-            });
-            return result[0] as TokenIndexEntry[] || [];
-        } catch (error) {
-            console.error("Error fetching tokens by type:", error);
-            return [];
-        }
-    }
+  /**
+   * Get tokens paginated
+   */
+  static async getTokensPaginated(offset: number, limit: number): Promise<TokenIndexEntry[]> {
+    console.warn('ContinuumService.getTokensPaginated not yet implemented for Tezos');
+    return [];
+  }
 
-    /**
-     * Get token details from registry
-     */
-    static async getTokenDetailsFromRegistry(tokenAddress: string): Promise<TokenIndexEntry> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.TOKEN_REGISTRY,
-                        "get_token"
-                    ),
-                    functionArguments: [tokenAddress],
-                },
-            });
-            return result[0] as TokenIndexEntry;
-        } catch (error) {
-            console.error('Failed to get token details:', error);
-            throw error;
-        }
-    }
+  /**
+   * Get tokens by type
+   */
+  static async getTokensByType(assetType: number): Promise<TokenIndexEntry[]> {
+    console.warn('ContinuumService.getTokensByType not yet implemented for Tezos');
+    return [];
+  }
 
-    /**
-     * Get NFT name and description directly from blockchain
-     */
-    static async getNFTMetadata(tokenAddress: string): Promise<{ name: string, description: string }> {
-        try {
-            // Fetch the token object's properties using Aptos SDK
-            const resource = await aptosClient.getAccountResource({
-                accountAddress: tokenAddress,
-                resourceType: '0x4::token::Token',
-            });
+  /**
+   * Create asset stream transaction data
+   */
+  static createAssetStream(
+    tokenAddress: string,
+    totalYield: number,
+    durationInSeconds: number,
+    assetType: number,
+    metadataUri: string = ""
+  ): any {
+    console.warn('ContinuumService.createAssetStream not yet implemented for Tezos');
+    return null;
+  }
 
-            // Extract name from the token object
-            const name = (resource.data as any)?.name || `Asset #${tokenAddress.slice(-4)}`;
-            const description = (resource.data as any)?.description || '';
+  /**
+   * Claim yield transaction data
+   */
+  static claimYield(tokenAddress: string): any {
+    console.warn('ContinuumService.claimYield not yet implemented for Tezos');
+    return null;
+  }
 
-            return { name, description };
-        } catch (error) {
-            console.warn(`Could not fetch NFT metadata from blockchain for ${tokenAddress}:`, error);
-            // Fallback to fetching from URI if available
-            return {
-                name: `Asset #${tokenAddress.slice(-4)}`,
-                description: '',
-            };
-        }
-    }
+  /**
+   * Flash advance transaction data
+   */
+  static flashAdvance(tokenAddress: string, amountRequested: number): any {
+    console.warn('ContinuumService.flashAdvance not yet implemented for Tezos');
+    return null;
+  }
 
-    /**
-     * Check if an asset has an active rental
-     * Returns: { isRented: boolean, streamId: number }
-     */
-    static async getActiveRental(tokenAddress: string): Promise<{ isRented: boolean, streamId: number }> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(CONTRACT_CONFIG.MODULES.RWA_HUB, "get_active_rental"),
-                    functionArguments: [tokenAddress],
-                },
-            });
+  /**
+   * Whitelist user transaction data
+   */
+  static whitelistUser(userAddress: string, assetTypes: number[] = [1, 2, 3, 4]): any {
+    console.warn('ContinuumService.whitelistUser not yet implemented for Tezos');
+    return null;
+  }
 
-            const isRented = result[0] as boolean;
-            const streamId = Number(result[1]);
+  /**
+   * Register identity transaction data
+   */
+  static registerIdentity(
+    userAddress: string,
+    jurisdiction: string = "US",
+    verificationLevel: number = 1,
+    expiryTime: number = 9999999999
+  ): any {
+    console.warn('ContinuumService.registerIdentity not yet implemented for Tezos');
+    return null;
+  }
 
-            return { isRented, streamId };
-        } catch (error) {
-            console.error('Error checking active rental:', error);
-            return { isRented: false, streamId: 0 };
-        }
-    }
+  /**
+   * Freeze asset transaction data
+   */
+  static freezeAsset(streamId: number, reason: string = "Emergency freeze"): any {
+    console.warn('ContinuumService.freezeAsset not yet implemented for Tezos');
+    return null;
+  }
 
-    /**
-     * Get detailed rental information
-     * Returns: { tenant, landlord, timeRemaining, totalPaidSoFar, isActive }
-     */
-    static async getRentalDetails(streamId: number): Promise<RentalDetails | null> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(CONTRACT_CONFIG.MODULES.RWA_HUB, "get_rental_details"),
-                    typeArguments: ["0x1::aptos_coin::AptosCoin"],
-                    functionArguments: [CONTRACT_CONFIG.MODULE_ADDRESS, streamId.toString()],
-                },
-            });
+  /**
+   * Unfreeze asset transaction data
+   */
+  static unfreezeAsset(streamId: number): any {
+    console.warn('ContinuumService.unfreezeAsset not yet implemented for Tezos');
+    return null;
+  }
 
-            return {
-                tenant: result[0] as string,
-                landlord: result[1] as string,
-                timeRemaining: Number(result[2]),
-                totalPaidSoFar: Number(result[3]),
-                isActive: result[4] as boolean,
-            };
-        } catch (error) {
-            console.error('Error fetching rental details:', error);
-            return null;
-        }
-    }
+  /**
+   * Batch whitelist transaction data
+   */
+  static batchWhitelist(users: string[], assetTypes: number[] = [1, 2, 3, 4]): any {
+    console.warn('ContinuumService.batchWhitelist not yet implemented for Tezos');
+    return null;
+  }
 
-    /**
-     * Get count of all registered tokens
-     */
-    static async getTokenCount(): Promise<number> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_total_token_count`,
-                    functionArguments: [],
-                },
-            });
-            return Number(result[0]) || 0;
-        } catch (error) {
-            console.error("Error fetching token count:", error);
-            return 0;
-        }
-    }
+  /**
+   * Stream rent to asset transaction data
+   */
+  static streamRentToAsset(
+    tokenAddress: string,
+    paymentAmount: number,
+    duration: number
+  ): any {
+    console.warn('ContinuumService.streamRentToAsset not yet implemented for Tezos');
+    return null;
+  }
 
-    /**
-     * Get token by stream ID
-     */
-    static async getTokenByStreamId(streamId: number): Promise<TokenIndexEntry | null> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: `${CONTRACT_CONFIG.MODULE_ADDRESS}::${CONTRACT_CONFIG.MODULES.RWA_HUB}::get_token_by_stream`,
-                    functionArguments: [streamId.toString()],
-                },
-            });
-            return result[0] as TokenIndexEntry || null;
-        } catch (error) {
-            console.error("Error fetching token by stream ID:", error);
-            return null;
-        }
-    }
+  /**
+   * Cancel stream transaction data
+   */
+  static cancelStream(streamId: number): any {
+    console.warn('ContinuumService.cancelStream not yet implemented for Tezos');
+    return null;
+  }
 
-    // ============================================
-    // 2. ASSET STREAM MANAGEMENT
-    // ============================================
-
-    /**
-     * Check if an asset (NFT) has a registered yield stream
-     */
-    static async isAssetRegistered(tokenAddress: string): Promise<boolean> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.ASSET_YIELD_PROTOCOL,
-                        "is_asset_registered"
-                    ),
-                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr
-                        tokenAddress,
-                    ],
-                },
-            });
-            return result[0] as boolean;
-        } catch (error) {
-            console.error("Error checking asset registration:", error);
-            return false;
-        }
-    }
-
-    /**
-     * Get stream ID for an asset
-     */
-    static async getAssetStreamId(tokenAddress: string): Promise<number | null> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.ASSET_YIELD_PROTOCOL,
-                        "get_asset_stream_id"
-                    ),
-                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS,
-                        tokenAddress,
-                    ],
-                },
-            });
-            return Number(result[0]);
-        } catch (error) {
-            console.error("Error getting stream ID:", error);
-            return null;
-        }
-    }
-
-    /**
-     * Get stream information
-     */
-    static async getStreamInfo(streamId: number): Promise<StreamInfo | null> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.STREAMING_PROTOCOL,
-                        "get_stream_info"
-                    ),
-                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS,
-                        streamId,
-                    ],
-                },
-            });
-
-            return {
-                sender: result[0] as string,
-                recipient: result[1] as string,
-                totalAmount: Number(result[2]),
-                flowRate: Number(result[3]),
-                startTime: Number(result[4]),
-                stopTime: Number(result[5]),
-                amountWithdrawn: Number(result[6]),
-                status: Number(result[7]),
-            };
-        } catch (error) {
-            console.error("Error getting stream info:", error);
-            return null;
-        }
-    }
-
-    /**
-     * Get claimable balance for a stream
-     */
-    static async getClaimableBalance(streamId: number): Promise<number> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.STREAMING_PROTOCOL,
-                        "claimable_balance_with_addr"
-                    ),
-                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS,
-                        streamId,
-                    ],
-                },
-            });
-            return Number(result[0]);
-        } catch (error) {
-            console.error("Error getting claimable balance:", error);
-            return 0;
-        }
-    }
-
-    /**
-     * Get complete stream status (claimable, escrow, remaining, frozen)
-     */
-    static async getStreamStatus(streamId: number) {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.RWA_HUB,
-                        "get_stream_status"
-                    ),
-                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                        CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                        streamId,
-                    ],
-                },
-            });
-
-            return {
-                claimable: Number(result[0]),
-                escrowBalance: Number(result[1]),
-                remaining: Number(result[2]),
-                isFrozen: result[3] as boolean,
-            };
-        } catch (error) {
-            console.error("Error getting stream status:", error);
-            return null;
-        }
-    }
-
-    // ============================================
-    // 3. TRANSACTION BUILDERS
-    // ============================================
-
-    /**
-     * Create an asset yield stream with specified asset type
-     * Supports: 0=Real Estate, 1=Vehicle, 2=Commodities
-     */
-    static createAssetStream(
-        tokenAddress: string,
-        totalYield: number,
-        durationInSeconds: number,
-        assetType: number, // 0=Real Estate, 1=Vehicle, 2=Commodities
-        metadataUri: string = ""
-    ): InputTransactionData {
-        // Map frontend asset types (0,1,2) to contract asset types (1,2,3)
-        // Frontend: 0=Real Estate, 1=Vehicle, 2=Commodities
-        // Contract: 1=Real Estate, 2=Securities(Vehicle), 3=Commodities, 4=Art
-        const contractAssetType = assetType + 1;
-
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "create_compliant_rwa_stream" // ✅ CORRECT function that accepts asset_type!
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                    tokenAddress,                    // token_obj_addr
-                    totalYield,                      // total_yield
-                    durationInSeconds,               // duration
-                    contractAssetType,               // asset_type (1-4)
-                    metadataUri,                     // metadata_uri
-                ],
-            },
-        };
-    }
-
-    /**
-     * Create a real estate yield stream (legacy - calls createAssetStream with type 0)
-     * Note: expected_stream_id removed - the contract now auto-generates and captures the stream ID
-     */
-    static createRealEstateStream(
-        tokenAddress: string,
-        totalYield: number,
-        durationInSeconds: number,
-        metadataUri: string = ""
-    ): InputTransactionData {
-        return ContinuumService.createAssetStream(
-            tokenAddress,
-            totalYield,
-            durationInSeconds,
-            0, // Real Estate
-            metadataUri
-        );
-    }
-
-    /**
-     * Claim yield for an asset
-     * Note: asset_type removed - auto-lookup from token registry prevents user error
-     */
-    static claimYield(
-        tokenAddress: string
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "compliant_claim_yield"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                    tokenAddress,
-                ],
-            },
-        };
-    }
-
-    /**
-     * Flash advance - withdraw future yield immediately
-     * Note: asset_type removed - auto-lookup from token registry prevents user error
-     */
-    static flashAdvance(
-        tokenAddress: string,
-        amountRequested: number
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "compliant_flash_advance"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // yield_registry_addr  
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                    tokenAddress,                    // token_obj_addr
-                    amountRequested.toString(),      // amount_requested (as string for u64)
-                ],
-            },
-        };
-    }
-
-    // ============================================
-    // 4. ADMIN FUNCTIONS
-    // ============================================
-
-    /**
-     * Whitelist a user for specific asset types
-     */
-    static whitelistUser(
-        userAddress: string,
-        assetTypes: number[] = [1, 2, 3, 4] // All types by default
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.COMPLIANCE_GUARD,
-                    "whitelist_address"
-                ),
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS,
-                    userAddress,
-                    assetTypes,
-                ],
-            },
-        };
-    }
-
-    /**
-     * Simulate KYC verification (Testnet only)
-     */
-    static simulateKYC(): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.COMPLIANCE_GUARD,
-                    "simulate_kyc"
-                ),
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                ],
-            },
-        };
-    }
-
-    /**
-     * Register identity (Admin only)
-     */
-    static registerIdentity(
-        userAddress: string,
-        jurisdiction: string = "US",
-        verificationLevel: number = 1,
-        expiryTime: number = 9999999999
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.COMPLIANCE_GUARD,
-                    "register_identity"
-                ),
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS,
-                    userAddress,
-                    true, // is_kyc_verified
-                    Array.from(new TextEncoder().encode(jurisdiction)),
-                    verificationLevel,
-                    expiryTime,
-                ],
-            },
-        };
-    }
-
-    /**
-     * Emergency freeze a stream (admin only)
-     */
-    static freezeAsset(
-        streamId: number,
-        reason: string = "Emergency freeze"
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "emergency_freeze"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    streamId,
-                    reason,
-                ],
-            },
-        };
-    }
-
-    /**
-     * Emergency unfreeze a stream (admin only)
-     */
-    static unfreezeAsset(streamId: number): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "emergency_unfreeze"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // compliance_addr
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    streamId,
-                ],
-            },
-        };
-    }
-
-    /**
-     * Batch whitelist multiple users (admin only)
-     */
-    static batchWhitelist(
-        users: string[],
-        assetTypes: number[] = [1, 2, 3, 4]
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "batch_whitelist"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS,
-                    users,
-                    assetTypes,
-                ],
-            },
-        };
-    }
-
-    // ============================================
-    // 5. RENTAL & IoT STREAMING (NEW)
-    // ============================================
-
-    /**
-     * Stream rent to asset (Pay-as-you-go rental)
-     * Use cases: Car rentals, apartment rentals, equipment rentals
-     * Tenant streams money to asset owner to gain physical access
-     */
-    static streamRentToAsset(
-        tokenAddress: string,
-        paymentAmount: number,
-        duration: number
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.RWA_HUB,
-                    "stream_rent_to_asset"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                    tokenAddress,                    // token_obj_addr (the asset)
-                    paymentAmount,                   // payment_amount
-                    duration,                        // duration in seconds
-                ],
-            },
-        };
-    }
-
-    /**
-     * Check access status for IoT devices
-     * Returns true if tenant has active payment stream to current asset owner
-     * Called by: Tesla, smart locks, IoT gateways, industrial equipment
-     */
-    static async checkAccessStatus(
-        streamId: number,
-        tokenAddress: string
-    ): Promise<boolean> {
-        try {
-            const result = await aptosClient.view({
-                payload: {
-                    function: buildFunctionId(
-                        CONTRACT_CONFIG.MODULES.RWA_HUB,
-                        "check_access_status"
-                    ),
-                    typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                    functionArguments: [
-                        CONTRACT_CONFIG.MODULE_ADDRESS, // stream_registry_addr
-                        streamId,
-                        tokenAddress,                    // token_obj_addr
-                    ],
-                },
-            });
-            return result[0] as boolean;
-        } catch (error) {
-            console.error("Error checking access status:", error);
-            return false;
-        }
-    }
-
-    /**
-     * Cancel a rental stream early and get refund
-     * Completes the "pay only for what you use" user journey
-     * Example: Rented car for $100/day, used 2 hours, get $91.50 refunded
-     */
-    static cancelStream(
-        streamId: number
-    ): InputTransactionData {
-        return {
-            data: {
-                function: buildFunctionId(
-                    CONTRACT_CONFIG.MODULES.STREAMING_PROTOCOL,
-                    "cancel"
-                ),
-                typeArguments: [CONTRACT_CONFIG.COIN_TYPE],
-                functionArguments: [
-                    CONTRACT_CONFIG.MODULE_ADDRESS, // registry_addr
-                    streamId,
-                ],
-            },
-        };
-    }
+  /**
+   * Check access status
+   */
+  static async checkAccessStatus(streamId: number, tokenAddress: string): Promise<boolean> {
+    console.warn('ContinuumService.checkAccessStatus not yet implemented for Tezos');
+    return false;
+  }
 }

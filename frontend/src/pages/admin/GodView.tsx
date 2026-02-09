@@ -1,21 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
-import { Activity, DollarSign, Zap, TrendingUp, Car, Home, Wrench } from 'lucide-react';
+import { Activity, DollarSign, Zap, TrendingUp, Car, Home, Wrench, RefreshCw } from 'lucide-react';
 import { StatCard } from '../../components/admin/StatCard';
 import { AssetMap } from '../../components/admin/AssetMap';
+import { AnalyticsExport } from '../../components/admin/AnalyticsExport';
 import { formatCurrency } from '../../utils/formatting';
 import { ContinuumService } from '../../services/continuumService';
 import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { TokenIndexEntry, AssetLocation } from '../../types/continuum';
 import { calculateTotalStreamed } from '../../utils/streamCalculations';
+import { getSystemMetrics, type SystemMetrics } from '../../services/systemMetricsService';
+import { mutezToTokens } from '../../services/tezosContractService';
 
 export const GodView: React.FC = () => {
     const [assets, setAssets] = useState<AssetLocation[]>([]);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState({
-        activeStreams: 0,
+    const [metricsLoading, setMetricsLoading] = useState(false);
+    const [stats, setStats] = useState<SystemMetrics & { iotUptime: number }>({
+        activeStreamsCount: 0,
         totalValueLocked: 0,
         totalYieldDistributed: 0,
+        totalAssetsCount: 0,
         iotUptime: 99.9, // Placeholder for now as IoT isn't fully integrated
     });
 
@@ -60,12 +65,14 @@ export const GodView: React.FC = () => {
 
                         // Transform streamInfo to match expected format for calculations
                         const streamInfoForCalc = streamInfo ? {
+                            sender: streamInfo.sender || '',
+                            recipient: streamInfo.recipient || '',
                             startTime: streamInfo.startTime,
                             flowRate: streamInfo.flowRate / 100_000_000, // Convert to APT/sec
                             amountWithdrawn: streamInfo.amountWithdrawn / 100_000_000, // Convert to APT
                             totalAmount: streamInfo.totalAmount / 100_000_000, // Convert to APT
                             stopTime: streamInfo.stopTime,
-                            isActive: streamInfo.status === 0,
+                            status: streamInfo.status || 0,
                         } : null;
 
                         return {
@@ -90,18 +97,6 @@ export const GodView: React.FC = () => {
 
                 setAssets(transformedAssets);
 
-                // Calculate stats from real data
-                const activeStreams = transformedAssets.filter(a => a.status === 'active').length;
-                const totalValueLocked = transformedAssets.reduce((sum, a) => sum + (a.currentValue || 0), 0);
-                const totalYieldDistributed = transformedAssets.reduce((sum, a) => sum + (a.totalEarned || 0), 0);
-
-                setStats({
-                    activeStreams,
-                    totalValueLocked,
-                    totalYieldDistributed,
-                    iotUptime: 99.9,
-                });
-
             } catch (error) {
                 console.error('Error fetching real assets:', error);
                 // Keep empty array on error
@@ -110,8 +105,48 @@ export const GodView: React.FC = () => {
             }
         };
 
+        const fetchSystemMetrics = async () => {
+            setMetricsLoading(true);
+            try {
+                // Fetch system metrics from Tezos contracts
+                const metrics = await getSystemMetrics();
+                console.log('Fetched system metrics:', metrics);
+
+                setStats({
+                    activeStreamsCount: metrics.activeStreamsCount,
+                    totalValueLocked: mutezToTokens(metrics.totalValueLocked),
+                    totalYieldDistributed: mutezToTokens(metrics.totalYieldDistributed),
+                    totalAssetsCount: metrics.totalAssetsCount,
+                    iotUptime: 99.9,
+                });
+            } catch (error) {
+                console.error('Error fetching system metrics:', error);
+            } finally {
+                setMetricsLoading(false);
+            }
+        };
+
         fetchRealAssets();
+        fetchSystemMetrics();
     }, []);
+
+    const handleRefreshMetrics = async () => {
+        setMetricsLoading(true);
+        try {
+            const metrics = await getSystemMetrics();
+            setStats({
+                activeStreamsCount: metrics.activeStreamsCount,
+                totalValueLocked: mutezToTokens(metrics.totalValueLocked),
+                totalYieldDistributed: mutezToTokens(metrics.totalYieldDistributed),
+                totalAssetsCount: metrics.totalAssetsCount,
+                iotUptime: 99.9,
+            });
+        } catch (error) {
+            console.error('Error refreshing metrics:', error);
+        } finally {
+            setMetricsLoading(false);
+        }
+    };
 
     const handleAssetClick = (asset: AssetLocation) => {
         console.log('Asset clicked:', asset);
@@ -148,10 +183,33 @@ export const GodView: React.FC = () => {
             </div>
 
             {/* Top Stats Bar */}
+            <div style={{ marginBottom: 'var(--spacing-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3>System Metrics</h3>
+                <button
+                    onClick={handleRefreshMetrics}
+                    disabled={metricsLoading}
+                    style={{
+                        padding: 'var(--spacing-xs) var(--spacing-md)',
+                        background: metricsLoading ? 'var(--color-bg-secondary)' : 'var(--gradient-primary)',
+                        border: 'none',
+                        borderRadius: 'var(--border-radius-md)',
+                        color: 'white',
+                        cursor: metricsLoading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-xs)',
+                        fontWeight: 600,
+                        opacity: metricsLoading ? 0.6 : 1,
+                    }}
+                >
+                    <RefreshCw size={16} style={{ animation: metricsLoading ? 'spin 1s linear infinite' : 'none' }} />
+                    Refresh Metrics
+                </button>
+            </div>
             <div className="grid grid-cols-4 gap-lg" style={{ marginBottom: 'var(--spacing-2xl)' }}>
                 <StatCard
                     label="Active Streams"
-                    value={stats.activeStreams}
+                    value={stats.activeStreamsCount}
                     glow={true}
                     icon={<Activity size={24} style={{ color: 'var(--color-success)' }} />}
                     trend="up"
@@ -203,6 +261,11 @@ export const GodView: React.FC = () => {
                         {assets.filter(a => a.type === 'machinery').length} units deployed
                     </p>
                 </div>
+            </div>
+
+            {/* Analytics Export Section */}
+            <div style={{ marginTop: 'var(--spacing-2xl)' }}>
+                <AnalyticsExport />
             </div>
         </div>
     );

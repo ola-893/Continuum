@@ -1,4 +1,5 @@
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+// Removed Aptos wallet adapter - using Tezos wallet instead
+// import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useState, useEffect } from "react";
 import { ContinuumService } from "../services/continuumService";
 

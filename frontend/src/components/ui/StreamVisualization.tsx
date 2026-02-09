@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStreamProgress } from '../../hooks/useStreamBalance';
-import type { StreamInfo } from '../../hooks/useStreamBalance';
+import type { StreamInfo } from '../../types/continuum';
 
 export interface StreamVisualizationProps {
     streamInfo: StreamInfo | null;
@@ -17,8 +17,23 @@ export const StreamVisualization: React.FC<StreamVisualizationProps> = ({
         return null;
     }
 
-    const statusColor = streamInfo.isActive ? 'var(--color-success)' : 'var(--color-warning)';
-    const statusText = streamInfo.isActive ? 'Active' : 'Paused';
+    // Determine status based on status field
+    const getStatusInfo = () => {
+        switch (streamInfo.status) {
+            case 0:
+                return { text: 'Active', color: 'var(--color-success)', isActive: true };
+            case 1:
+                return { text: 'Paused', color: 'var(--color-warning)', isActive: false };
+            case 2:
+                return { text: 'Cancelled', color: 'var(--color-error)', isActive: false };
+            case 3:
+                return { text: 'Depleted', color: 'var(--color-muted)', isActive: false };
+            default:
+                return { text: 'Unknown', color: 'var(--color-muted)', isActive: false };
+        }
+    };
+
+    const statusInfo = getStatusInfo();
 
     return (
         <div className={`${className}`}>
@@ -26,11 +41,11 @@ export const StreamVisualization: React.FC<StreamVisualizationProps> = ({
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-sm">
                     <div
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: statusColor }}
+                        className={`w-2 h-2 rounded-full ${statusInfo.isActive ? 'animate-pulse' : ''}`}
+                        style={{ backgroundColor: statusInfo.color }}
                     />
-                    <span className="text-sm font-medium" style={{ color: statusColor }}>
-                        {statusText}
+                    <span className="text-sm font-medium" style={{ color: statusInfo.color }}>
+                        {statusInfo.text}
                     </span>
                 </div>
                 <span className="text-sm text-muted">{progress.toFixed(1)}% Complete</span>

@@ -1,0 +1,1 @@
+sp.record(stream_id = 2, token_address = sp.address('tz1Wwc5goaSTKJofamCshEF4XD3RRgh6rkJq'))

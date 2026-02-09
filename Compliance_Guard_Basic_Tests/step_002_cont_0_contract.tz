@@ -1,0 +1,518 @@
+parameter (or (or (address %add_admin) (pair %freeze_stream (missing_type_conversion %reason a53) (nat %stream_id))) (or (pair %register_identity (timestamp %expiry_time) (pair (string %jurisdiction) (pair (address %user) (nat %verification_level)))) (or (nat %unfreeze_stream) (pair %whitelist_address (set %asset_types nat) (address %user)))));
+storage   (pair (set %admins address) (pair (map %asset_types int string) (pair (big_map %frozen_streams nat bool) (big_map %identities address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat)))))))));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    IF_LEFT
+      {
+        IF_LEFT
+          {
+            # == add_admin ==
+            # assert self.data.admins.contains(sp.sender), \ # @parameter%add_admin : @storage
+            DUP 2;      # @storage : @parameter%add_admin : @storage
+            CAR;        # set address : @parameter%add_admin : @storage
+            SENDER;     # @sender : set address : @parameter%add_admin : @storage
+            MEM;        # bool : @parameter%add_admin : @storage
+            IF
+              {}
+              {
+                PUSH string "NOT_ADMIN: Only administrators can add new admins"; # string : @parameter%add_admin : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%add_admin : @storage
+            SWAP;       # @storage : @parameter%add_admin
+            # self.data.admins.add(new_admin) # @storage : @parameter%add_admin
+            DUP;        # @storage : @storage : @parameter%add_admin
+            CAR;        # set address : @storage : @parameter%add_admin
+            PUSH bool True; # bool : set address : @storage : @parameter%add_admin
+            DUP 4;      # @parameter%add_admin : bool : set address : @storage : @parameter%add_admin
+            UPDATE;     # set address : @storage : @parameter%add_admin
+            UPDATE 1;   # @storage : @parameter%add_admin
+            SWAP;       # @parameter%add_admin : @storage
+            # sp.emit( # @parameter%add_admin : @storage
+            NIL operation; # list operation : @parameter%add_admin : @storage
+            NOW;        # @now : list operation : @parameter%add_admin : @storage
+            DIG 2;      # @parameter%add_admin : @now : list operation : @storage
+            SENDER;     # @sender : @parameter%add_admin : @now : list operation : @storage
+            PAIR 3;     # pair @sender (pair @parameter%add_admin @now) : list operation : @storage
+            EMIT %admin_added (pair (address %added_by) (pair (address %new_admin) (timestamp %timestamp))); # operation : list operation : @storage
+            CONS;       # list operation : @storage
+          }
+          {
+            # == freeze_stream ==
+            # assert self.data.admins.contains(sp.sender), \ # @parameter%freeze_stream : @storage
+            DUP 2;      # @storage : @parameter%freeze_stream : @storage
+            CAR;        # set address : @parameter%freeze_stream : @storage
+            SENDER;     # @sender : set address : @parameter%freeze_stream : @storage
+            MEM;        # bool : @parameter%freeze_stream : @storage
+            IF
+              {}
+              {
+                PUSH string "NOT_ADMIN: Only administrators can freeze streams"; # string : @parameter%freeze_stream : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%freeze_stream : @storage
+            SWAP;       # @storage : @parameter%freeze_stream
+            # self.data.frozen_streams[stream_id] = True # @storage : @parameter%freeze_stream
+            DUP;        # @storage : @storage : @parameter%freeze_stream
+            GET 5;      # big_map nat bool : @storage : @parameter%freeze_stream
+            PUSH (option bool) (Some True); # option bool : big_map nat bool : @storage : @parameter%freeze_stream
+            DUP 4;      # @parameter%freeze_stream : option bool : big_map nat bool : @storage : @parameter%freeze_stream
+            CDR;        # nat : option bool : big_map nat bool : @storage : @parameter%freeze_stream
+            UPDATE;     # big_map nat bool : @storage : @parameter%freeze_stream
+            UPDATE 5;   # @storage : @parameter%freeze_stream
+            SWAP;       # @parameter%freeze_stream : @storage
+            # sp.emit( # @parameter%freeze_stream : @storage
+            NIL operation; # list operation : @parameter%freeze_stream : @storage
+            DUP;        # list operation : list operation : @parameter%freeze_stream : @storage
+            NOW;        # @now : list operation : list operation : @parameter%freeze_stream : @storage
+            DUP 4;      # @parameter%freeze_stream : @now : list operation : list operation : @parameter%freeze_stream : @storage
+            CDR;        # nat : @now : list operation : list operation : @parameter%freeze_stream : @storage
+            DUP 5;      # @parameter%freeze_stream : nat : @now : list operation : list operation : @parameter%freeze_stream : @storage
+            CAR;        # missing_type_conversion a53 : nat : @now : list operation : list operation : @parameter%freeze_stream : @storage
+            SENDER;     # @sender : missing_type_conversion a53 : nat : @now : list operation : list operation : @parameter%freeze_stream : @storage
+            PAIR 4;     # pair @sender (pair (missing_type_conversion a53) (pair nat @now)) : list operation : list operation : @parameter%freeze_stream : @storage
+            DIG 2;      # list operation : pair @sender (pair (missing_type_conversion a53) (pair nat @now)) : list operation : @parameter%freeze_stream : @storage
+            DROP;       # pair @sender (pair (missing_type_conversion a53) (pair nat @now)) : list operation : @parameter%freeze_stream : @storage
+            DIG 2;      # @parameter%freeze_stream : pair @sender (pair (missing_type_conversion a53) (pair nat @now)) : list operation : @storage
+            DROP;       # pair @sender (pair (missing_type_conversion a53) (pair nat @now)) : list operation : @storage
+            EMIT %stream_frozen (pair (address %frozen_by) (pair (missing_type_conversion %reason a53) (pair (nat %stream_id) (timestamp %timestamp)))); # operation : list operation : @storage
+            CONS;       # list operation : @storage
+          }; # list operation : @storage
+      }
+      {
+        IF_LEFT
+          {
+            # == register_identity ==
+            # assert self.data.admins.contains(sp.sender), \ # @parameter%register_identity : @storage
+            DUP 2;      # @storage : @parameter%register_identity : @storage
+            CAR;        # set address : @parameter%register_identity : @storage
+            SENDER;     # @sender : set address : @parameter%register_identity : @storage
+            MEM;        # bool : @parameter%register_identity : @storage
+            IF
+              {}
+              {
+                PUSH string "NOT_ADMIN: Only administrators can register identities"; # string : @parameter%register_identity : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%register_identity : @storage
+            # assert verification_level <= 2, \ # @parameter%register_identity : @storage
+            PUSH nat 2; # nat : @parameter%register_identity : @storage
+            DUP 2;      # @parameter%register_identity : nat : @parameter%register_identity : @storage
+            GET 6;      # nat : nat : @parameter%register_identity : @storage
+            COMPARE;    # int : @parameter%register_identity : @storage
+            LE;         # bool : @parameter%register_identity : @storage
+            IF
+              {}
+              {
+                PUSH string "INVALID_VERIFICATION_LEVEL: Must be 0, 1, or 2"; # string : @parameter%register_identity : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%register_identity : @storage
+            SWAP;       # @storage : @parameter%register_identity
+            # self.data.identities[user] = sp.record( # @storage : @parameter%register_identity
+            DUP;        # @storage : @storage : @parameter%register_identity
+            GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            EMPTY_SET nat; # set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            DUP 4;      # @parameter%register_identity : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            GET 6;      # nat : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            DUP 5;      # @parameter%register_identity : nat : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            GET 3;      # string : nat : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            PUSH bool True; # bool : string : nat : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            DUP 7;      # @parameter%register_identity : bool : string : nat : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            CAR;        # timestamp : bool : string : nat : set nat : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            PAIR 5;     # pair timestamp (pair bool (pair string (pair nat (set nat)))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            SOME;       # option (pair timestamp (pair bool (pair string (pair nat (set nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            DUP 4;      # @parameter%register_identity : option (pair timestamp (pair bool (pair string (pair nat (set nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            GET 5;      # address : option (pair timestamp (pair bool (pair string (pair nat (set nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : @parameter%register_identity
+            UPDATE;     # big_map address (pair timestamp (pair bool (pair string (pair nat (set nat))))) : @storage : @parameter%register_identity
+            UPDATE 6;   # @storage : @parameter%register_identity
+            SWAP;       # @parameter%register_identity : @storage
+            # sp.emit( # @parameter%register_identity : @storage
+            NIL operation; # list operation : @parameter%register_identity : @storage
+            DUP;        # list operation : list operation : @parameter%register_identity : @storage
+            DUP 3;      # @parameter%register_identity : list operation : list operation : @parameter%register_identity : @storage
+            GET 6;      # nat : list operation : list operation : @parameter%register_identity : @storage
+            DUP 4;      # @parameter%register_identity : nat : list operation : list operation : @parameter%register_identity : @storage
+            GET 5;      # address : nat : list operation : list operation : @parameter%register_identity : @storage
+            NOW;        # @now : address : nat : list operation : list operation : @parameter%register_identity : @storage
+            SENDER;     # @sender : @now : address : nat : list operation : list operation : @parameter%register_identity : @storage
+            DUP 7;      # @parameter%register_identity : @sender : @now : address : nat : list operation : list operation : @parameter%register_identity : @storage
+            GET 3;      # string : @sender : @now : address : nat : list operation : list operation : @parameter%register_identity : @storage
+            DUP 8;      # @parameter%register_identity : string : @sender : @now : address : nat : list operation : list operation : @parameter%register_identity : @storage
+            CAR;        # timestamp : string : @sender : @now : address : nat : list operation : list operation : @parameter%register_identity : @storage
+            PAIR 6;     # pair timestamp (pair string (pair @sender (pair @now (pair address nat)))) : list operation : list operation : @parameter%register_identity : @storage
+            DIG 2;      # list operation : pair timestamp (pair string (pair @sender (pair @now (pair address nat)))) : list operation : @parameter%register_identity : @storage
+            DROP;       # pair timestamp (pair string (pair @sender (pair @now (pair address nat)))) : list operation : @parameter%register_identity : @storage
+            DIG 2;      # @parameter%register_identity : pair timestamp (pair string (pair @sender (pair @now (pair address nat)))) : list operation : @storage
+            DROP;       # pair timestamp (pair string (pair @sender (pair @now (pair address nat)))) : list operation : @storage
+            EMIT %identity_registered (pair (timestamp %expiry_time) (pair (string %jurisdiction) (pair (address %registered_by) (pair (timestamp %timestamp) (pair (address %user) (nat %verification_level)))))); # operation : list operation : @storage
+            CONS;       # list operation : @storage
+          }
+          {
+            IF_LEFT
+              {
+                # == unfreeze_stream ==
+                # assert self.data.admins.contains(sp.sender), \ # @parameter%unfreeze_stream : @storage
+                DUP 2;      # @storage : @parameter%unfreeze_stream : @storage
+                CAR;        # set address : @parameter%unfreeze_stream : @storage
+                SENDER;     # @sender : set address : @parameter%unfreeze_stream : @storage
+                MEM;        # bool : @parameter%unfreeze_stream : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "NOT_ADMIN: Only administrators can unfreeze streams"; # string : @parameter%unfreeze_stream : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%unfreeze_stream : @storage
+                # assert self.data.frozen_streams.contains(stream_id), \ # @parameter%unfreeze_stream : @storage
+                DUP 2;      # @storage : @parameter%unfreeze_stream : @storage
+                GET 5;      # big_map nat bool : @parameter%unfreeze_stream : @storage
+                DUP 2;      # @parameter%unfreeze_stream : big_map nat bool : @parameter%unfreeze_stream : @storage
+                MEM;        # bool : @parameter%unfreeze_stream : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "STREAM_NOT_FROZEN: Stream is not frozen"; # string : @parameter%unfreeze_stream : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%unfreeze_stream : @storage
+                SWAP;       # @storage : @parameter%unfreeze_stream
+                # del self.data.frozen_streams[stream_id] # @storage : @parameter%unfreeze_stream
+                DUP;        # @storage : @storage : @parameter%unfreeze_stream
+                GET 5;      # big_map nat bool : @storage : @parameter%unfreeze_stream
+                NONE bool;  # option bool : big_map nat bool : @storage : @parameter%unfreeze_stream
+                DUP 4;      # @parameter%unfreeze_stream : option bool : big_map nat bool : @storage : @parameter%unfreeze_stream
+                UPDATE;     # big_map nat bool : @storage : @parameter%unfreeze_stream
+                UPDATE 5;   # @storage : @parameter%unfreeze_stream
+                SWAP;       # @parameter%unfreeze_stream : @storage
+                # sp.emit( # @parameter%unfreeze_stream : @storage
+                NIL operation; # list operation : @parameter%unfreeze_stream : @storage
+                SENDER;     # @sender : list operation : @parameter%unfreeze_stream : @storage
+                NOW;        # @now : @sender : list operation : @parameter%unfreeze_stream : @storage
+                DIG 3;      # @parameter%unfreeze_stream : @now : @sender : list operation : @storage
+                PAIR 3;     # pair @parameter%unfreeze_stream (pair @now @sender) : list operation : @storage
+                EMIT %stream_unfrozen (pair (nat %stream_id) (pair (timestamp %timestamp) (address %unfrozen_by))); # operation : list operation : @storage
+                CONS;       # list operation : @storage
+              }
+              {
+                # == whitelist_address ==
+                # assert self.data.admins.contains(sp.sender), \ # @parameter%whitelist_address : @storage
+                DUP 2;      # @storage : @parameter%whitelist_address : @storage
+                CAR;        # set address : @parameter%whitelist_address : @storage
+                SENDER;     # @sender : set address : @parameter%whitelist_address : @storage
+                MEM;        # bool : @parameter%whitelist_address : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "NOT_ADMIN: Only administrators can whitelist addresses"; # string : @parameter%whitelist_address : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%whitelist_address : @storage
+                # assert self.data.identities.contains(user), \ # @parameter%whitelist_address : @storage
+                DUP 2;      # @storage : @parameter%whitelist_address : @storage
+                GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                DUP 2;      # @parameter%whitelist_address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                CDR;        # address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                MEM;        # bool : @parameter%whitelist_address : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "IDENTITY_NOT_FOUND: User must be registered first"; # string : @parameter%whitelist_address : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%whitelist_address : @storage
+                # identity = self.data.identities[user] # @parameter%whitelist_address : @storage
+                DUP 2;      # @storage : @parameter%whitelist_address : @storage
+                GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                DUP 2;      # @parameter%whitelist_address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                CDR;        # address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                GET;        # option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter%whitelist_address : @storage
+                IF_NONE
+                  {
+                    PUSH int 137; # int : @parameter%whitelist_address : @storage
+                    FAILWITH;   # FAILED
+                  }
+                  {}; # @some : @parameter%whitelist_address : @storage
+                # assert identity.is_verified, \ # @some : @parameter%whitelist_address : @storage
+                DUP;        # @some : @some : @parameter%whitelist_address : @storage
+                GET 3;      # bool : @some : @parameter%whitelist_address : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "KYC_NOT_VERIFIED: User's KYC is not verified"; # string : @some : @parameter%whitelist_address : @storage
+                    FAILWITH;   # FAILED
+                  }; # @some : @parameter%whitelist_address : @storage
+                # assert sp.now < identity.expiry_time, \ # @some : @parameter%whitelist_address : @storage
+                DUP;        # @some : @some : @parameter%whitelist_address : @storage
+                CAR;        # timestamp : @some : @parameter%whitelist_address : @storage
+                NOW;        # @now : timestamp : @some : @parameter%whitelist_address : @storage
+                COMPARE;    # int : @some : @parameter%whitelist_address : @storage
+                LT;         # bool : @some : @parameter%whitelist_address : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "KYC_EXPIRED: User's KYC has expired"; # string : @some : @parameter%whitelist_address : @storage
+                    FAILWITH;   # FAILED
+                  }; # @some : @parameter%whitelist_address : @storage
+                # updated_types = identity.whitelisted_asset_types # @some : @parameter%whitelist_address : @storage
+                DUP;        # @some : @some : @parameter%whitelist_address : @storage
+                GET 8;      # set nat : @some : @parameter%whitelist_address : @storage
+                # for asset_type in asset_types.elements(): # set nat : @some : @parameter%whitelist_address : @storage
+                DUP 3;      # @parameter%whitelist_address : set nat : @some : @parameter%whitelist_address : @storage
+                CAR;        # set nat : set nat : @some : @parameter%whitelist_address : @storage
+                ITER
+                  {
+                    # assert asset_type <= 2, \ # nat : set nat : @some : @parameter%whitelist_address : @storage
+                    PUSH nat 2; # nat : nat : set nat : @some : @parameter%whitelist_address : @storage
+                    DUP 2;      # nat : nat : nat : set nat : @some : @parameter%whitelist_address : @storage
+                    COMPARE;    # int : nat : set nat : @some : @parameter%whitelist_address : @storage
+                    LE;         # bool : nat : set nat : @some : @parameter%whitelist_address : @storage
+                    IF
+                      {}
+                      {
+                        PUSH string "INVALID_ASSET_TYPE: Asset type must be 0, 1, or 2"; # string : nat : set nat : @some : @parameter%whitelist_address : @storage
+                        FAILWITH;   # FAILED
+                      }; # nat : set nat : @some : @parameter%whitelist_address : @storage
+                    SWAP;       # set nat : nat : @some : @parameter%whitelist_address : @storage
+                    # updated_types.add(asset_type) # set nat : nat : @some : @parameter%whitelist_address : @storage
+                    PUSH bool True; # bool : set nat : nat : @some : @parameter%whitelist_address : @storage
+                    DIG 2;      # nat : bool : set nat : @some : @parameter%whitelist_address : @storage
+                    UPDATE;     # set nat : @some : @parameter%whitelist_address : @storage
+                  }; # set nat : @some : @parameter%whitelist_address : @storage
+                # self.data.identities[user].whitelisted_asset_types = updated_types # set nat : @some : @parameter%whitelist_address : @storage
+                DIG 3;      # @storage : set nat : @some : @parameter%whitelist_address
+                DUP;        # @storage : @storage : set nat : @some : @parameter%whitelist_address
+                GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                DUP;        # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                DUP 6;      # @parameter%whitelist_address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                CDR;        # address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                DUP;        # address : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                DUG 2;      # address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                GET;        # option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                IF_NONE
+                  {
+                    PUSH int 155; # int : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                    FAILWITH;   # FAILED
+                  }
+                  {}; # @some : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                DUP 5;      # set nat : @some : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                UPDATE 8;   # @some : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                SOME;       # option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                SWAP;       # address : option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                UPDATE;     # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @storage : set nat : @some : @parameter%whitelist_address
+                UPDATE 6;   # @storage : set nat : @some : @parameter%whitelist_address
+                DUG 3;      # set nat : @some : @parameter%whitelist_address : @storage
+                # sp.emit( # set nat : @some : @parameter%whitelist_address : @storage
+                NIL operation; # list operation : set nat : @some : @parameter%whitelist_address : @storage
+                DUP;        # list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                SENDER;     # @sender : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                DUP 6;      # @parameter%whitelist_address : @sender : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                CDR;        # address : @sender : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                NOW;        # @now : address : @sender : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                DUP 8;      # @parameter%whitelist_address : @now : address : @sender : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                CAR;        # set nat : @now : address : @sender : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                PAIR 4;     # pair (set nat) (pair @now (pair address @sender)) : list operation : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                DIG 2;      # list operation : pair (set nat) (pair @now (pair address @sender)) : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                DROP;       # pair (set nat) (pair @now (pair address @sender)) : list operation : set nat : @some : @parameter%whitelist_address : @storage
+                DIG 2;      # set nat : pair (set nat) (pair @now (pair address @sender)) : list operation : @some : @parameter%whitelist_address : @storage
+                DROP;       # pair (set nat) (pair @now (pair address @sender)) : list operation : @some : @parameter%whitelist_address : @storage
+                DIG 2;      # @some : pair (set nat) (pair @now (pair address @sender)) : list operation : @parameter%whitelist_address : @storage
+                DROP;       # pair (set nat) (pair @now (pair address @sender)) : list operation : @parameter%whitelist_address : @storage
+                DIG 2;      # @parameter%whitelist_address : pair (set nat) (pair @now (pair address @sender)) : list operation : @storage
+                DROP;       # pair (set nat) (pair @now (pair address @sender)) : list operation : @storage
+                EMIT %address_whitelisted (pair (set %asset_types nat) (pair (timestamp %timestamp) (pair (address %user) (address %whitelisted_by)))); # operation : list operation : @storage
+                CONS;       # list operation : @storage
+              }; # list operation : @storage
+          }; # list operation : @storage
+      }; # list operation : @storage
+    PAIR;       # pair (list operation) @storage
+  };
+view
+  "is_authorized_recipient" (pair (nat %asset_type) (address %user)) bool
+  {
+    UNPAIR;     # @parameter : @storage
+    # user = params.user # @parameter : @storage
+    DUP;        # @parameter : @parameter : @storage
+    CDR;        # address : @parameter : @storage
+    # asset_type = params.asset_type # address : @parameter : @storage
+    DUP 2;      # @parameter : address : @parameter : @storage
+    CAR;        # nat : address : @parameter : @storage
+    # authorized = False # nat : address : @parameter : @storage
+    PUSH bool False; # bool : nat : address : @parameter : @storage
+    # if self.data.identities.contains(user): # bool : nat : address : @parameter : @storage
+    DUP 5;      # @storage : bool : nat : address : @parameter : @storage
+    GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : bool : nat : address : @parameter : @storage
+    DUP 4;      # address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : bool : nat : address : @parameter : @storage
+    MEM;        # bool : bool : nat : address : @parameter : @storage
+    IF
+      {
+        DROP;       # nat : address : @parameter : @storage
+        DIG 2;      # @parameter : nat : address : @storage
+        DROP;       # nat : address : @storage
+        # identity = self.data.identities[user] # nat : address : @storage
+        DIG 2;      # @storage : nat : address
+        GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : nat : address
+        DIG 2;      # address : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : nat
+        GET;        # option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : nat
+        IF_NONE
+          {
+            PUSH int 291; # int : nat
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat
+        # is_verified = identity.is_verified # @some : nat
+        DUP;        # @some : @some : nat
+        GET 3;      # bool : @some : nat
+        # not_expired = sp.now < identity.expiry_time # bool : @some : nat
+        DUP 2;      # @some : bool : @some : nat
+        CAR;        # timestamp : bool : @some : nat
+        NOW;        # @now : timestamp : bool : @some : nat
+        COMPARE;    # int : bool : @some : nat
+        LT;         # bool : bool : @some : nat
+        # is_whitelisted = identity.whitelisted_asset_types.contains(asset_type) # bool : bool : @some : nat
+        DIG 2;      # @some : bool : bool : nat
+        GET 8;      # set nat : bool : bool : nat
+        DIG 3;      # nat : set nat : bool : bool
+        MEM;        # bool : bool : bool
+        # authorized = is_verified and not_expired and is_whitelisted # bool : bool : bool
+        DIG 2;      # bool : bool : bool
+        IF
+          {
+            SWAP;       # bool : bool
+          }
+          {
+            SWAP;       # bool : bool
+            DROP;       # bool
+            PUSH bool False; # bool : bool
+          }; # bool : bool
+        IF
+          {}
+          {
+            DROP;       # 
+            PUSH bool False; # bool
+          }; # bool
+      }
+      {
+        SWAP;       # nat : bool : address : @parameter : @storage
+        DROP;       # bool : address : @parameter : @storage
+        SWAP;       # address : bool : @parameter : @storage
+        DROP;       # bool : @parameter : @storage
+        SWAP;       # @parameter : bool : @storage
+        DROP;       # bool : @storage
+        SWAP;       # @storage : bool
+        DROP;       # bool
+      }; # bool
+    # return authorized # bool
+  };
+view
+  "is_stream_frozen" nat bool
+  {
+    UNPAIR;     # @parameter : @storage
+    # frozen = False # @parameter : @storage
+    PUSH bool False; # bool : @parameter : @storage
+    # if self.data.frozen_streams.contains(stream_id): # bool : @parameter : @storage
+    DUP 3;      # @storage : bool : @parameter : @storage
+    GET 5;      # big_map nat bool : bool : @parameter : @storage
+    DUP 3;      # @parameter : big_map nat bool : bool : @parameter : @storage
+    MEM;        # bool : bool : @parameter : @storage
+    IF
+      {
+        DROP;       # @parameter : @storage
+        SWAP;       # @storage : @parameter
+        # frozen = self.data.frozen_streams[stream_id] # @storage : @parameter
+        GET 5;      # big_map nat bool : @parameter
+        SWAP;       # @parameter : big_map nat bool
+        GET;        # option bool
+        IF_NONE
+          {
+            PUSH int 317; # int
+            FAILWITH;   # FAILED
+          }
+          {}; # @some
+      }
+      {
+        SWAP;       # @parameter : bool : @storage
+        DROP;       # bool : @storage
+        SWAP;       # @storage : bool
+        DROP;       # bool
+      }; # bool
+    # return frozen # bool
+  };
+view
+  "has_valid_kyc" address bool
+  {
+    UNPAIR;     # @parameter : @storage
+    # valid = False # @parameter : @storage
+    PUSH bool False; # bool : @parameter : @storage
+    # if self.data.identities.contains(user): # bool : @parameter : @storage
+    DUP 3;      # @storage : bool : @parameter : @storage
+    GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : bool : @parameter : @storage
+    DUP 3;      # @parameter : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : bool : @parameter : @storage
+    MEM;        # bool : bool : @parameter : @storage
+    IF
+      {
+        DROP;       # @parameter : @storage
+        SWAP;       # @storage : @parameter
+        # identity = self.data.identities[user] # @storage : @parameter
+        GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter
+        SWAP;       # @parameter : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat)))))
+        GET;        # option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat)))))
+        IF_NONE
+          {
+            PUSH int 339; # int
+            FAILWITH;   # FAILED
+          }
+          {}; # @some
+        # valid = identity.is_verified and (sp.now < identity.expiry_time) # @some
+        DUP;        # @some : @some
+        GET 3;      # bool : @some
+        IF
+          {
+            CAR;        # timestamp
+            NOW;        # @now : timestamp
+            COMPARE;    # int
+            LT;         # bool
+          }
+          {
+            DROP;       # 
+            PUSH bool False; # bool
+          }; # bool
+      }
+      {
+        SWAP;       # @parameter : bool : @storage
+        DROP;       # bool : @storage
+        SWAP;       # @storage : bool
+        DROP;       # bool
+      }; # bool
+    # return valid # bool
+  };
+view
+  "is_admin" address bool
+  {
+    UNPAIR;     # @parameter : @storage
+    SWAP;       # @storage : @parameter
+    # return self.data.admins.contains(user) # @storage : @parameter
+    CAR;        # set address : @parameter
+    SWAP;       # @parameter : set address
+    MEM;        # bool
+  };
+view
+  "get_identity" address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat)))))
+  {
+    UNPAIR;     # @parameter : @storage
+    # assert self.data.identities.contains(user), \ # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter : @storage
+    DUP 2;      # @parameter : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter : @storage
+    MEM;        # bool : @parameter : @storage
+    IF
+      {}
+      {
+        PUSH string "IDENTITY_NOT_FOUND: User has no registered identity"; # string : @parameter : @storage
+        FAILWITH;   # FAILED
+      }; # @parameter : @storage
+    SWAP;       # @storage : @parameter
+    # return self.data.identities[user] # @storage : @parameter
+    GET 6;      # big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat))))) : @parameter
+    SWAP;       # @parameter : big_map address (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat)))))
+    GET;        # option (pair (timestamp %expiry_time) (pair (bool %is_verified) (pair (string %jurisdiction) (pair (nat %verification_level) (set %whitelisted_asset_types nat)))))
+    IF_NONE
+      {
+        PUSH int 371; # int
+        FAILWITH;   # FAILED
+      }
+      {}; # @some
+  };

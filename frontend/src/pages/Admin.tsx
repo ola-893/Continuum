@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Factory, Users, Radio, Shield, ArrowLeft } from 'lucide-react';
-import { useContinuum } from '../hooks/useContinuum';
+import { LayoutDashboard, Factory, Users, Radio, Shield, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { useTezosWallet } from '../hooks/useTezosWallet';
+import { useTezosAdmin } from '../hooks/useTezosAdmin';
 import { GodView } from './admin/GodView';
 import { AssetFactory } from './admin/AssetFactory';
 import { ComplianceDesk } from './admin/ComplianceDesk';
 import { FleetControl } from './admin/FleetControl';
+import { MarketplaceView } from './admin/MarketplaceView';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
-type AdminTab = 'god-view' | 'factory' | 'compliance' | 'fleet';
+type AdminTab = 'god-view' | 'factory' | 'compliance' | 'fleet' | 'marketplace';
 
 export const Admin: React.FC = () => {
     const navigate = useNavigate();
-    const { complianceStatus, account } = useContinuum();
+    const { address, isConnected } = useTezosWallet();
+    const { isAdmin, isLoading } = useTezosAdmin();
     const [activeTab, setActiveTab] = useState<AdminTab>('god-view');
 
+    // Show loading while checking admin status
+    if (isLoading) {
+        return <LoadingScreen message="Verifying admin credentials..." />;
+    }
+
     // Check if user is admin
-    if (!account || !complianceStatus.isAdmin) {
+    if (!isConnected || !address || !isAdmin) {
         return (
             <div className="container" style={{ paddingTop: 'var(--spacing-2xl)' }}>
                 <div
@@ -33,7 +42,9 @@ export const Admin: React.FC = () => {
                         Access Denied
                     </h2>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-xl)' }}>
-                        This area is restricted to administrators only. Your wallet address is not authorized.
+                        {!isConnected 
+                            ? 'Please connect your Tezos wallet to access the admin panel.'
+                            : 'This area is restricted to administrators only. Your wallet address is not authorized.'}
                     </p>
                     <button
                         onClick={() => navigate('/dashboard')}
@@ -59,6 +70,7 @@ export const Admin: React.FC = () => {
         { id: 'factory', label: 'Asset Factory', icon: <Factory size={18} /> },
         { id: 'compliance', label: 'Compliance Desk', icon: <Users size={18} /> },
         { id: 'fleet', label: 'Fleet Control', icon: <Radio size={18} /> },
+        { id: 'marketplace', label: 'Marketplace', icon: <ShoppingBag size={18} /> },
     ];
 
     return (
@@ -108,7 +120,7 @@ export const Admin: React.FC = () => {
                                     Control: Continuum Command Center
                                 </h2>
                                 <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                                    Operator: {account?.address.slice(0, 10)}...{account?.address.slice(-6)}
+                                    Operator: {address?.slice(0, 10)}...{address?.slice(-6)}
                                     <span
                                         style={{
                                             marginLeft: 'var(--spacing-sm)',
@@ -160,6 +172,7 @@ export const Admin: React.FC = () => {
                 {activeTab === 'factory' && <AssetFactory />}
                 {activeTab === 'compliance' && <ComplianceDesk />}
                 {activeTab === 'fleet' && <FleetControl />}
+                {activeTab === 'marketplace' && <MarketplaceView />}
             </div>
         </div>
     );
